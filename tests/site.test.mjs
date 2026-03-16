@@ -11,33 +11,48 @@ async function readBuilt(relativePath) {
 	}
 }
 
-test("homepage exposes academic identity instead of Spectre demo copy", async () => {
+test("homepage renders the academic CV structure and omits excluded personal data", async () => {
 	const html = await readBuilt("index.html");
 
 	assert.ok(html, "expected built homepage HTML");
 	assert.match(html, /Hengquan Guo/);
 	assert.match(html, /ShanghaiTech University/);
-	assert.match(html, /Selected Publications/);
 	assert.match(html, /Reinforcement Learning/);
 	assert.match(html, /LLM Alignment/);
+	assert.match(html, /About me/);
+	assert.match(html, /Selected Publications/);
+	assert.match(html, /Awards/);
+	assert.match(html, /Experience/);
+	assert.match(html, /Academic Service(?:\s*&amp;\s*|\s*&\s*)Teaching/);
+	assert.match(html, /guohq \(at\) shanghaitech\.edu\.cn/);
+	assert.match(
+		html,
+		/href="https:\/\/scholar\.google\.com\/citations\?user=8bGinucAAAAJ/,
+	);
+	assert.match(html, /National Scholarship,? 2025/);
+	assert.match(html, /Project Placeholder 1/);
+	assert.match(html, /Project Placeholder 2/);
+	assert.match(html, /Project Placeholder 3/);
+	assert.doesNotMatch(html, /mailto:/);
+	assert.doesNotMatch(html, /tel:/);
+	assert.doesNotMatch(html, /Xiangtan University/);
 	assert.doesNotMatch(html, /Latest Posts/);
 	assert.doesNotMatch(html, /Work Experience/);
 	assert.doesNotMatch(html, /Made in Germany/);
 });
 
-test("publications page exists and project placeholders are visible", async () => {
+test("publications route and homepage navigation expose full publications", async () => {
 	const publicationsHtml = await readBuilt("publications/index.html");
 	const homepageHtml = await readBuilt("index.html");
 
 	assert.ok(publicationsHtml, "expected built publications index");
-	assert.match(publicationsHtml, /Selected Publications|Publications/);
+	assert.match(publicationsHtml, /Full Publications|Publications/);
 	assert.match(
 		publicationsHtml,
-		/Online convex optimization with hard constraints/i,
+		/Triple-Optimistic Learning|Online convex optimization with hard constraints/i,
 	);
 
 	assert.ok(homepageHtml, "expected built homepage HTML");
-	assert.match(homepageHtml, /Project Placeholder 1/);
-	assert.match(homepageHtml, /Project Placeholder 2/);
-	assert.match(homepageHtml, /Project Placeholder 3/);
+	assert.match(homepageHtml, /href="\/publications"/);
+	assert.match(homepageHtml, />Full Publications</);
 });
