@@ -69,7 +69,7 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /2025\.06 - 2026\.02/);
 	assert.match(
 		html,
-		/Experience[\s\S]*Studying reinforcement learning for recommendation and bidding\.[\s\S]*Outcomes:[\s\S]*Towards Safe and Optimal Online Bidding[\s\S]*ICLR 2026, accepted[\s\S]*GRB[\s\S]*submitted to KDD[\s\S]*Towards Temporal Interest Modeling[\s\S]*submitted to ICML/i,
+		/Experience[\s\S]*Studying reinforcement learning for recommendation and bidding\.[\s\S]*Outcomes:[\s\S]*Towards Safe and Optimal Online Bidding[\s\S]*ICLR 2026, accepted[\s\S]*GRB[\s\S]*submitted to KDD[\s\S]*Towards Temporal Interest Modeling in Recommendation via Reinforcement Learning/i,
 	);
 	assert.match(
 		html,
@@ -78,6 +78,7 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /Hengquan Guo[\s\S]*ShanghaiTech University[\s\S]*Google Scholar/);
 	assert.doesNotMatch(html, /GitHub \(Coming soon\)/);
 	assert.doesNotMatch(html, /CV \(Coming soon\)/);
+	assert.doesNotMatch(html, /submitted to ICML/i);
 	assert.doesNotMatch(html, /<h3[^>]*>\s*Links\s*<\/h3>/);
 	assert.doesNotMatch(html, /mailto:/);
 	assert.doesNotMatch(html, /tel:/);
