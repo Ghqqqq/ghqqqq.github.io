@@ -24,8 +24,8 @@ const config = defineConfig({
 					description: 'Academic homepage for Hengquan Guo.',
 				},
 				blog: {
-					title: 'Publications',
-					description: 'Selected publications and research outputs.',
+					title: 'Full Publications',
+					description: 'Full publication list and research outputs.',
 				},
 				projects: {
 					title: 'Projects',

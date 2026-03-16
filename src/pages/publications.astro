@@ -5,12 +5,17 @@ import { getCollection } from "astro:content";
 import { openGraph } from "spectre:globals";
 import Card from "../components/Card.astro";
 import Icon from "../components/Icon.astro";
+import PublicationTeaser from "../components/PublicationTeaser.astro";
 import Layout from "../layouts/Layout.astro";
 
-const publications = await getCollection("publications");
+const publications = (await getCollection("publications")).sort(
+	(a, b) =>
+		b.data.year - a.data.year ||
+		b.data.createdAt.getTime() - a.data.createdAt.getTime(),
+);
 ---
 <Layout
-	title={openGraph.blog.title || "Publications"}
+	title={openGraph.blog.title || "Full Publications"}
 	description={openGraph.blog.description}
 	pagefindIgnore
 >
@@ -29,21 +34,17 @@ const publications = await getCollection("publications");
 		<Card>
 			<div class="header-container">
 				<Icon type="lucide" name="book-open" width={24} height={24} class="glow-icon" />
-				<h2>Publications</h2>
+				<h2>Full Publications</h2>
 			</div>
 			<div class="content-container">
 				{
-					publications
-						.sort((a, b) => b.data.createdAt.getTime() - a.data.createdAt.getTime())
-						.map((publication) => (
-							<a href={`/publications/${publication.id}`} class="post-container">
-								<div class="post-header">
-									<h3>{publication.data.title}</h3>
-									<span class="post-date">{publication.data.year}</span>
-								</div>
-								<span>{publication.data.venue}</span>
-							</a>
-						))
+					publications.map((publication) => (
+						<PublicationTeaser
+							publication={publication}
+							href={`/publications/${publication.id}`}
+							variant="full"
+						/>
+					))
 				}
 			</div>
 		</Card>

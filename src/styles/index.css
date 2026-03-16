@@ -93,3 +93,38 @@
 	gap: 0.75rem;
 	align-items: center;
 }
+
+.socials-item {
+	display: flex;
+	flex-direction: row;
+	gap: 0.75rem;
+	align-items: center;
+}
+
+.socials-text {
+	color: #fff;
+}
+
+.section-list {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.section-entry {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 1rem;
+	border: 1px solid #353535;
+}
+
+.section-meta {
+	color: #c7c7c7;
+}
+
+.section-description {
+	margin: 0;
+	line-height: 1.55;
+	color: #c7c7c7;
+}

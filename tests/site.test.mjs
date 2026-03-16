@@ -29,7 +29,9 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 		html,
 		/href="https:\/\/scholar\.google\.com\/citations\?user=8bGinucAAAAJ/,
 	);
-	assert.match(html, /National Scholarship,? 2025/);
+	assert.match(html, /National Scholarship/);
+	assert.match(html, /Tencent Rhino-Bird Elite Talent Program/);
+	assert.match(html, /RLChina 2022/);
 	assert.match(html, /Project Placeholder 1/);
 	assert.match(html, /Project Placeholder 2/);
 	assert.match(html, /Project Placeholder 3/);

@@ -4,13 +4,13 @@
 		"title": "PhD Researcher",
 		"organization": "ShanghaiTech University",
 		"period": "2021.09 - Present",
-		"description": "Researching reinforcement learning, constrained optimization, online learning, and LLM alignment."
+		"description": "Designing safe and efficient algorithms for constrained online learning, with applications to network resource management and LLM fine-tuning / alignment."
 	},
 	{
 		"id": 2,
 		"title": "Research Intern",
 		"organization": "Tencent CDG",
 		"period": "2025.06 - 2026.06",
-		"description": "Working on research directions adjacent to large-scale learning and decision making."
+		"description": "Studying reinforcement learning for recommendation and bidding, with one accepted ICLR paper, two active submissions, and two patents under review."
 	}
 ]

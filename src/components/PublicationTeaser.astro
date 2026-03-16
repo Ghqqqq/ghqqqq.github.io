@@ -1,0 +1,130 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+	publication: CollectionEntry<"publications">;
+	href: string;
+	variant?: "compact" | "full";
+}
+
+const { publication, href, variant = "compact" } = Astro.props;
+const isExternal = href.startsWith("http://") || href.startsWith("https://");
+const venueLabel = publication.data.venue
+	.split(/\s+/)
+	.map((part) => part.replace(/[^A-Za-z0-9]/g, "").slice(0, 1).toUpperCase())
+	.join("")
+	.slice(0, 8) || "PAPER";
+---
+
+<a
+	href={href}
+	class:list={["publication-teaser", variant]}
+	target={isExternal ? "_blank" : undefined}
+	rel={isExternal ? "noopener noreferrer" : undefined}
+>
+	<div class="publication-cover" aria-hidden="true">
+		<span class="publication-badge">{venueLabel}</span>
+		<strong>{publication.data.year}</strong>
+	</div>
+	<div class="publication-copy">
+		<div class="post-header">
+			<h3>{publication.data.title}</h3>
+			<span class="post-date">{publication.data.year}</span>
+		</div>
+		<span>{publication.data.venue} / {publication.data.authors}</span>
+	</div>
+</a>
+
+<style>
+	.publication-teaser {
+		display: grid;
+		grid-template-columns: 5.5rem minmax(0, 1fr);
+		gap: 1rem;
+		padding: 1rem;
+		border: 1px solid #353535;
+		color: #fff;
+		text-decoration: none;
+		transition:
+			background-color 0.15s ease,
+			border-color 0.15s ease,
+			transform 0.15s ease;
+	}
+
+	.publication-teaser:hover,
+	.publication-teaser:focus-visible {
+		background-color: rgba(140, 92, 245, 0.125);
+		border-color: var(--primary);
+		outline: none;
+		transform: translateY(-1px);
+	}
+
+	.publication-cover {
+		aspect-ratio: 3 / 4;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		padding: 0.75rem;
+		background:
+			linear-gradient(160deg, rgba(140, 92, 245, 0.24), rgba(33, 245, 166, 0.08)),
+			#191919;
+		border: 1px solid rgba(140, 92, 245, 0.4);
+	}
+
+	.publication-badge {
+		display: inline-flex;
+		width: fit-content;
+		padding: 0.2rem 0.45rem;
+		background: rgba(255, 255, 255, 0.08);
+		font-size: 0.72rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.publication-cover strong {
+		font-size: 1.5rem;
+		line-height: 1;
+	}
+
+	.publication-copy {
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.publication-copy h3 {
+		margin: 0;
+		line-height: 1.3;
+	}
+
+	.publication-copy span {
+		color: #c7c7c7;
+		line-height: 1.5;
+	}
+
+	.publication-teaser.compact {
+		grid-template-columns: 5rem minmax(0, 1fr);
+	}
+
+	.publication-teaser.compact .publication-cover {
+		padding: 0.65rem;
+	}
+
+	.publication-teaser.full {
+		grid-template-columns: 6rem minmax(0, 1fr);
+	}
+
+	@media screen and (max-width: 640px) {
+		.publication-teaser,
+		.publication-teaser.compact,
+		.publication-teaser.full {
+			grid-template-columns: 4.25rem minmax(0, 1fr);
+			gap: 0.85rem;
+			padding: 0.9rem;
+		}
+
+		.publication-cover strong {
+			font-size: 1.15rem;
+		}
+	}
+</style>
