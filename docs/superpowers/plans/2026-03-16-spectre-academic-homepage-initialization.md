@@ -1,227 +1,100 @@
-# Spectre Academic Homepage Initialization Implementation Plan
+# Spectre Academic Homepage CV Refresh Implementation Plan
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Initialize a Spectre-based Astro homepage for Hengquan Guo and adapt the default blog template into an academic-first site with publications and placeholder projects.
+**Goal:** Update the existing Spectre-based academic homepage so it matches the approved CV-driven design: hero with right-side About, selected publications with compact covers, awards, experience, academic service and teaching, and a dedicated `Full Publications` navigation path.
 
-**Architecture:** Start from the upstream `louisescher/spectre` template, preserve its visual system and Astro structure, then replace blog-oriented homepage semantics with academic equivalents. Reuse the existing content-driven approach where it stays clean, but introduce a dedicated `publications` route and collection so the public site no longer exposes blog wording or sample Spectre identity content.
+**Architecture:** Keep the current Astro + content-collection structure, but extend the data model so the homepage can render structured academic CV sections cleanly. Reuse one shared publication teaser component for both the homepage and `/publications`, loosen the socials model to support obfuscated non-link contact items, and seed the new homepage sections from JSON/MDX content rather than hardcoding large arrays inside page files.
 
-**Tech Stack:** Astro 6, TypeScript, MDX content collections, PNPM/Corepack, Node.js built-in test runner
+**Tech Stack:** Astro 6, TypeScript, Astro content collections, MDX, PNPM, Node.js built-in test runner
 
 ---
 
-## Chunk 1: Workspace And Template Bootstrap
+## File Structure
 
-### Task 1: Prepare The Isolated Workspace And Local Tooling
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/tests/site.test.mjs`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content.config.ts`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/socials.json`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/info.json`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/other/about.mdx`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/components/Navbar.astro`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/pages/index.astro`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/pages/publications.astro`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/styles/index.css`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/styles/article-list.css`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/publications/*.mdx`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/projects/project-placeholder-1.mdx`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/projects/project-placeholder-2.mdx`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/projects/project-placeholder-3.mdx`
+- Create: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/awards.json`
+- Create: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/experience.json`
+- Create: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/service-teaching.json`
+- Create: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/components/PublicationTeaser.astro`
 
-**Files:**
-- Modify: `/Users/ghq/Documents/homepage/.gitignore`
-- Create: `/Users/ghq/Documents/homepage/.worktrees/` or external worktree directory
-- Context: `/Users/ghq/Documents/homepage/docs/superpowers/specs/2026-03-16-spectre-academic-homepage-design.md`
+## Chunk 1: Data Model And Acceptance Tests
 
-- [ ] **Step 1: Confirm the worktree location with the user**
-
-Ask exactly one concise question if neither `.worktrees/` nor `worktrees/` exists:
-
-```text
-No worktree directory exists yet. Should I create the isolated branch in `.worktrees/` inside this repo, or in `~/.config/superpowers/worktrees/homepage/`?
-```
-
-- [ ] **Step 2: Install Node.js if it is missing**
-
-Run:
-
-```bash
-node -v
-```
-
-If missing, run:
-
-```bash
-brew install node
-```
-
-Expected: `node -v` succeeds after installation.
-
-- [ ] **Step 3: Add local ignore rules if using a project-local worktree**
-
-If the user chooses `.worktrees/` or `worktrees/`, update `/Users/ghq/Documents/homepage/.gitignore` with:
-
-```gitignore
-.DS_Store
-.worktrees/
-worktrees/
-```
-
-Run:
-
-```bash
-git -C /Users/ghq/Documents/homepage add .gitignore
-git -C /Users/ghq/Documents/homepage commit -m "Add local workspace ignore rules"
-```
-
-Expected: commit succeeds before any worktree is created.
-
-- [ ] **Step 4: Create the isolated worktree on a feature branch**
-
-Use a `codex/` branch name:
-
-```bash
-git -C /Users/ghq/Documents/homepage worktree add /Users/ghq/Documents/homepage/.worktrees/codex/spectre-init -b codex/spectre-init
-```
-
-If the user chooses the global location, adapt only the destination path.
-
-Expected: a clean worktree exists on branch `codex/spectre-init`.
-
-- [ ] **Step 5: Verify the worktree starts clean**
-
-Run:
-
-```bash
-git -C <worktree-path> status --short
-```
-
-Expected: no tracked file changes.
-
-- [ ] **Step 6: Commit any workspace-only setup**
-
-If Step 3 changed `.gitignore`, that commit is already done. Otherwise skip this step.
-
-### Task 2: Import The Spectre Template And Verify The Baseline Build
+### Task 1: Update The Site-Shape Test To Cover The New Academic CV Scope
 
 **Files:**
-- Create: `/Users/ghq/Documents/homepage/package.json`
-- Create: `/Users/ghq/Documents/homepage/astro.config.ts`
-- Create: `/Users/ghq/Documents/homepage/pnpm-lock.yaml`
-- Create: `/Users/ghq/Documents/homepage/pnpm-workspace.yaml`
-- Create: `/Users/ghq/Documents/homepage/src/**`
-- Create: `/Users/ghq/Documents/homepage/public/**`
-- Create: `/Users/ghq/Documents/homepage/package/**`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/tests/site.test.mjs`
 
-- [ ] **Step 1: Clone the upstream Spectre template into a temporary directory**
+- [ ] **Step 1: Expand the homepage assertions to match the approved sections**
 
-Run:
-
-```bash
-tmpdir=$(mktemp -d /tmp/spectre-init.XXXXXX)
-git clone --depth 1 https://github.com/louisescher/spectre.git "$tmpdir"
-echo "$tmpdir"
-```
-
-Expected: a temporary checkout exists and prints its path.
-
-- [ ] **Step 2: Copy the upstream template into the isolated worktree without copying `.git`**
-
-Run:
-
-```bash
-rsync -a --exclude '.git' "$tmpdir"/ <worktree-path>/
-```
-
-Expected: Spectre project files appear in the worktree.
-
-- [ ] **Step 3: Enable Corepack and install dependencies**
-
-Run:
-
-```bash
-corepack enable
-pnpm install
-```
-
-Expected: dependencies install successfully in the worktree.
-
-- [ ] **Step 4: Run the unmodified baseline build**
-
-Run:
-
-```bash
-pnpm build
-```
-
-Expected: the upstream template builds successfully before customization.
-
-- [ ] **Step 5: Commit the imported baseline**
-
-Run:
-
-```bash
-git add .
-git commit -m "Import Spectre template baseline"
-```
-
-Expected: one commit containing the upstream starting point.
-
-## Chunk 2: TDD For Academic Homepage Behavior
-
-### Task 3: Write A Failing Site-Shape Test For The Academic Homepage
-
-**Files:**
-- Modify: `<worktree-path>/package.json`
-- Create: `<worktree-path>/tests/site.test.mjs`
-
-- [ ] **Step 1: Add a test script to `package.json`**
-
-Add:
-
-```json
-{
-  "scripts": {
-    "test": "node --test tests/site.test.mjs",
-    "verify:site": "pnpm build && pnpm test"
-  }
-}
-```
-
-- [ ] **Step 2: Write the failing test for the required public site shape**
-
-Create `<worktree-path>/tests/site.test.mjs`:
+Replace the current homepage assertions with checks for the new public contract:
 
 ```js
-import test from "node:test";
-import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
-
-async function readBuilt(relativePath) {
-  try {
-    return await readFile(resolve("dist", relativePath), "utf8");
-  } catch {
-    return null;
-  }
-}
-
-test("homepage exposes academic identity instead of Spectre demo copy", async () => {
+test("homepage renders the academic CV structure and omits excluded personal data", async () => {
   const html = await readBuilt("index.html");
 
   assert.ok(html, "expected built homepage HTML");
   assert.match(html, /Hengquan Guo/);
   assert.match(html, /ShanghaiTech University/);
-  assert.match(html, /Selected Publications/);
   assert.match(html, /Reinforcement Learning/);
   assert.match(html, /LLM Alignment/);
+  assert.match(html, /About me/);
+  assert.match(html, /Selected Publications/);
+  assert.match(html, /Awards/);
+  assert.match(html, /Experience/);
+  assert.match(html, /Academic Service(?:\s*&amp;\s*|\s*&\s*)Teaching/);
+  assert.match(html, /guohq \\(at\\) shanghaitech\\.edu\\.cn/);
+  assert.match(html, /href="https:\\/\\/scholar\\.google\\.com\\/citations\\?user=8bGinucAAAAJ/);
+  assert.match(html, /National Scholarship,? 2025/);
+  assert.doesNotMatch(html, /mailto:/);
+  assert.doesNotMatch(html, /tel:/);
+  assert.doesNotMatch(html, /Xiangtan University/);
   assert.doesNotMatch(html, /Latest Posts/);
-  assert.doesNotMatch(html, /Work Experience/);
   assert.doesNotMatch(html, /Made in Germany/);
 });
+```
 
-test("publications page exists and project placeholders are visible", async () => {
+- [ ] **Step 2: Expand the publications/nav assertions**
+
+Add checks that `/publications` is the full listing page and the nav uses the approved label:
+
+```js
+test("publications route and homepage navigation expose full publications", async () => {
   const publicationsHtml = await readBuilt("publications/index.html");
   const homepageHtml = await readBuilt("index.html");
 
   assert.ok(publicationsHtml, "expected built publications index");
-  assert.match(publicationsHtml, /Selected Publications|Publications/);
-  assert.match(publicationsHtml, /Online convex optimization with hard constraints/i);
-
-  assert.ok(homepageHtml, "expected built homepage HTML");
-  assert.match(homepageHtml, /Project Placeholder 1/);
-  assert.match(homepageHtml, /Project Placeholder 2/);
-  assert.match(homepageHtml, /Project Placeholder 3/);
+  assert.match(publicationsHtml, /Full Publications|Publications/);
+  assert.match(publicationsHtml, /Triple-Optimistic Learning/i);
+  assert.match(homepageHtml, /href="\\/publications"/);
+  assert.match(homepageHtml, />Full Publications</);
 });
 ```
 
-- [ ] **Step 3: Run the verification command and watch it fail**
+- [ ] **Step 3: Keep the placeholder-project expectation**
+
+Add these lines inside the same homepage test from Step 1 so the placeholder-project assertions actually execute against the built homepage HTML:
+
+```js
+assert.match(html, /Project Placeholder 1/);
+assert.match(html, /Project Placeholder 2/);
+assert.match(html, /Project Placeholder 3/);
+```
+
+- [ ] **Step 4: Run the verification command before implementation**
 
 Run:
 
@@ -229,122 +102,50 @@ Run:
 pnpm verify:site
 ```
 
-Expected: FAIL because the unmodified template still renders Spectre demo content and has no `/publications` page.
+Expected: FAIL, because the current homepage does not yet render the new sections or obfuscated school email.
 
-- [ ] **Step 4: Commit the failing test scaffold**
+- [ ] **Step 5: Commit the failing test update**
 
 Run:
 
 ```bash
-git add package.json tests/site.test.mjs
-git commit -m "Add failing academic homepage site-shape tests"
+git -C /Users/ghq/Documents/homepage/.worktrees/codex/spectre-init add tests/site.test.mjs
+git -C /Users/ghq/Documents/homepage/.worktrees/codex/spectre-init commit -m "Add failing CV homepage acceptance tests"
 ```
 
-Expected: commit succeeds with intentionally failing tests on top of the baseline.
+Expected: commit succeeds and the branch now contains the updated failing acceptance contract.
 
-### Task 4: Implement The Academic Homepage, Publications, And Placeholder Projects
+### Task 2: Extend The Content Collections For Academic CV Data
 
 **Files:**
-- Modify: `<worktree-path>/astro.config.ts`
-- Modify: `<worktree-path>/src/content.config.ts`
-- Modify: `<worktree-path>/src/components/Navbar.astro`
-- Modify: `<worktree-path>/src/pages/index.astro`
-- Modify: `<worktree-path>/src/pages/projects.astro`
-- Modify: `<worktree-path>/src/content/info.json`
-- Modify: `<worktree-path>/src/content/socials.json`
-- Modify: `<worktree-path>/src/content/work.json`
-- Modify: `<worktree-path>/src/content/other/about.mdx`
-- Create: `<worktree-path>/src/pages/publications.astro`
-- Create: `<worktree-path>/src/pages/publications/[publication].astro`
-- Create: `<worktree-path>/src/content/publications/online-convex-optimization-hard-constraints.mdx`
-- Create: `<worktree-path>/src/content/publications/rectified-pessimistic-optimistic-learning.mdx`
-- Create: `<worktree-path>/src/content/publications/stochastic-constrained-contextual-bandits.mdx`
-- Create: `<worktree-path>/src/content/publications/contextual-bandits-knapsacks-small-budget.mdx`
-- Create: `<worktree-path>/src/content/publications/triple-optimistic-learning-general-constraints.mdx`
-- Create: `<worktree-path>/src/content/projects/project-placeholder-1.mdx`
-- Create: `<worktree-path>/src/content/projects/project-placeholder-2.mdx`
-- Create: `<worktree-path>/src/content/projects/project-placeholder-3.mdx`
-- Delete: `<worktree-path>/src/pages/blog.astro`
-- Delete: `<worktree-path>/src/pages/blog/[post].astro`
-- Delete: `<worktree-path>/src/content/posts/getting-started.mdx`
-- Delete: `<worktree-path>/src/content/projects/spectre.mdx`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content.config.ts`
+- Create: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/awards.json`
+- Create: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/experience.json`
+- Create: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/service-teaching.json`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/socials.json`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/info.json`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/other/about.mdx`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/publications/online-convex-optimization-hard-constraints.mdx`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/publications/rectified-pessimistic-optimistic-learning.mdx`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/publications/stochastic-constrained-contextual-bandits.mdx`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/publications/contextual-bandits-knapsacks-small-budget.mdx`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/publications/triple-optimistic-learning-general-constraints.mdx`
 
-- [ ] **Step 1: Make the smallest content/configuration changes needed to satisfy the first homepage assertions**
+- [ ] **Step 1: Loosen the `socials` schema so contact items may be plain text**
 
-Implement:
+Update the `socials` collection schema to allow `link` to be optional, and update the `publications` schema so homepage curation can rely on an explicit `selected` flag:
 
 ```ts
-// astro.config.ts
-spectre({
-  name: "Hengquan Guo",
-  openGraph: {
-    home: {
-      title: "Hengquan Guo",
-      description: "Academic homepage for Hengquan Guo.",
-    },
-    blog: {
-      title: "Publications",
-      description: "Selected publications and research outputs.",
-    },
-    projects: {
-      title: "Projects",
-      description: "Research and engineering projects.",
-    },
-  },
-})
-```
+const socials = defineCollection({
+  loader: file("src/content/socials.json"),
+  schema: z.object({
+    id: z.number(),
+    icon: z.union([lucideIconSchema, simpleIconSchema]),
+    text: z.string(),
+    link: z.string().url().optional(),
+  }),
+});
 
-Replace demo quick info in `src/content/info.json` with:
-
-```json
-[
-  {
-    "id": 1,
-    "icon": { "type": "lucide", "name": "building-2" },
-    "text": "ShanghaiTech University"
-  },
-  {
-    "id": 2,
-    "icon": { "type": "lucide", "name": "brain" },
-    "text": "Reinforcement Learning"
-  },
-  {
-    "id": 3,
-    "icon": { "type": "lucide", "name": "sparkles" },
-    "text": "LLM Alignment"
-  },
-  {
-    "id": 4,
-    "icon": { "type": "lucide", "name": "badge-help" },
-    "text": "Constrained Optimization / Online Learning / Bandit"
-  }
-]
-```
-
-- [ ] **Step 2: Replace navigation and homepage section wording**
-
-Implement:
-
-```astro
-<!-- src/components/Navbar.astro -->
-<a href="/publications" class:list={{ active: path.startsWith("/publications") }}>
-  Publications
-</a>
-```
-
-Update `src/pages/index.astro` so the right-column cards become:
-
-- `About`
-- `Selected Publications`
-- `Projects`
-
-and remove the homepage `Work Experience` card entirely.
-
-- [ ] **Step 3: Introduce a dedicated `publications` collection and route**
-
-Add a `publications` collection in `src/content.config.ts` mirroring the former posts schema without tags:
-
-```ts
 const publications = defineCollection({
   loader: glob({ base: "src/content/publications", pattern: "**/*.{md,mdx}" }),
   schema: ({ image }) =>
@@ -355,44 +156,121 @@ const publications = defineCollection({
       year: z.number(),
       authors: z.string(),
       createdAt: z.coerce.date(),
+      selected: z.boolean().optional(),
       image: image().optional(),
       link: z.string().url().optional(),
     }),
 });
 ```
 
-Create `src/pages/publications.astro` and `src/pages/publications/[publication].astro` by adapting the old blog routes to publications terminology.
+- [ ] **Step 2: Add structured collections for awards, experience, and service/teaching**
 
-- [ ] **Step 4: Replace demo content with Scholar-derived publications and placeholders**
+Create file-backed collections with simple flat schemas:
 
-Create five publication entries based on the approved Scholar-derived list and placeholder-friendly metadata. Update:
-
-- `src/content/socials.json` with:
-  - real Google Scholar URL
-  - placeholder email
-  - placeholder GitHub
-  - placeholder CV
-- `src/content/other/about.mdx` with concise English placeholder biography text
-- `src/content/work.json` to `[]`
-- `src/content/projects/` with exactly three placeholder entries titled:
-  - `Project Placeholder 1`
-  - `Project Placeholder 2`
-  - `Project Placeholder 3`
-
-- [ ] **Step 5: Remove public demo pages and sample content**
-
-Delete:
-
-```text
-src/pages/blog.astro
-src/pages/blog/[post].astro
-src/content/posts/getting-started.mdx
-src/content/projects/spectre.mdx
+```ts
+const awards = defineCollection({
+  loader: file("src/content/awards.json"),
+  schema: z.object({
+    id: z.number(),
+    title: z.string(),
+    meta: z.string().optional(),
+    year: z.number().optional(),
+  }),
+});
 ```
 
-Expected: no public Spectre demo identity remains reachable from the homepage flow.
+Mirror that pattern for:
 
-- [ ] **Step 6: Run the test suite and make it pass**
+- `experience.json`:
+
+```ts
+const experience = defineCollection({
+  loader: file("src/content/experience.json"),
+  schema: z.object({
+    id: z.number(),
+    title: z.string(),
+    organization: z.string(),
+    period: z.string(),
+    description: z.string().optional(),
+  }),
+});
+```
+
+- `service-teaching.json`:
+
+```ts
+const serviceTeaching = defineCollection({
+  loader: file("src/content/service-teaching.json"),
+  schema: z.object({
+    id: z.number(),
+    title: z.string(),
+    meta: z.string(),
+    kind: z.enum(["service", "teaching", "talk"]),
+  }),
+});
+```
+
+Then export the collections from `src/content.config.ts`.
+
+- [ ] **Step 3: Seed the approved CV content**
+
+Populate:
+
+- `src/content/awards.json` with the six approved awards, including `National Scholarship, 2025` and grouped `ShanghaiTech University Scholarship, 2021 - 2025`
+- `src/content/experience.json` with the ShanghaiTech PhD role and Tencent CDG internship
+- `src/content/service-teaching.json` with reviewer/service venues and `Teaching Assistant, Online Optimization and Learning (CS245), 2022 - 2025`
+
+Example seed rows to lock field names:
+
+```json
+[
+  { "id": 1, "title": "National Scholarship", "meta": "China", "year": 2025 }
+]
+```
+
+```json
+[
+  {
+    "id": 1,
+    "title": "PhD Researcher",
+    "organization": "ShanghaiTech University",
+    "period": "2021.09 - Present"
+  }
+]
+```
+
+```json
+[
+  {
+    "id": 1,
+    "title": "Teaching Assistant, Online Optimization and Learning (CS245)",
+    "meta": "2022 - 2025",
+    "kind": "teaching"
+  }
+]
+```
+
+Also update:
+
+- `src/content/socials.json` so only Google Scholar remains a live link, while the email is plain text `guohq (at) shanghaitech.edu.cn` and GitHub/CV use clear placeholders
+- `src/content/info.json` so the quick facts emphasize `Reinforcement Learning`, `LLM Alignment`, and the approved academic profile
+- `src/content/other/about.mdx` with a concise English academic summary that does not mention undergraduate education
+
+- [ ] **Step 4: Mark the curated homepage publications**
+
+Add `selected: true` to the 4-5 homepage papers and keep the publication metadata consistent enough for both homepage and `/publications` sorting.
+
+- [ ] **Step 5: Run the targeted build to verify the collection schema is valid**
+
+Run:
+
+```bash
+pnpm build
+```
+
+Expected: build succeeds and collection parsing passes without schema errors; the acceptance tests are still expected to fail until the new UI wiring lands.
+
+- [ ] **Step 5a: Re-run the acceptance suite after seeding content**
 
 Run:
 
@@ -400,76 +278,260 @@ Run:
 pnpm verify:site
 ```
 
-Expected: PASS, with the academic homepage assertions now satisfied.
+Expected: the suite still fails because the homepage and publications UI are not rewired yet, but failures are limited to page-shape expectations rather than schema or content-loading errors.
 
-- [ ] **Step 7: Refactor lightly if needed while keeping tests green**
-
-Allowed cleanup:
-
-- simplify duplicated publication-card rendering
-- improve labels or placeholder wording
-- adjust route titles
-
-Do not add extra features such as auto-sync, CV generation, or deployment config.
-
-- [ ] **Step 8: Commit the academic initialization**
+- [ ] **Step 6: Commit the data-model update**
 
 Run:
 
 ```bash
-git add astro.config.ts package.json src tests
-git commit -m "Initialize academic homepage from Spectre"
+git -C /Users/ghq/Documents/homepage/.worktrees/codex/spectre-init add src/content.config.ts src/content
+git -C /Users/ghq/Documents/homepage/.worktrees/codex/spectre-init commit -m "Add academic CV content collections"
 ```
 
-Expected: commit succeeds with passing tests.
+Expected: content model and seed data are committed independently from the page layout changes.
 
-## Chunk 3: Verification And Handoff
+## Chunk 2: Shared UI Components And Page Layout
 
-### Task 5: Verify The Build Output And Working Tree State
+### Task 3: Build A Shared Publication Teaser With Compact Cover Styling
 
 **Files:**
-- Verify only: `<worktree-path>/dist/**`
+- Create: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/components/PublicationTeaser.astro`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/styles/index.css`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/styles/article-list.css`
 
-- [ ] **Step 1: Run the final verification commands fresh**
+- [ ] **Step 1: Create a reusable publication teaser component**
+
+Create `src/components/PublicationTeaser.astro` that accepts one publication entry and a compact/full variant:
+
+```astro
+---
+const { publication, href, variant = "compact" } = Astro.props;
+---
+
+<a href={href} class:list={["publication-teaser", variant]}>
+  <div class="publication-cover" aria-hidden="true">
+    <span class="publication-badge">{publication.data.venue}</span>
+    <strong>{publication.data.year}</strong>
+  </div>
+  <div class="publication-copy">
+    <div class="post-header">
+      <h3>{publication.data.title}</h3>
+      <span class="post-date">{publication.data.year}</span>
+    </div>
+    <span>{publication.data.venue} / {publication.data.authors}</span>
+  </div>
+</a>
+```
+
+- [ ] **Step 1a: Keep teaser links explicit and safe**
+
+Derive the `href` in each page context instead of hard-coding it inside the component. Use the internal detail route only where it already exists (`/publications/${publication.id}`), and prefer `publication.data.link` as the fallback when a detail page is not available. When the teaser renders an external link in a new tab, require the site's safe-link attributes such as `rel="noopener noreferrer"`.
+
+- [ ] **Step 2: Add a consistent fallback cover treatment**
+
+Style the teaser so the cover is a small fixed-ratio badge panel rather than a missing image hole. Keep it decorative with `aria-hidden="true"` and a stable ratio such as `3 / 4`.
+
+- [ ] **Step 3: Reuse the same component in both list contexts**
+
+Keep compact spacing for the homepage and a roomier variant for `/publications`, but do not fork the markup into two separate ad-hoc implementations.
+
+- [ ] **Step 4: Run the test command to keep the TDD loop active**
 
 Run:
 
 ```bash
-pnpm build
 pnpm test
-git status --short
 ```
 
-Expected:
+Expected: still FAIL until the pages are updated, but no component import or CSS build errors appear.
 
-- `pnpm build` exits 0
-- `pnpm test` exits 0
-- `git status --short` shows only expected tracked changes, or a clean tree if the final commit already happened
+### Task 4: Rebuild The Homepage Hero And Academic Sections
 
-- [ ] **Step 2: Manually inspect the built HTML for the highest-risk user-facing strings**
+**Files:**
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/pages/index.astro`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/styles/index.css`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/projects/project-placeholder-1.mdx`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/projects/project-placeholder-2.mdx`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/content/projects/project-placeholder-3.mdx`
+
+- [ ] **Step 1: Load the new content collections on the homepage**
+
+Update `src/pages/index.astro` to fetch:
+
+- `awards`
+- `experience`
+- `serviceTeaching`
+- `socials`
+- `quickInfo`
+- `about`
+- selected publications only
+- projects
+
+and to sort publications reverse-chronologically before slicing or filtering.
+
+- [ ] **Step 2: Move `About me` into the hero’s right side**
+
+Keep the left column for avatar, name, affiliation, interests, and links. Replace the old stacked-card layout on the right with a hero-adjacent `About me` card so the upper fold is balanced.
+
+The left-column links must explicitly render:
+
+- Google Scholar with the confirmed live URL
+- `guohq (at) shanghaitech.edu.cn` as plain text, not `mailto:`
+- GitHub and CV as obvious placeholders
+
+- [ ] **Step 3: Add the three new academic sections in homepage order**
+
+Render `Awards`, `Experience`, and `Academic Service & Teaching` as compact cards beneath `Selected Publications`, followed by the existing placeholder projects.
+
+Explicitly omit:
+
+- phone number
+- undergraduate institution
+
+- [ ] **Step 4: Normalize placeholder project copy**
+
+Update the three placeholder project MDX files so they use consistent `Project Placeholder 1/2/3` naming and `Coming soon`-style descriptions.
+
+- [ ] **Step 5: Add responsive styling**
+
+Ensure:
+
+- hero collapses to one column on small screens
+- publication teaser covers stay aligned
+- the new CV sections do not overflow or create large empty gutters
+
+- [ ] **Step 6: Run the full verification command**
 
 Run:
 
 ```bash
-rg -n "Hengquan Guo|Selected Publications|Project Placeholder|Latest Posts|Work Experience" dist
+pnpm verify:site
 ```
 
-Expected:
+Expected: homepage-related assertions now pass; remaining failures, if any, should be isolated to `/publications` or nav wording.
 
-- required academic strings are present
-- `Latest Posts` and `Work Experience` are absent from built homepage output
-
-- [ ] **Step 3: Commit any final cleanup if needed**
+- [ ] **Step 7: Commit the homepage redesign**
 
 Run:
 
 ```bash
-git add -A
-git commit -m "Polish academic homepage initialization"
+git -C /Users/ghq/Documents/homepage/.worktrees/codex/spectre-init add src/pages/index.astro src/styles/index.css src/content/projects src/components/PublicationTeaser.astro src/styles/article-list.css
+git -C /Users/ghq/Documents/homepage/.worktrees/codex/spectre-init commit -m "Redesign homepage as academic CV landing page"
 ```
 
-Only do this if Step 2 required a real follow-up change.
+Expected: the homepage CV transformation is isolated in its own commit.
 
-- [ ] **Step 4: Hand off for branch completion**
+### Task 5: Align The Publications Route And Navbar With The Approved IA
 
-Use `superpowers:finishing-a-development-branch` after the implementation and verification steps are complete.
+**Files:**
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/pages/publications.astro`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/components/Navbar.astro`
+- Modify: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init/src/styles/article-list.css`
+
+- [ ] **Step 1: Rename the nav item to `Full Publications`**
+
+Update `src/components/Navbar.astro` so the `/publications` link label is `Full Publications`, keeps correct active-state behavior, and preserves the search + projects items unless they now conflict with the approved layout.
+
+- [ ] **Step 2: Make `/publications` the canonical full listing page**
+
+Update `src/pages/publications.astro` to:
+
+- use the shared `PublicationTeaser` component
+- pass an explicit `href` for each teaser
+- sort publications reverse-chronologically
+- present the page as a fuller publication index rather than another “selected” list
+
+- [ ] **Step 3: Keep the page left rail useful but minimal**
+
+Retain lightweight stats or summary content only if it still helps scanability; otherwise simplify rather than carrying forward irrelevant template chrome.
+
+- [ ] **Step 4: Run the full verification command again**
+
+Run:
+
+```bash
+pnpm verify:site
+```
+
+Expected: all tests pass and the built site includes the updated nav + publications route behavior.
+
+- [ ] **Step 5: Commit the navigation/publications alignment**
+
+Run:
+
+```bash
+git -C /Users/ghq/Documents/homepage/.worktrees/codex/spectre-init add src/components/Navbar.astro src/pages/publications.astro src/styles/article-list.css
+git -C /Users/ghq/Documents/homepage/.worktrees/codex/spectre-init commit -m "Align publications route with academic navigation"
+```
+
+Expected: nav wording and full-publications page behavior are committed separately from the homepage redesign.
+
+## Chunk 3: Final Verification And Branch Finish
+
+### Task 6: Verify The Final Site And Prepare The Branch For Handoff
+
+**Files:**
+- Context only: `/Users/ghq/Documents/homepage/.worktrees/codex/spectre-init`
+
+- [ ] **Step 1: Run a runtime sanity check**
+
+Run:
+
+```bash
+pnpm install
+timeout 20s pnpm dev --host 127.0.0.1
+```
+
+Expected: dependencies resolve successfully and the Astro dev server starts without configuration/runtime errors before `timeout` stops it.
+
+- [ ] **Step 2: Run the final verification suite**
+
+Run:
+
+```bash
+pnpm verify:site
+```
+
+Expected: PASS with all acceptance tests green, including the checks for `/publications`, `Full Publications`, obfuscated email text without `mailto:`, no `tel:`, Google Scholar href, the homepage CV sections, visible project placeholders, and the excluded undergraduate institution.
+
+- [ ] **Step 3: Run a small-screen and semantics smoke check**
+
+Use Playwright or an equivalent browser tool against the local dev server to confirm:
+
+- the hero places `About me` in the right-side column on desktop
+- the hero collapses cleanly into one column on a small viewport such as `375px` wide
+- `/publications` shows the active nav state for `Full Publications`
+- `Selected Publications` still shows the compact cover-style visual treatment
+- decorative publication covers remain `aria-hidden="true"`, and if any real cover images are introduced they use meaningful `alt` text
+- external links keep safe-link attributes where applicable
+- placeholder text such as `Coming soon` remains visible where expected
+
+Expected: desktop and mobile browser inspection confirms the spec-critical layout, responsive, nav-state, accessibility, and placeholder details that static HTML assertions do not fully cover.
+
+- [ ] **Step 4: Inspect the working tree**
+
+Run:
+
+```bash
+git -C /Users/ghq/Documents/homepage/.worktrees/codex/spectre-init status --short
+```
+
+Expected: only intentional tracked changes remain; generated preview artifacts such as `dist/`, `.astro/`, `output/`, and `tmp/` stay uncommitted.
+
+- [ ] **Step 5: Review the diff before handoff**
+
+Run:
+
+```bash
+git -C /Users/ghq/Documents/homepage/.worktrees/codex/spectre-init log --oneline --decorate --graph --max-count=20
+git -C /Users/ghq/Documents/homepage/.worktrees/codex/spectre-init diff --stat "$(git -C /Users/ghq/Documents/homepage/.worktrees/codex/spectre-init merge-base HEAD main)"..HEAD
+```
+
+Expected: the branch history reflects the TDD/content/layout/nav progression and the diff is scoped to the full approved academic homepage work, not just the last few commits.
+
+- [ ] **Step 6: Use `superpowers:finishing-a-development-branch`**
+
+After verification passes, present the user with the standard merge / PR / keep / discard options instead of assuming the integration path.
+
+Expected: the branch-finish step ends with a recorded user decision about integration, such as merge locally, open a PR, keep the branch for later, or discard it.
