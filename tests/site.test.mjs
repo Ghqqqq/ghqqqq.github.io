@@ -4,8 +4,18 @@ import { resolve } from "node:path";
 import test from "node:test";
 
 async function readBuilt(relativePath) {
+	for (const basePath of [resolve("dist", relativePath), resolve("dist", "client", relativePath)]) {
+		try {
+			return await readFile(basePath, "utf8");
+		} catch {}
+	}
+
+	return null;
+}
+
+async function readRepo(relativePath) {
 	try {
-		return await readFile(resolve("dist", "client", relativePath), "utf8");
+		return await readFile(resolve(relativePath), "utf8");
 	} catch {
 		return null;
 	}
@@ -201,4 +211,19 @@ test("homepage shell exposes the refreshed avatar and theme toggle", async () =>
 	assert.doesNotMatch(html, /brand-bird-icon|brand-bird-mark/);
 	assert.doesNotMatch(html, /darkThemeColor|lightThemeColor/);
 	assert.doesNotMatch(html, /award-entry/);
+});
+
+test("repository is configured for GitHub Pages deployment", async () => {
+	const astroConfig = await readRepo("astro.config.ts");
+	const deployWorkflow = await readRepo(".github/workflows/deploy.yml");
+
+	assert.ok(astroConfig, "expected astro.config.ts");
+	assert.match(astroConfig, /site:\s*['"]https:\/\/ghqqqq\.github\.io['"]/i);
+	assert.doesNotMatch(astroConfig, /@astrojs\/node/);
+	assert.doesNotMatch(astroConfig, /adapter:\s*node/);
+
+	assert.ok(deployWorkflow, "expected GitHub Pages workflow");
+	assert.match(deployWorkflow, /withastro\/action@v5/);
+	assert.match(deployWorkflow, /actions\/deploy-pages@v4/);
+	assert.match(deployWorkflow, /gh-pages|github-pages/i);
 });

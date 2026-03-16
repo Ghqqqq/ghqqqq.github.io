@@ -1,5 +1,4 @@
 import mdx from '@astrojs/mdx';
-import node from '@astrojs/node';
 import sitemap from '@astrojs/sitemap';
 import { defineConfig } from 'astro/config';
 import expressiveCode from 'astro-expressive-code';
@@ -8,7 +7,7 @@ import { spectreDark } from './src/ec-theme';
 
 // https://astro.build/config
 const config = defineConfig({
-	site: 'https://example.com',
+	site: 'https://ghqqqq.github.io',
 	output: 'static',
 	devToolbar: {
 		enabled: false,
@@ -38,9 +37,6 @@ const config = defineConfig({
 			giscus: false,
 		}),
 	],
-	adapter: node({
-		mode: 'standalone',
-	}),
 });
 
 export default config;
