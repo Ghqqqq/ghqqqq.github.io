@@ -55,9 +55,7 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /National Scholarship for Doctoral Students/);
 	assert.match(html, /Tencent Rhino-Bird Elite Talent Program/);
 	assert.match(html, /RLChina 2022/);
-	assert.match(html, /Project Placeholder 1/);
-	assert.match(html, /Project Placeholder 2/);
-	assert.match(html, /Project Placeholder 3/);
+	assert.match(html, /href="\/projects\/block"/);
 	assert.match(html, /Research Intern/);
 	assert.match(html, /2025\.06 - 2026\.02/);
 	assert.match(
@@ -79,11 +77,14 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.doesNotMatch(html, /Latest Posts/);
 	assert.doesNotMatch(html, /Work Experience/);
 	assert.doesNotMatch(html, /Made in Germany/);
+	assert.doesNotMatch(html, /Project Placeholder/);
 });
 
 test("publications route and homepage navigation expose full publications", async () => {
 	const publicationsHtml = await readBuilt("publications/index.html");
 	const homepageHtml = await readBuilt("index.html");
+	const projectsHtml = await readBuilt("projects/index.html");
+	const blockProjectHtml = await readBuilt("projects/block/index.html");
 
 	assert.ok(publicationsHtml, "expected built publications index");
 	assert.match(publicationsHtml, /Full Publications|Publications/);
@@ -106,6 +107,14 @@ test("publications route and homepage navigation expose full publications", asyn
 	assert.ok(homepageHtml, "expected built homepage HTML");
 	assert.match(homepageHtml, /href="\/publications"/);
 	assert.match(homepageHtml, />Full Publications</);
+	assert.ok(projectsHtml, "expected built projects index");
+	assert.match(projectsHtml, /BLOCK/);
+	assert.doesNotMatch(projectsHtml, /Project Placeholder/);
+	assert.ok(blockProjectHtml, "expected built BLOCK project page");
+	assert.match(
+		blockProjectHtml,
+		/I[’']m iterating and working on generating Minecraft skins end-to-end\. If you are also interested, feel free to contact me\./,
+	);
 });
 
 test("homepage groups selected publications by research area with real venue badges", async () => {

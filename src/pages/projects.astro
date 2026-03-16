@@ -5,9 +5,13 @@ import { getCollection } from "astro:content";
 import { openGraph } from "spectre:globals";
 import Card from "../components/Card.astro";
 import Icon from "../components/Icon.astro";
+import ImageGlow from "../components/ImageGlow.astro";
 import Layout from "../layouts/Layout.astro";
 
 const projects = await getCollection("projects");
+const sortedProjects = [...projects].sort(
+	(a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
 ---
 <Layout
 	title={openGraph.projects.title || "Projects"}
@@ -31,14 +35,29 @@ const projects = await getCollection("projects");
 				<Icon type='lucide' name="folder-git" width={24} height={24} class='glow-icon' />
 				<h2>Projects</h2>
 			</div>
-			<div class="content-container">
-				{projects.sort((a, b) => b.data.date.getTime() - a.data.date.getTime()).map((post) => (
-					<a href={`/projects/${post.id}`} class="post-container">
-						<div class="post-header">
-							<h3>{post.data.title}</h3>
-							<span class="post-date">{post.data.date.toLocaleDateString()}</span>
+			<div class="projects-spotlight-list">
+				{sortedProjects.map((post) => (
+					<a href={`/projects/${post.id}`} class="post-container project-spotlight-card">
+						{post.data.image && (
+							<ImageGlow
+								src={post.data.image}
+								alt="Figure 2: Overview of BLOCK"
+								class="project-spotlight-image"
+								width={1185}
+								height={500}
+								quality={100}
+							/>
+						)}
+						<div class="project-spotlight-copy">
+							<div class="post-header">
+								<h3>{post.data.title}</h3>
+								<span class="post-date">{post.data.date.toLocaleDateString()}</span>
+							</div>
+							<span>{post.data.description}</span>
+							<p class="project-spotlight-note">
+								I'm iterating and working on generating Minecraft skins end-to-end. If you are also interested, feel free to contact me.
+							</p>
 						</div>
-						<span>{post.data.description}</span>
 					</a>
 				))}
 			</div>
@@ -61,6 +80,34 @@ const projects = await getCollection("projects");
 		font-size: 2em;
 		margin: 0;
 		margin-bottom: .5rem;
+	}
+
+	.projects-spotlight-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.project-spotlight-card {
+		gap: 1.1rem;
+	}
+
+	.project-spotlight-image {
+		width: 100%;
+		height: auto;
+		display: block;
+	}
+
+	.project-spotlight-copy {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.project-spotlight-note {
+		margin: 0;
+		line-height: 1.6;
+		color: var(--text-secondary);
 	}
 
 </style>

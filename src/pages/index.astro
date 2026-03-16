@@ -73,6 +73,10 @@ const publicationSections = [
 		(publication) => publication.data.homepageCategory === section.id,
 	),
 }));
+
+const featuredProject = [...projects].sort(
+	(a, b) => b.data.date.getTime() - a.data.date.getTime(),
+)[0];
 ---
 
 <Layout
@@ -312,24 +316,24 @@ const publicationSections = [
 				/>
 				<h2>Projects</h2>
 			</div>
-			<div class="content-container">
-				{
-					projects
-						.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
-						.slice(0, 3)
-						.map((project) => (
-							<a href={`/projects/${project.id}`} class="post-container">
-								<div class="post-header">
-									<h3>{project.data.title}</h3>
-									<span class="post-date">
-										{project.data.date.toLocaleDateString()}
-									</span>
-								</div>
-								<span>{project.data.description}</span>
-							</a>
-						))
-				}
-			</div>
+			{
+				featuredProject && (
+					<a
+						href={`/projects/${featuredProject.id}`}
+						class="project-figure-link"
+						aria-label={`Open ${featuredProject.data.title} project page`}
+					>
+						<ImageGlow
+							src={featuredProject.data.image!}
+							alt="Figure 2: Overview of BLOCK"
+							class="project-figure-image"
+							width={1185}
+							height={500}
+							quality={100}
+						/>
+					</a>
+				)
+			}
 		</Card>
 	</div>
 </Layout>
