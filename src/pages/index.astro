@@ -118,16 +118,18 @@ const publicationSections = [
 			<div class="header-container">
 				<Icon
 					type="lucide"
-					name="brain"
+					name="compass"
 					width={24}
 					height={24}
-					class="glow-icon"
+					class="glow-icon research-interest-heading-icon"
 				/>
 				<h2>Research Interests</h2>
 			</div>
 			<ul class="overview-list research-interest-list">
 				{
-					quickInfo.map((info) => (
+					quickInfo
+						.sort((a, b) => a.data.id - b.data.id)
+						.map((info) => (
 						<li>
 							<Icon
 								type={info.data.icon.type}

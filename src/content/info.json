@@ -3,20 +3,36 @@
 		"id": 1,
 		"icon": {
 			"type": "lucide",
-			"name": "brain"
+			"name": "bot"
 		},
-		"text": "Reinforcement Learning"
+		"text": "Agentic RL"
 	},
 	{
 		"id": 2,
 		"icon": {
 			"type": "lucide",
+			"name": "image"
+		},
+		"text": "MLLMs"
+	},
+	{
+		"id": 3,
+		"icon": {
+			"type": "lucide",
 			"name": "brain"
+		},
+		"text": "Reinforcement Learning"
+	},
+	{
+		"id": 4,
+		"icon": {
+			"type": "lucide",
+			"name": "cpu"
 		},
 		"text": "LLM Alignment"
 	},
 	{
-		"id": 3,
+		"id": 5,
 		"icon": {
 			"type": "lucide",
 			"name": "chart-no-axes-combined"
@@ -24,7 +40,7 @@
 		"text": "Constrained Optimization"
 	},
 	{
-		"id": 4,
+		"id": 6,
 		"icon": {
 			"type": "lucide",
 			"name": "waypoints"

@@ -19,6 +19,11 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /data-theme="dark"/);
 	assert.match(html, /id="theme-toggle"/);
 	assert.match(html, /ShanghaiTech University/);
+	assert.match(html, /research-interest-heading-icon/);
+	assert.match(
+		html,
+		/Research Interests[\s\S]*Agentic RL[\s\S]*MLLMs[\s\S]*Reinforcement Learning[\s\S]*LLM Alignment/,
+	);
 	assert.match(html, /Reinforcement Learning/);
 	assert.match(html, /LLM Alignment/);
 	assert.match(html, /Research Interests/);
