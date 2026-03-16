@@ -15,5 +15,13 @@
 			"name": "mail"
 		},
 		"text": "guohq (at) shanghaitech.edu.cn"
+	},
+	{
+		"id": 3,
+		"icon": {
+			"type": "lucide",
+			"name": "mail"
+		},
+		"text": "guohq46 (at) qq.com"
 	}
 ]

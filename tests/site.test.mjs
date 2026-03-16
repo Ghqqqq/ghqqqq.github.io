@@ -27,6 +27,7 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 		/About me[\s\S]*Experience[\s\S]*Awards[\s\S]*Academic Service(?:\s*&amp;\s*|\s*&\s*)Teaching[\s\S]*Selected Publications[\s\S]*Projects/,
 	);
 	assert.match(html, /guohq \(at\) shanghaitech\.edu\.cn/);
+	assert.match(html, /guohq46 \(at\) qq\.com/);
 	assert.match(
 		html,
 		/href="https:\/\/scholar\.google\.com\/citations\?user=8bGinucAAAAJ/,
