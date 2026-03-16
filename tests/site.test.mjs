@@ -63,7 +63,7 @@ test("publications route and homepage navigation expose full publications", asyn
 	assert.ok(publicationsHtml, "expected built publications index");
 	assert.match(publicationsHtml, /Full Publications|Publications/);
 	assert.match(publicationsHtml, /full-publications-list/);
-	assert.doesNotMatch(publicationsHtml, /publication-cover/);
+	assert.doesNotMatch(publicationsHtml, /class="publication-cover"/);
 	assert.match(
 		publicationsHtml,
 		/Triple-Optimistic Learning|Online convex optimization with hard constraints/i,

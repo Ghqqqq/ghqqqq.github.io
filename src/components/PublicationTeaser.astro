@@ -4,7 +4,7 @@ import type { CollectionEntry } from "astro:content";
 interface Props {
 	publication: CollectionEntry<"publications">;
 	href: string;
-	variant?: "compact" | "full";
+	variant?: "compact" | "full" | "list";
 }
 
 const { publication, href, variant = "compact" } = Astro.props;
@@ -36,10 +36,14 @@ const statusLabel =
 	target={isExternal ? "_blank" : undefined}
 	rel={isExternal ? "noopener noreferrer" : undefined}
 >
-	<div class="publication-cover" aria-hidden="true">
-		<span class="publication-badge">{venueLabel}</span>
-		<strong>{publication.data.year}</strong>
-	</div>
+	{
+		variant !== "list" && (
+			<div class="publication-cover" aria-hidden="true">
+				<span class="publication-badge">{venueLabel}</span>
+				<strong>{publication.data.year}</strong>
+			</div>
+		)
+	}
 	<div class="publication-copy">
 		<div class="post-header">
 			<h3>{publication.data.title}</h3>
@@ -166,6 +170,44 @@ const statusLabel =
 		grid-template-columns: 6rem minmax(0, 1fr);
 	}
 
+	.publication-teaser.list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		padding: 0.9rem 1rem;
+		box-shadow: none;
+	}
+
+	.publication-teaser.list .publication-copy {
+		gap: 0.35rem;
+	}
+
+	.publication-teaser.list .publication-copy h3 {
+		font-size: 1rem;
+	}
+
+	.publication-teaser.list .publication-authors {
+		font-size: 0.9rem;
+	}
+
+	.publication-teaser.list .publication-meta-row {
+		justify-content: flex-start;
+		gap: 0.45rem 0.85rem;
+	}
+
+	.publication-teaser.list .publication-meta,
+	.publication-teaser.list .publication-status {
+		font-size: 0.84rem;
+	}
+
+	.publication-teaser.list .publication-status {
+		margin-left: auto;
+		padding: 0;
+		border: none;
+		background: transparent;
+		color: var(--text-secondary);
+	}
+
 	@media screen and (max-width: 640px) {
 		.publication-teaser,
 		.publication-teaser.compact,
@@ -177,6 +219,14 @@ const statusLabel =
 
 		.publication-cover strong {
 			font-size: 1.15rem;
+		}
+
+		.publication-teaser.list {
+			padding: 0.8rem 0.9rem;
+		}
+
+		.publication-teaser.list .publication-status {
+			margin-left: 0;
 		}
 	}
 </style>
