@@ -27,6 +27,21 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /Reinforcement Learning/);
 	assert.match(html, /LLM Alignment/);
 	assert.match(html, /Research Interests/);
+	assert.match(html, /href="https:\/\/www\.shanghaitech\.edu\.cn\/"/);
+	assert.match(html, /href="https:\/\/liuxincell\.github\.io\/"/);
+	assert.match(html, /href="https:\/\/junwei-pan\.github\.io\/"/);
+	assert.match(
+		html,
+		/research lies at the intersection of reinforcement learning and bandits/i,
+	);
+	assert.match(
+		html,
+		/Tencent Rhino-Bird Elite Talent Program[\s\S]*reinforcement learning and recommender systems/i,
+	);
+	assert.match(
+		html,
+		/agentic LLMs[\s\S]*multimodal large models[\s\S]*embodied intelligence/i,
+	);
 	assert.match(
 		html,
 		/About me[\s\S]*Experience[\s\S]*Awards[\s\S]*Academic Service(?:\s*&amp;\s*|\s*&\s*)Teaching[\s\S]*Selected Publications[\s\S]*Projects/,
