@@ -27,7 +27,7 @@
 		"id": 4,
 		"icon": {
 			"type": "lucide",
-			"name": "brain"
+			"name": "chart-no-axes-combined"
 		},
 		"text": "Constrained Optimization"
 	},
@@ -35,7 +35,7 @@
 		"id": 5,
 		"icon": {
 			"type": "lucide",
-			"name": "brain"
+			"name": "waypoints"
 		},
 		"text": "Online Learning / Bandit"
 	}

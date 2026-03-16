@@ -1,0 +1,16 @@
+[
+	{
+		"id": 1,
+		"title": "PhD Researcher",
+		"organization": "ShanghaiTech University",
+		"period": "2021.09 - Present",
+		"description": "Researching reinforcement learning, constrained optimization, online learning, and LLM alignment."
+	},
+	{
+		"id": 2,
+		"title": "Research Intern",
+		"organization": "Tencent CDG",
+		"period": "2025.06 - 2026.06",
+		"description": "Working on research directions adjacent to large-scale learning and decision making."
+	}
+]

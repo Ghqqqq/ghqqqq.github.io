@@ -1,0 +1,35 @@
+[
+	{
+		"id": 1,
+		"title": "NeurIPS Top Reviewer",
+		"meta": "Top 5%",
+		"year": 2025
+	},
+	{
+		"id": 2,
+		"title": "National Scholarship",
+		"meta": "China",
+		"year": 2025
+	},
+	{
+		"id": 3,
+		"title": "ShanghaiTech University Scholarship",
+		"meta": "2021 - 2025"
+	},
+	{
+		"id": 4,
+		"title": "Annual Conference on Learning Theory Travel Grant",
+		"year": 2024
+	},
+	{
+		"id": 5,
+		"title": "ACM SIGMETRICS/IFIP Performance Travel Grant",
+		"year": 2023
+	},
+	{
+		"id": 6,
+		"title": "Outstanding Teaching Assistant",
+		"meta": "ShanghaiTech University",
+		"year": 2023
+	}
+]

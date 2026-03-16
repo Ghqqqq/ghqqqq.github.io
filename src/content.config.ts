@@ -32,7 +32,38 @@ const socials = defineCollection({
 		id: z.number(),
 		icon: z.union([lucideIconSchema, simpleIconSchema]),
 		text: z.string(),
-		link: z.string().url(),
+		link: z.string().url().optional(),
+	}),
+});
+
+const awards = defineCollection({
+	loader: file("src/content/awards.json"),
+	schema: z.object({
+		id: z.number(),
+		title: z.string(),
+		meta: z.string().optional(),
+		year: z.number().optional(),
+	}),
+});
+
+const experience = defineCollection({
+	loader: file("src/content/experience.json"),
+	schema: z.object({
+		id: z.number(),
+		title: z.string(),
+		organization: z.string(),
+		period: z.string(),
+		description: z.string().optional(),
+	}),
+});
+
+const serviceTeaching = defineCollection({
+	loader: file("src/content/service-teaching.json"),
+	schema: z.object({
+		id: z.number(),
+		title: z.string(),
+		meta: z.string(),
+		kind: z.enum(["service", "teaching", "talk"]),
 	}),
 });
 
@@ -46,6 +77,7 @@ const publications = defineCollection({
 			year: z.number(),
 			authors: z.string(),
 			createdAt: z.coerce.date(),
+			selected: z.boolean().optional(),
 			image: image().optional(),
 			link: z.string().url().optional(),
 		}),
@@ -71,6 +103,9 @@ const projects = defineCollection({
 });
 
 export const collections = {
+	awards,
+	experience,
+	serviceTeaching,
 	publications,
 	projects,
 	other,

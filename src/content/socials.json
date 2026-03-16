@@ -14,8 +14,7 @@
 			"type": "lucide",
 			"name": "mail"
 		},
-		"text": "Email (placeholder)",
-		"link": "https://example.com/email-placeholder"
+		"text": "guohq (at) shanghaitech.edu.cn"
 	},
 	{
 		"id": 3,
@@ -23,8 +22,7 @@
 			"type": "lucide",
 			"name": "github"
 		},
-		"text": "GitHub (placeholder)",
-		"link": "https://github.com/placeholder"
+		"text": "GitHub (Coming soon)"
 	},
 	{
 		"id": 4,
@@ -32,7 +30,6 @@
 			"type": "lucide",
 			"name": "file-text"
 		},
-		"text": "CV (placeholder)",
-		"link": "https://example.com/cv-placeholder"
+		"text": "CV (Coming soon)"
 	}
 ]
