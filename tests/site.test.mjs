@@ -38,6 +38,7 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /Project Placeholder 2/);
 	assert.match(html, /Project Placeholder 3/);
 	assert.match(html, /Research Intern/);
+	assert.match(html, /2025\.06 - 2026\.02/);
 	assert.match(html, /Hengquan Guo[\s\S]*ShanghaiTech University[\s\S]*Google Scholar/);
 	assert.doesNotMatch(html, /GitHub \(Coming soon\)/);
 	assert.doesNotMatch(html, /CV \(Coming soon\)/);
@@ -94,6 +95,18 @@ test("homepage groups selected publications by research area with real venue bad
 	);
 	assert.match(
 		html,
+		/BLOCK: An Open-Source Bi-Stage MLLM Character-to-Skin Pipeline/,
+	);
+	assert.match(
+		html,
+		/Towards Temporal Interest Modeling in Recommendation via Reinforcement Learning/,
+	);
+	assert.match(
+		html,
+		/GRB: A Generative Reinforcement Bidding Framework for Multi-Channel Online Advertising/,
+	);
+	assert.match(
+		html,
 		/Triple-Optimistic Learning for Stochastic Contextual Bandits with General Constraints/,
 	);
 	assert.match(html, /publication-badge[^>]*>\s*NeurIPS\s*</);
@@ -110,5 +123,6 @@ test("homepage shell exposes the refreshed avatar and theme toggle", async () =>
 	assert.match(html, /theme-toggle/);
 	assert.match(html, /data-avatar-parallax/);
 	assert.match(html, /awards-text-list/);
+	assert.match(html, /awards-text-main/);
 	assert.doesNotMatch(html, /award-entry/);
 });
