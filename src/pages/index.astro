@@ -246,13 +246,11 @@ const publicationSections = [
 						.sort((a, b) => a.data.id - b.data.id)
 						.map((item) => (
 							<li class="service-text-item">
-								<div class="service-text-row">
-									<span class="service-text-main">
-										<strong>{item.data.title}</strong>
-										<span class="service-text-meta">{item.data.meta}</span>
-									</span>
+								<div class="service-text-heading">
+									<strong>{item.data.title}</strong>
 									<span class="service-text-kind">{formatKindLabel(item.data.kind)}</span>
 								</div>
+								<div class="service-text-meta">{item.data.meta}</div>
 							</li>
 						))
 				}

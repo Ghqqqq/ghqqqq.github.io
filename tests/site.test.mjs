@@ -136,5 +136,6 @@ test("homepage shell exposes the refreshed avatar and theme toggle", async () =>
 	assert.match(html, /service-text-list/);
 	assert.match(html, /service-text-heading/);
 	assert.match(html, /service-text-kind/);
+	assert.doesNotMatch(html, /darkThemeColor|lightThemeColor/);
 	assert.doesNotMatch(html, /award-entry/);
 });

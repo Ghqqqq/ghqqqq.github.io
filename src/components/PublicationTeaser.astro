@@ -28,6 +28,7 @@ const statusLabel =
 				: publication.data.status === "conference"
 					? "Published"
 					: undefined;
+const hasEqualContribution = publication.data.authors.includes("*");
 ---
 
 <a
@@ -50,6 +51,9 @@ const statusLabel =
 			<span class="post-date">{publication.data.year}</span>
 		</div>
 		<p class="publication-authors">{publication.data.authors}</p>
+		{hasEqualContribution && (
+			<p class="publication-author-note">* equal contribution</p>
+		)}
 		<div class="publication-meta-row">
 			<p class="publication-meta">{publication.data.venue}</p>
 			{variant === "full" && statusLabel && (
@@ -130,6 +134,14 @@ const statusLabel =
 		line-height: 1.5;
 	}
 
+	.publication-author-note {
+		margin: -0.15rem 0 0;
+		color: var(--text-secondary);
+		font-family: "Geist Mono", "Courier New", Courier, monospace;
+		font-size: 0.78rem;
+		letter-spacing: 0.03em;
+	}
+
 	.publication-authors {
 		font-size: 0.96rem;
 	}
@@ -188,6 +200,10 @@ const statusLabel =
 
 	.publication-teaser.list .publication-authors {
 		font-size: 0.9rem;
+	}
+
+	.publication-teaser.list .publication-author-note {
+		font-size: 0.76rem;
 	}
 
 	.publication-teaser.list .publication-meta-row {

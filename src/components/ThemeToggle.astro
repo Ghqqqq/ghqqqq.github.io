@@ -2,14 +2,14 @@
 import Icon from "./Icon.astro";
 ---
 
-<button id="theme-toggle" type="button" aria-label="Toggle color theme" aria-pressed="false">
+<button id="theme-toggle" type="button" aria-label="Toggle color theme" aria-pressed="true">
 	<span class="theme-toggle-icon">
 		<Icon type="lucide" name="sun-medium" width={16} height={16} />
 	</span>
 	<span class="theme-toggle-icon theme-toggle-moon">
 		<Icon type="lucide" name="moon-star" width={16} height={16} />
 	</span>
-	<span class="theme-toggle-label">Light</span>
+	<span class="theme-toggle-label">Dark</span>
 </button>
 
 <script is:inline>
@@ -38,7 +38,7 @@ import Icon from "./Icon.astro";
 
 		const syncTheme = () => {
 			const storedTheme = localStorage.getItem(storageKey);
-			applyTheme(storedTheme === "dark" ? "dark" : "light");
+			applyTheme(storedTheme === "light" ? "light" : "dark");
 		};
 
 		syncTheme();
