@@ -1,0 +1,305 @@
+---
+import "../styles/index.css";
+
+import { getCollection, getEntry, render } from "astro:content";
+import { name, openGraph } from "spectre:globals";
+import ProfilePicture from "../assets/profile-bird.png";
+import Card from "../components/Card.astro";
+import Icon from "../components/Icon.astro";
+import ImageGlow from "../components/ImageGlow.astro";
+import Layout from "../layouts/Layout.astro";
+import PublicationTeaser from "../components/PublicationTeaser.astro";
+
+const [
+	publications,
+	projects,
+	about,
+	quickInfo,
+	socials,
+	awards,
+	experience,
+	serviceTeaching,
+] =
+	await Promise.all([
+		getCollection("publications"),
+		getCollection("projects"),
+		getEntry("other", "about"),
+		getCollection("quickInfo"),
+		getCollection("socials"),
+		getCollection("awards"),
+		getCollection("experience"),
+		getCollection("serviceTeaching"),
+	]);
+
+const { Content: About } = await render(about!);
+const formatKindLabel = (kind: "service" | "teaching" | "talk") =>
+	kind.charAt(0).toUpperCase() + kind.slice(1);
+
+const selectedPublications = publications
+	.filter((publication) => publication.data.selected)
+	.sort(
+		(a, b) =>
+			b.data.year - a.data.year ||
+			b.data.createdAt.getTime() - a.data.createdAt.getTime(),
+	);
+
+const publicationSections = [
+	{
+		id: "agent-llm-alignment",
+		title: "Agent / LLM Alignment",
+	},
+	{
+		id: "recommendation-bidding",
+		title: "Recommendation & Bidding",
+	},
+	{
+		id: "reinforcement-learning-bandits",
+		title: "Reinforcement Learning & Bandits",
+	},
+].map((section) => ({
+	...section,
+	publications: selectedPublications.filter(
+		(publication) => publication.data.homepageCategory === section.id,
+	),
+}));
+---
+
+<Layout
+	title={openGraph.home.title || name}
+	description={openGraph.home.description}
+	pagefindIgnore
+>
+	<div class="layout-grid-left" slot="left">
+		<Card class="flex-col-card">
+			<ImageGlow
+				quality={100}
+				width={120}
+				height={120}
+				src={ProfilePicture}
+				alt="Placeholder profile illustration"
+				loading="eager"
+			/>
+			<h2>{name}</h2>
+			<ul class="overview-list">
+				{
+					quickInfo.map((info) => (
+						<li>
+							<Icon
+								type={info.data.icon.type}
+								name={info.data.icon.name as any}
+								width={24}
+								height={24}
+								class="glow-icon"
+							/>
+							<span>{info.data.text}</span>
+						</li>
+					))
+				}
+			</ul>
+		</Card>
+		<Card>
+			<h3 class="no-mt">Links</h3>
+			<ul class="overview-list">
+				{
+					socials
+						.sort((a, b) => a.data.id - b.data.id)
+						.map((item) => (
+						<li>
+							{
+								item.data.link ? (
+									<a href={item.data.link} class="socials-link">
+										<Icon
+											type={item.data.icon.type}
+											name={item.data.icon.name as any}
+											width={24}
+											height={24}
+											class="glow-icon"
+										/>
+										<span>{item.data.text}</span>
+									</a>
+								) : (
+									<div class="socials-item">
+										<Icon
+											type={item.data.icon.type}
+											name={item.data.icon.name as any}
+											width={24}
+											height={24}
+											class="glow-icon"
+										/>
+										<span class="socials-text">{item.data.text}</span>
+									</div>
+								)
+							}
+						</li>
+					))
+				}
+			</ul>
+		</Card>
+	</div>
+	<div class="layout-grid-right" slot="right">
+		<Card>
+			<div class="header-container">
+				<Icon
+					type="lucide"
+					name="user"
+					width={24}
+					height={24}
+					class="glow-icon"
+				/>
+				<h2>About me</h2>
+			</div>
+			<div class="prose">
+				<About />
+			</div>
+		</Card>
+		<Card>
+			<div class="header-container">
+				<Icon
+					type="lucide"
+					name="trophy"
+					width={24}
+					height={24}
+					class="glow-icon"
+				/>
+				<h2>Awards</h2>
+			</div>
+			<div class="section-list awards-list">
+				{
+					awards
+						.sort((a, b) => (b.data.year ?? 0) - (a.data.year ?? 0))
+						.map((award) => (
+							<div class="section-entry award-entry">
+								<div class="award-row">
+									<h3>{award.data.title}</h3>
+									{award.data.year && <span class="award-year">{award.data.year}</span>}
+								</div>
+								{award.data.meta && <span class="section-meta">{award.data.meta}</span>}
+							</div>
+						))
+				}
+			</div>
+		</Card>
+		<Card>
+			<div class="header-container">
+				<Icon
+					type="lucide"
+					name="graduation-cap"
+					width={24}
+					height={24}
+					class="glow-icon"
+				/>
+				<h2>Academic Service &amp; Teaching</h2>
+			</div>
+			<div class="section-list">
+				{
+					serviceTeaching
+						.sort((a, b) => a.data.id - b.data.id)
+						.map((item) => (
+							<div class="section-entry">
+								<div class="post-header">
+									<h3>{item.data.title}</h3>
+									<span class="post-date">{formatKindLabel(item.data.kind)}</span>
+								</div>
+								<span class="section-meta">{item.data.meta}</span>
+							</div>
+						))
+				}
+			</div>
+		</Card>
+		<Card>
+			<div class="header-container">
+				<Icon
+					type="lucide"
+					name="briefcase-business"
+					width={24}
+					height={24}
+					class="glow-icon"
+				/>
+				<h2>Experience</h2>
+			</div>
+			<div class="section-list">
+				{
+					experience
+						.sort((a, b) => a.data.id - b.data.id)
+						.map((item) => (
+							<div class="section-entry">
+								<div class="post-header">
+									<h3>{item.data.title}</h3>
+									<span class="post-date">{item.data.period}</span>
+								</div>
+								<span class="section-meta">{item.data.organization}</span>
+								{item.data.description && (
+									<p class="section-description">{item.data.description}</p>
+								)}
+							</div>
+						))
+				}
+			</div>
+		</Card>
+		<Card>
+			<div class="header-container">
+				<Icon
+					type="lucide"
+					name="book-open"
+					width={24}
+					height={24}
+					class="glow-icon"
+				/>
+				<h2>Selected Publications</h2>
+			</div>
+			<div class="publication-groups">
+				{
+					publicationSections.map(
+						(section) =>
+							section.publications.length > 0 && (
+								<section class="publication-group">
+									<h3 class="publication-group-title">{section.title}</h3>
+									<div class="content-container">
+										{
+											section.publications.map((publication) => (
+												<PublicationTeaser
+													publication={publication}
+													href={`/publications/${publication.id}`}
+													variant="compact"
+												/>
+											))
+										}
+									</div>
+								</section>
+							),
+					)
+				}
+			</div>
+		</Card>
+		<Card>
+			<div class="header-container">
+				<Icon
+					type="lucide"
+					name="folder-git"
+					width={24}
+					height={24}
+					class="glow-icon"
+				/>
+				<h2>Projects</h2>
+			</div>
+			<div class="content-container">
+				{
+					projects
+						.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+						.slice(0, 3)
+						.map((project) => (
+							<a href={`/projects/${project.id}`} class="post-container">
+								<div class="post-header">
+									<h3>{project.data.title}</h3>
+									<span class="post-date">
+										{project.data.date.toLocaleDateString()}
+									</span>
+								</div>
+								<span>{project.data.description}</span>
+							</a>
+						))
+				}
+			</div>
+		</Card>
+	</div>
+</Layout>

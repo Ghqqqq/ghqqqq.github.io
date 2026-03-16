@@ -1,0 +1,182 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+	publication: CollectionEntry<"publications">;
+	href: string;
+	variant?: "compact" | "full";
+}
+
+const { publication, href, variant = "compact" } = Astro.props;
+const isExternal = href.startsWith("http://") || href.startsWith("https://");
+const venueLabel =
+	(
+		publication.data.venueShort ??
+		publication.data.venue
+			.split(/\s+/)
+			.map((part) => part.replace(/[^A-Za-z0-9]/g, "").slice(0, 1).toUpperCase())
+			.join("")
+			.slice(0, 8)
+	) || "PAPER";
+const statusLabel =
+	publication.data.status === "journal"
+		? "Journal"
+		: publication.data.status === "submitted"
+			? "Submitted"
+			: publication.data.status === "preprint"
+				? "ArXiv"
+				: publication.data.status === "conference"
+					? "Published"
+					: undefined;
+---
+
+<a
+	href={href}
+	class:list={["publication-teaser", variant]}
+	target={isExternal ? "_blank" : undefined}
+	rel={isExternal ? "noopener noreferrer" : undefined}
+>
+	<div class="publication-cover" aria-hidden="true">
+		<span class="publication-badge">{venueLabel}</span>
+		<strong>{publication.data.year}</strong>
+	</div>
+	<div class="publication-copy">
+		<div class="post-header">
+			<h3>{publication.data.title}</h3>
+			<span class="post-date">{publication.data.year}</span>
+		</div>
+		<p class="publication-authors">{publication.data.authors}</p>
+		<div class="publication-meta-row">
+			<p class="publication-meta">{publication.data.venue}</p>
+			{variant === "full" && statusLabel && (
+				<span class="publication-status">{statusLabel}</span>
+			)}
+		</div>
+	</div>
+</a>
+
+<style>
+	.publication-teaser {
+		display: grid;
+		grid-template-columns: 5.5rem minmax(0, 1fr);
+		gap: 1rem;
+		padding: 1rem;
+		border: 1px solid var(--border-color);
+		background-color: var(--surface-bg);
+		box-shadow: var(--card-shadow);
+		color: var(--text-primary);
+		text-decoration: none;
+		transition:
+			background-color 0.15s ease,
+			border-color 0.15s ease,
+			transform 0.15s ease;
+	}
+
+	.publication-teaser:hover,
+	.publication-teaser:focus-visible {
+		background-color: var(--surface-accent);
+		border-color: var(--primary);
+		outline: none;
+		transform: translateY(-1px);
+	}
+
+	.publication-cover {
+		aspect-ratio: 3 / 4;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		padding: 0.75rem;
+		background:
+			linear-gradient(160deg, rgba(var(--primary-rgb), 0.22), rgba(var(--primary-rgb), 0.05)),
+			var(--surface-bg-strong);
+		border: 1px solid rgba(var(--primary-rgb), 0.28);
+	}
+
+	.publication-badge {
+		display: inline-flex;
+		width: fit-content;
+		padding: 0.2rem 0.45rem;
+		background: rgba(255, 255, 255, 0.35);
+		font-size: 0.72rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.publication-cover strong {
+		font-size: 1.5rem;
+		line-height: 1;
+	}
+
+	.publication-copy {
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.publication-copy h3 {
+		margin: 0;
+		line-height: 1.3;
+	}
+
+	.publication-authors,
+	.publication-meta {
+		margin: 0;
+		color: var(--text-secondary);
+		line-height: 1.5;
+	}
+
+	.publication-authors {
+		font-size: 0.96rem;
+	}
+
+	.publication-meta-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.65rem;
+	}
+
+	.publication-meta {
+		font-size: 0.92rem;
+	}
+
+	.publication-status {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.18rem 0.5rem;
+		border: 1px solid rgba(var(--primary-rgb), 0.22);
+		background: rgba(var(--primary-rgb), 0.1);
+		font-size: 0.78rem;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--text-primary);
+	}
+
+	.publication-teaser.compact {
+		grid-template-columns: 5rem minmax(0, 1fr);
+	}
+
+	.publication-teaser.compact .publication-cover {
+		padding: 0.65rem;
+	}
+
+	.publication-teaser.full {
+		grid-template-columns: 6rem minmax(0, 1fr);
+	}
+
+	@media screen and (max-width: 640px) {
+		.publication-teaser,
+		.publication-teaser.compact,
+		.publication-teaser.full {
+			grid-template-columns: 4.25rem minmax(0, 1fr);
+			gap: 0.85rem;
+			padding: 0.9rem;
+		}
+
+		.publication-cover strong {
+			font-size: 1.15rem;
+		}
+	}
+</style>

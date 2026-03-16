@@ -1,0 +1,35 @@
+[
+	{
+		"id": 1,
+		"icon": {
+			"type": "lucide",
+			"name": "book-open"
+		},
+		"text": "Google Scholar",
+		"link": "https://scholar.google.com/citations?user=8bGinucAAAAJ&hl=zh-CN"
+	},
+	{
+		"id": 2,
+		"icon": {
+			"type": "lucide",
+			"name": "mail"
+		},
+		"text": "guohq (at) shanghaitech.edu.cn"
+	},
+	{
+		"id": 3,
+		"icon": {
+			"type": "lucide",
+			"name": "github"
+		},
+		"text": "GitHub (Coming soon)"
+	},
+	{
+		"id": 4,
+		"icon": {
+			"type": "lucide",
+			"name": "file-text"
+		},
+		"text": "CV (Coming soon)"
+	}
+]

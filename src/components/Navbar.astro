@@ -1,0 +1,394 @@
+---
+import { name } from "spectre:globals";
+import Icon from "./Icon.astro";
+import ThemeToggle from "./ThemeToggle.astro";
+
+const path = Astro.url.pathname;
+---
+<nav>
+  <div class="nav-brand">
+    <ThemeToggle />
+    <a class="site-title" href="/">{name}</a>
+  </div>
+  <ul>
+    <li>
+      <a href="/publications" class:list={{ active: path.startsWith('/publications') }}>Full Publications</a>
+    </li>
+    <li class="nav-separator">/</li>
+    <li>
+      <a href="/projects" class:list={{ active: path.startsWith('/projects') }}>Projects</a>
+    </li>
+    <li class="nav-separator">/</li>
+    <li>
+      <input id="search" type="text" placeholder="Search (Ctrl+K)" />
+      <div id="search-results"></div>
+    </li>
+  </ul>
+  <button class="mobile-nav-toggle" aria-label="Mobile menu trigger">
+    <Icon type="lucide" name="menu" width={24} height={24} class="menu-closed" />
+    <Icon type="lucide" name="x" width={24} height={24} class="menu-open" />
+  </button>
+</nav>
+<script is:inline>
+  const searchElement = document.querySelector('#search');
+  const results = document.querySelector('#search-results');
+  const navToggle = document.querySelector('.mobile-nav-toggle');
+
+  let focusIndex = -1;
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'k' && e.ctrlKey) {
+      searchElement.focus();
+    }
+
+    if (e.key === 'Escape') {
+      searchElement.blur();
+      results.classList.remove('active');
+      focusIndex = -1;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+
+      focusIndex++;
+      const results = document.querySelectorAll('#search-results a');
+
+      if (focusIndex >= results.length) {
+        focusIndex = 0;
+      }
+
+      results[focusIndex]?.focus();
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+
+      focusIndex--;
+      const results = document.querySelectorAll('#search-results a');
+
+      if (focusIndex < 0) {
+        focusIndex = results.length - 1;
+      }
+
+      results[focusIndex]?.focus();
+    }
+  });
+
+  let pagefindInitialized = false;
+
+  searchElement?.addEventListener('focus', async () => {
+    searchElement.placeholder = '';
+    results.classList.add('active');
+    
+    // initialize pagefind on first focus
+    if (!pagefindInitialized) {
+      try {
+        window.pagefind = await import("/pagefind/pagefind.js");
+        await window.pagefind.init();
+        pagefindInitialized = true;
+      } catch (error) {
+        console.error('Failed to initialize Pagefind:', error);
+      }
+    }
+  });
+  
+  searchElement?.addEventListener('blur', () => {
+    handleTabletChange();
+    setTimeout(() => {
+      if (!document.activeElement?.closest('#search-results')) {
+        results.classList.remove('active');
+        focusIndex = -1;
+      }
+    }, 1);
+  });
+
+  results?.addEventListener('focusout', (e) => {
+    if (!e.relatedTarget?.closest('#search-results')) {
+      results.classList.remove('active');
+      focusIndex = -1;
+    }
+  });
+
+  searchElement?.addEventListener('input', async (e) => {
+    // only search if Pagefind is ready
+    if (!pagefindInitialized) {
+      return;
+    }
+
+    results.innerHTML = '';
+    let searchResultHtml = '';
+
+    const search = await window.pagefind.search(e.target.value);
+
+    let i = 0;
+    for (const result of search.results) {
+      i++;
+
+      const data = await result.data();
+      
+      searchResultHtml += `
+        <a href="${data.url}">
+          <h3 class="no-mt">${data.meta.title}</h3>
+          <p>${data.excerpt}</p>
+        </a>
+        ${i < search.results.length ? '<hr class="separator">' : ''}
+      `;
+    }
+
+    if (search.results.length === 0 && e.target.value.length > 0) {
+      results.innerHTML = '<p style="margin-top: 0;">No results found</p>';
+    } else {
+      results.innerHTML = searchResultHtml;
+    }
+
+    results.classList.add('active');
+  });
+
+  navToggle?.addEventListener('click', () => {
+    navToggle.classList.toggle('active');
+    document.querySelector('nav').classList.toggle('active');
+  });
+
+  const handleTabletChange = () => {
+    if (window.matchMedia('(max-width: 640px)').matches) {
+      searchElement.placeholder = 'Search';
+    } else {
+      searchElement.placeholder = 'Search (Ctrl+K)';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', handleTabletChange);
+  window.addEventListener('resize', handleTabletChange);
+</script>
+<style>
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Geist Mono', 'Courier New', Courier, monospace;
+    z-index: 50;
+    gap: 1rem;
+  }
+
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+  }
+
+  .site-title {
+    font-weight: 800;
+    text-decoration: none;
+    font-size: 1.25em;
+    z-index: 2;
+  }
+
+  nav ul {
+    display: flex;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    align-items: center;
+  }
+
+  nav ul li {
+    position: relative;
+  }
+
+  nav a {
+    color: inherit;
+    text-decoration: none;
+    padding: .25rem .5rem;
+  }
+
+  nav a:hover, nav a:focus-visible, nav a.active {
+    background-color: rgba(var(--primary-rgb), 0.14);
+    outline: none;
+    text-decoration: none;
+  }
+
+  #search {
+    background: var(--search-bg);
+    border: 1px solid var(--border-color);
+    outline: none;
+    padding: .45rem .65rem;
+    width: 160px;
+    color: var(--text-primary);
+  }
+
+  #search::placeholder {
+    color: var(--text-secondary);
+  }
+
+  #search:focus {
+    border-color: var(--primary);
+  }
+
+  #search-results {
+    position: absolute;
+    top: calc(100% + .5rem);
+    right: 0;
+    background-color: var(--search-results-bg);
+    border: 1px solid var(--border-color);
+    display: none;
+    width: 200%;
+    z-index: 10;
+    padding: .5rem;
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(16px);
+  }
+
+  #search-results.active:has(*) {
+    display: block;
+  }
+
+  .mobile-nav-toggle {
+    display: none;
+    width: 40px;
+    height: 40px;
+    background-color: var(--surface-bg);
+    border: 1px solid var(--border-color);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    color: var(--text-primary);
+  }
+
+  .menu-open {
+    display: none;
+  }
+
+  .mobile-nav-toggle.active .menu-open {
+    display: flex;
+  }
+
+  .mobile-nav-toggle.active .menu-closed {
+    display: none;
+  }
+
+  @media screen and (max-width: 640px) {
+    nav {
+      padding: 0 1rem;
+      padding-top: 1rem;
+      transition: all .25s ease;
+      align-items: flex-start;
+    }
+
+    .mobile-nav-toggle {
+      display: flex;
+    }
+
+    .nav-separator {
+      display: none;
+    }
+
+    nav ul {
+      flex-direction: column;
+      gap: 0;
+      position: absolute;
+      width: 100%;
+      top: calc(1rem + 40px);
+      right: 0;
+      padding: 1rem;
+      z-index: 1;
+      opacity: 0;
+      pointer-events: none;
+      transition: all .25s ease;
+      user-select: none;
+      height: calc(100vh - 1rem - 40px);
+      align-items: start;
+    }
+
+    nav.active {
+      background-color: var(--nav-overlay-bg);
+      backdrop-filter: blur(18px);
+    }
+
+    nav.active ul {
+      opacity: 1;
+      pointer-events: all;
+      background-color: var(--nav-overlay-bg);
+    }
+
+    nav ul li {
+      position: relative;
+      transition: all .25s ease-out;
+      top: -1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      width: 100%;
+      max-width: none;
+      padding: 0;
+      font-size: 1.125em;
+    }
+  
+    nav ul li a {
+      display: block;
+      padding: .75rem 0;
+      width: 100%;
+      padding-left: 1rem;
+    }
+
+    nav ul li:first-child {
+      border-top: 1px solid var(--border-color);
+    }
+
+    nav.active ul li {
+      top: 0;
+    }
+
+    #search {
+      width: 100%;
+      max-width: none;
+      padding: .75rem 1rem;
+    }
+
+    #search-results {
+      width: 100%;
+      top: 100%;
+      font-size: 0.875em;
+    }
+  }
+</style>
+<style is:global>
+  #search-results a {
+    display: block;
+    text-decoration: none;
+    color: var(--text-primary) !important;
+    padding: .5rem;
+  }
+
+  #search-results a:hover, #search-results a:focus-visible {
+    background-color: rgba(var(--primary-rgb), 0.14);
+    outline: none;
+  }
+
+  #search-results a:hover mark, #search-results a:focus-visible mark {
+    background-color: var(--text-primary);
+    color: var(--page-bg);
+  }
+
+  #search-results a h3 {
+    margin-bottom: .5rem;
+  }
+
+  #search-results a p {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  #search-results mark {
+    background-color: rgba(var(--primary-rgb), 0.18);
+    color: var(--text-primary);
+  }
+
+  .separator {
+    margin: .5rem .5rem;
+    border: none;
+    height: 1px;
+    background-color: var(--border-color);
+  }
+</style>

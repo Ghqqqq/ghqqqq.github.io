@@ -1,0 +1,106 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import test from "node:test";
+
+async function readBuilt(relativePath) {
+	try {
+		return await readFile(resolve("dist", "client", relativePath), "utf8");
+	} catch {
+		return null;
+	}
+}
+
+test("homepage renders the academic CV structure and omits excluded personal data", async () => {
+	const html = await readBuilt("index.html");
+
+	assert.ok(html, "expected built homepage HTML");
+	assert.match(html, /Hengquan Guo/);
+	assert.match(html, /data-theme="light"/);
+	assert.match(html, /id="theme-toggle"/);
+	assert.match(html, /ShanghaiTech University/);
+	assert.match(html, /Reinforcement Learning/);
+	assert.match(html, /LLM Alignment/);
+	assert.match(
+		html,
+		/About me[\s\S]*Awards[\s\S]*Academic Service(?:\s*&amp;\s*|\s*&\s*)Teaching[\s\S]*Experience[\s\S]*Selected Publications[\s\S]*Projects/,
+	);
+	assert.match(html, /guohq \(at\) shanghaitech\.edu\.cn/);
+	assert.match(
+		html,
+		/href="https:\/\/scholar\.google\.com\/citations\?user=8bGinucAAAAJ/,
+	);
+	assert.match(html, /National Scholarship/);
+	assert.match(html, /Tencent Rhino-Bird Elite Talent Program/);
+	assert.match(html, /RLChina 2022/);
+	assert.match(html, /Project Placeholder 1/);
+	assert.match(html, /Project Placeholder 2/);
+	assert.match(html, /Project Placeholder 3/);
+	assert.match(html, /Research Intern/);
+	assert.doesNotMatch(html, /mailto:/);
+	assert.doesNotMatch(html, /tel:/);
+	assert.doesNotMatch(html, /PhD Researcher/);
+	assert.doesNotMatch(html, /Xiangtan University/);
+	assert.doesNotMatch(html, /Latest Posts/);
+	assert.doesNotMatch(html, /Work Experience/);
+	assert.doesNotMatch(html, /Made in Germany/);
+});
+
+test("publications route and homepage navigation expose full publications", async () => {
+	const publicationsHtml = await readBuilt("publications/index.html");
+	const homepageHtml = await readBuilt("index.html");
+
+	assert.ok(publicationsHtml, "expected built publications index");
+	assert.match(publicationsHtml, /Full Publications|Publications/);
+	assert.match(
+		publicationsHtml,
+		/Triple-Optimistic Learning|Online convex optimization with hard constraints/i,
+	);
+	assert.match(
+		publicationsHtml,
+		/POBO: Safe and Optimal Resource Management for Cloud Microservices/,
+	);
+	assert.match(
+		publicationsHtml,
+		/SABO: Safe and Aggressive Bayesian Optimization for Automatic Legged Locomotion Controller Tuning/,
+	);
+	assert.match(publicationsHtml, /Submitted|Preprint|ArXiv|Journal/);
+
+	assert.ok(homepageHtml, "expected built homepage HTML");
+	assert.match(homepageHtml, /href="\/publications"/);
+	assert.match(homepageHtml, />Full Publications</);
+});
+
+test("homepage groups selected publications by research area with real venue badges", async () => {
+	const html = await readBuilt("index.html");
+
+	assert.ok(html, "expected built homepage HTML");
+	assert.match(
+		html,
+		/Agent \/ LLM Alignment[\s\S]*Recommendation(?:\s*&amp;\s*|\s*&\s*)Bidding[\s\S]*Reinforcement Learning(?:\s*&amp;\s*|\s*&\s*)Bandits/,
+	);
+	assert.match(
+		html,
+		/Enhancing Safety in Reinforcement Learning with Human Feedback via Rectified Policy Optimization/,
+	);
+	assert.match(
+		html,
+		/Towards Safe and Optimal Online Bidding: A Modular Look-ahead Lyapunov Framework/,
+	);
+	assert.match(
+		html,
+		/Triple-Optimistic Learning for Stochastic Contextual Bandits with General Constraints/,
+	);
+	assert.match(html, /publication-badge[^>]*>\s*NeurIPS\s*</);
+	assert.match(html, /publication-badge[^>]*>\s*ICLR\s*</);
+	assert.match(html, /publication-badge[^>]*>\s*ICML\s*</);
+	assert.match(html, /publication-badge[^>]*>\s*COLT\s*</);
+});
+
+test("homepage shell exposes the refreshed avatar and theme toggle", async () => {
+	const html = await readBuilt("index.html");
+
+	assert.ok(html, "expected built homepage HTML");
+	assert.match(html, /profile-bird/);
+	assert.match(html, /theme-toggle/);
+});

@@ -1,0 +1,109 @@
+---
+import "../../styles/article.css";
+
+import type { CollectionEntry } from "astro:content";
+import { getCollection, render } from "astro:content";
+import type { GetStaticPaths } from "astro";
+import Card from "../../components/Card.astro";
+import Layout from "../../layouts/Layout.astro";
+
+interface Props {
+	publication: CollectionEntry<"publications">;
+}
+
+const { publication } = Astro.props;
+const statusLabel =
+	publication.data.status === "journal"
+		? "Journal"
+		: publication.data.status === "submitted"
+			? "Submitted"
+			: publication.data.status === "preprint"
+				? "ArXiv"
+				: publication.data.status === "conference"
+					? "Published"
+					: undefined;
+
+export const getStaticPaths = (async () => {
+	const publications = await getCollection("publications");
+
+	return publications.map((publication) => ({
+		params: { publication: publication.id },
+		props: { publication },
+	}));
+}) satisfies GetStaticPaths;
+
+const { Content } = await render(publication);
+---
+
+<Layout
+	title={publication.data.title}
+	description={publication.data.description}
+	image={publication.data.image}
+	article={{
+		createdAt: publication.data.createdAt,
+	}}
+>
+	<div class="left" slot="left">
+		<Card class="toc-card">
+			<h2 class="no-mt">Publication Info</h2>
+			<ul class="overview-list">
+				<li><span>{publication.data.authors}</span></li>
+				<li><span>{publication.data.venue}</span></li>
+				<li><span>{publication.data.year}</span></li>
+				{statusLabel && <li><span>{statusLabel}</span></li>}
+			</ul>
+		</Card>
+	</div>
+	<article slot="right" data-pagefind-body>
+		<Card>
+			<div class="article-header" id="_top" data-pagefind-ignore>
+				<div class="header">
+					<div>
+						<h1 class="no-mt article-h1">{publication.data.title}</h1>
+					</div>
+					<div class="article-info">
+						<span>{publication.data.authors}</span>
+						<span>/</span>
+						<span>{publication.data.venue}</span>
+						<span>/</span>
+						<span>{publication.data.year}</span>
+						{statusLabel && (
+							<>
+								<span>/</span>
+								<span>{statusLabel}</span>
+							</>
+						)}
+					</div>
+				</div>
+			</div>
+			<Content />
+			<hr class="end-of-article" />
+			<a href="/publications" class="block-link" data-pagefind-ignore
+				>← Back to publications</a
+			>
+		</Card>
+	</article>
+</Layout>
+<style>
+	.left {
+		height: 100%;
+		position: relative;
+	}
+
+	.toc-card {
+		position: sticky;
+		top: 2rem;
+	}
+
+	article {
+		display: flex;
+		flex-direction: column;
+		gap: 2rem;
+	}
+
+	@media screen and (max-width: 640px) {
+		article {
+			gap: 1rem;
+		}
+	}
+</style>
