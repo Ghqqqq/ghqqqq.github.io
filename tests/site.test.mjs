@@ -62,6 +62,10 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /2025\.06 - 2026\.02/);
 	assert.match(
 		html,
+		/Experience[\s\S]*Studying reinforcement learning for recommendation and bidding\.[\s\S]*Outcomes:[\s\S]*Towards Safe and Optimal Online Bidding[\s\S]*ICLR 2026, accepted[\s\S]*GRB[\s\S]*submitted to KDD[\s\S]*Towards Temporal Interest Modeling[\s\S]*submitted to ICML/i,
+	);
+	assert.match(
+		html,
 		/Tencent CDG \(Tencent Rhino-Bird Elite Talent Program\)/,
 	);
 	assert.match(html, /Hengquan Guo[\s\S]*ShanghaiTech University[\s\S]*Google Scholar/);
@@ -149,8 +153,6 @@ test("homepage shell exposes the refreshed avatar and theme toggle", async () =>
 
 	assert.ok(html, "expected built homepage HTML");
 	assert.match(html, /profile-bird-original/);
-	assert.match(html, /brand-bird-icon/);
-	assert.match(html, /brand-bird-mark/);
 	assert.match(html, /theme-toggle/);
 	assert.match(html, /data-avatar-parallax/);
 	assert.match(html, /href="\/favicon-bird\.png"/);
@@ -160,6 +162,7 @@ test("homepage shell exposes the refreshed avatar and theme toggle", async () =>
 	assert.match(html, /service-text-list/);
 	assert.match(html, /service-text-heading/);
 	assert.match(html, /service-text-kind/);
+	assert.doesNotMatch(html, /brand-bird-icon|brand-bird-mark/);
 	assert.doesNotMatch(html, /darkThemeColor|lightThemeColor/);
 	assert.doesNotMatch(html, /award-entry/);
 });

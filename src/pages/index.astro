@@ -186,6 +186,14 @@ const publicationSections = [
 								{item.data.description && (
 									<p class="section-description">{item.data.description}</p>
 								)}
+								{item.data.outcomes && item.data.outcomes.length > 0 && (
+									<div class="experience-outcomes">
+										<span class="experience-outcomes-label">Outcomes:</span>
+										<ul class="experience-outcomes-list">
+											{item.data.outcomes.map((outcome) => <li>{outcome}</li>)}
+										</ul>
+									</div>
+								)}
 							</div>
 						))
 				}

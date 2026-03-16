@@ -54,6 +54,7 @@ const experience = defineCollection({
 		organization: z.string(),
 		period: z.string(),
 		description: z.string().optional(),
+		outcomes: z.array(z.string()).optional(),
 	}),
 });
 
