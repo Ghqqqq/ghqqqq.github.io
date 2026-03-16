@@ -75,6 +75,7 @@ const publications = defineCollection({
 			description: z.string(),
 			venue: z.string(),
 			venueShort: z.string().optional(),
+			status: z.enum(["conference", "journal", "submitted", "preprint"]).optional(),
 			year: z.number(),
 			authors: z.string(),
 			createdAt: z.coerce.date(),
