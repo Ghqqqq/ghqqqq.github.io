@@ -58,3 +58,29 @@ test("publications route and homepage navigation expose full publications", asyn
 	assert.match(homepageHtml, /href="\/publications"/);
 	assert.match(homepageHtml, />Full Publications</);
 });
+
+test("homepage groups selected publications by research area with real venue badges", async () => {
+	const html = await readBuilt("index.html");
+
+	assert.ok(html, "expected built homepage HTML");
+	assert.match(
+		html,
+		/Agent \/ LLM Alignment[\s\S]*Recommendation(?:\s*&amp;\s*|\s*&\s*)Bidding[\s\S]*Reinforcement Learning(?:\s*&amp;\s*|\s*&\s*)Bandits/,
+	);
+	assert.match(
+		html,
+		/Enhancing Safety in Reinforcement Learning with Human Feedback via Rectified Policy Optimization/,
+	);
+	assert.match(
+		html,
+		/Towards Safe and Optimal Online Bidding: A Modular Look-ahead Lyapunov Framework/,
+	);
+	assert.match(
+		html,
+		/Triple-Optimistic Learning for Stochastic Contextual Bandits with General Constraints/,
+	);
+	assert.match(html, /publication-badge[^>]*>\s*NeurIPS\s*</);
+	assert.match(html, /publication-badge[^>]*>\s*ICLR\s*</);
+	assert.match(html, /publication-badge[^>]*>\s*ICML\s*</);
+	assert.match(html, /publication-badge[^>]*>\s*COLT\s*</);
+});

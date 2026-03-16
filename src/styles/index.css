@@ -128,3 +128,22 @@
 	line-height: 1.55;
 	color: #c7c7c7;
 }
+
+.publication-groups {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+.publication-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+}
+
+.publication-group-title {
+	margin: 0;
+	font-size: 1rem;
+	letter-spacing: 0.02em;
+	color: #f3f3f3;
+}

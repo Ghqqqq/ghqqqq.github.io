@@ -42,6 +42,26 @@ const selectedPublications = publications
 			b.data.year - a.data.year ||
 			b.data.createdAt.getTime() - a.data.createdAt.getTime(),
 	);
+
+const publicationSections = [
+	{
+		id: "agent-llm-alignment",
+		title: "Agent / LLM Alignment",
+	},
+	{
+		id: "recommendation-bidding",
+		title: "Recommendation & Bidding",
+	},
+	{
+		id: "reinforcement-learning-bandits",
+		title: "Reinforcement Learning & Bandits",
+	},
+].map((section) => ({
+	...section,
+	publications: selectedPublications.filter(
+		(publication) => publication.data.homepageCategory === section.id,
+	),
+}));
 ---
 
 <Layout
@@ -143,17 +163,27 @@ const selectedPublications = publications
 				/>
 				<h2>Selected Publications</h2>
 			</div>
-			<div class="content-container">
+			<div class="publication-groups">
 				{
-					selectedPublications
-						.slice(0, 5)
-						.map((publication) => (
-							<PublicationTeaser
-								publication={publication}
-								href={`/publications/${publication.id}`}
-								variant="compact"
-							/>
-						))
+					publicationSections.map(
+						(section) =>
+							section.publications.length > 0 && (
+								<section class="publication-group">
+									<h3 class="publication-group-title">{section.title}</h3>
+									<div class="content-container">
+										{
+											section.publications.map((publication) => (
+												<PublicationTeaser
+													publication={publication}
+													href={`/publications/${publication.id}`}
+													variant="compact"
+												/>
+											))
+										}
+									</div>
+								</section>
+							),
+					)
 				}
 			</div>
 		</Card>

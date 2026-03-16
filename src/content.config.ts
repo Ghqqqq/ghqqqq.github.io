@@ -74,10 +74,18 @@ const publications = defineCollection({
 			title: z.string(),
 			description: z.string(),
 			venue: z.string(),
+			venueShort: z.string().optional(),
 			year: z.number(),
 			authors: z.string(),
 			createdAt: z.coerce.date(),
 			selected: z.boolean().optional(),
+			homepageCategory: z
+				.enum([
+					"agent-llm-alignment",
+					"recommendation-bidding",
+					"reinforcement-learning-bandits",
+				])
+				.optional(),
 			image: image().optional(),
 			link: z.string().url().optional(),
 		}),
