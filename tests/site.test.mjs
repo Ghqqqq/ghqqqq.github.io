@@ -16,7 +16,7 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 
 	assert.ok(html, "expected built homepage HTML");
 	assert.match(html, /Hengquan Guo/);
-	assert.match(html, /data-theme="light"/);
+	assert.match(html, /data-theme="dark"/);
 	assert.match(html, /id="theme-toggle"/);
 	assert.match(html, /ShanghaiTech University/);
 	assert.match(html, /Reinforcement Learning/);
@@ -111,6 +111,8 @@ test("homepage groups selected publications by research area with real venue bad
 		html,
 		/GRB: A Generative Reinforcement Bidding Framework for Multi-Channel Online Advertising/,
 	);
+	assert.match(html, /Hengquan Guo\*/);
+	assert.match(html, /equal contribution/);
 	assert.match(
 		html,
 		/Triple-Optimistic Learning for Stochastic Contextual Bandits with General Constraints/,
@@ -132,6 +134,7 @@ test("homepage shell exposes the refreshed avatar and theme toggle", async () =>
 	assert.match(html, /awards-text-list/);
 	assert.match(html, /awards-text-main/);
 	assert.match(html, /service-text-list/);
+	assert.match(html, /service-text-heading/);
 	assert.match(html, /service-text-kind/);
 	assert.doesNotMatch(html, /award-entry/);
 });
