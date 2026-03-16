@@ -32,7 +32,7 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /href="https:\/\/junwei-pan\.github\.io\/"/);
 	assert.match(
 		html,
-		/research lies at the intersection of reinforcement learning and bandits/i,
+		/research focuses on reinforcement learning and bandits/i,
 	);
 	assert.match(
 		html,
