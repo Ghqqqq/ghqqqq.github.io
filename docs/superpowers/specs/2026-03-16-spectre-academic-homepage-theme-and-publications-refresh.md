@@ -10,6 +10,7 @@ This spec extends the existing homepage design instead of replacing it. The goal
 
 - Default the site to an ivory-toned light theme.
 - Preserve a dark theme and expose a clear manual toggle in the top-left area of the page.
+- Replace the current placeholder avatar with the user-provided blue-bird profile image.
 - Reorder homepage sections so CV-heavy information appears before selected research highlights.
 - Reduce visual bulk in `Awards`.
 - Remove the `PhD Researcher` entry from homepage `Experience`.
@@ -31,6 +32,12 @@ This spec extends the existing homepage design instead of replacing it. The goal
 - Default theme: `ivory`.
 - The light theme should feel editorial and academic rather than stark pure white.
 - Add a visible theme toggle near the upper-left corner rather than burying it in page settings.
+
+### Profile Image
+
+- Use the user-provided blue-bird avatar image for the homepage profile block.
+- If the supplied image background is not transparent, convert it to a transparent PNG before use.
+- Keep the current square avatar placement and overall size unless later design changes require otherwise.
 
 ### Homepage Order
 
@@ -151,6 +158,10 @@ Dark mode should remain available, but it should be treated as a supported alter
 
 The theme switch will require global color tokens rather than hardcoded dark-only values. Current direct uses of dark borders, white text, and dark backgrounds should be migrated toward CSS variables so both themes stay maintainable.
 
+### Profile Card
+
+The profile card should swap out the current placeholder image for the approved bird avatar. The implementation should preserve the current layout footprint so the new image does not cause reflow in the left-side profile column.
+
 ### Awards
 
 Awards should become visually tighter by:
@@ -192,6 +203,7 @@ The content model should stay simple and file-driven.
 
 - The site loads in ivory light mode by default.
 - A visible top-left theme toggle switches between light and dark themes and persists the preference.
+- The homepage profile image uses the supplied bird avatar, with a transparent background if needed.
 - The homepage order is `About` → `Awards` → `Academic Service & Teaching` → `Experience` → `Selected Publications` → `Projects`.
 - Homepage `Experience` no longer includes the ShanghaiTech PhD role.
 - `Awards` is visually denser than the current implementation.
