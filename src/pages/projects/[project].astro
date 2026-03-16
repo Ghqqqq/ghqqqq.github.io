@@ -97,4 +97,55 @@ const { Content } = await render(project);
 		align-items: center;
 		gap: 1rem;
 	}
+
+	.header {
+		position: relative;
+		bottom: auto;
+		left: auto;
+		max-width: none;
+		margin-top: 1rem;
+	}
+
+	.article-h1 {
+		display: inline;
+		background: transparent;
+		padding: 0;
+		color: var(--text-primary);
+	}
+
+	.article-info {
+		background: transparent;
+		padding: 0;
+		color: var(--text-secondary);
+	}
+
+	:global(.project-result-grid) {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+		margin-top: 1rem;
+	}
+
+	:global(.project-result-card) {
+		margin: 0;
+		padding: 1rem;
+		border: 1px solid var(--border-color);
+		background: var(--surface-bg);
+	}
+
+	:global(.project-result-image) {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+
+	:global(.project-result-caption) {
+		margin-top: 0.85rem;
+		line-height: 1.6;
+		color: var(--text-secondary);
+	}
+
+	:global(.project-result-caption strong) {
+		color: var(--text-primary);
+	}
 </style>

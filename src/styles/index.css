@@ -297,26 +297,6 @@
 	white-space: nowrap;
 }
 
-.project-figure-link {
-	display: block;
-	text-decoration: none;
-}
-
-.project-figure-link:hover,
-.project-figure-link:focus-visible {
-	text-decoration: none;
-}
-
-.project-figure-link:focus-visible {
-	outline: none;
-}
-
-.project-figure-image {
-	display: block;
-	width: 100%;
-	height: auto;
-}
-
 @media screen and (max-width: 640px) {
 	.profile-avatar {
 		width: 7rem;

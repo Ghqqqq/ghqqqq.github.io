@@ -17,6 +17,54 @@ info:
     link: "https://huggingface.co/AliceKJ/BLOCKv0.5"
 ---
 
+import { Image } from "astro:assets";
+import Example1 from "../assets/block-example-1.png";
+import Example2 from "../assets/block-example-2.png";
+import Example3 from "../assets/block-example-3.png";
+
 BLOCK is an open-source bi-stage MLLM pipeline for translating character concepts into Minecraft-ready skins. The system first synthesizes structured preview images and then converts them into valid skin atlases with a deterministic decoder.
 
 I'm iterating and working on generating Minecraft skins end-to-end. If you are also interested, feel free to contact me.
+
+## Current Results
+
+<div class="project-result-grid">
+  <figure class="project-result-card">
+    <Image
+      src={Example1}
+      alt="BLOCK current result on a simple dark-clothed character concept"
+      class="project-result-image"
+      widths={[1120]}
+      sizes="(min-width: 900px) 860px, 100vw"
+    />
+    <figcaption class="project-result-caption">
+      <strong>Example 1.</strong> This is the current effect on a relatively simple character concept.
+    </figcaption>
+  </figure>
+
+  <figure class="project-result-card">
+    <Image
+      src={Example2}
+      alt="BLOCK current result on a detailed fantasy-style character concept"
+      class="project-result-image"
+      widths={[1120]}
+      sizes="(min-width: 900px) 860px, 100vw"
+    />
+    <figcaption class="project-result-caption">
+      <strong>Example 2.</strong> This is the current effect on a more detailed fantasy-style character with fine-grained clothing and hair cues.
+    </figcaption>
+  </figure>
+
+  <figure class="project-result-card">
+    <Image
+      src={Example3}
+      alt="BLOCK current result on a sports-jersey character concept"
+      class="project-result-image"
+      widths={[1090]}
+      sizes="(min-width: 900px) 860px, 100vw"
+    />
+    <figcaption class="project-result-caption">
+      <strong>Example 3.</strong> This is the current effect on a harder sports-jersey example where some preview details are still compressed.
+    </figcaption>
+  </figure>
+</div>

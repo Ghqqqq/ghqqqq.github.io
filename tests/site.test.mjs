@@ -44,7 +44,7 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	);
 	assert.match(
 		html,
-		/About me[\s\S]*Experience[\s\S]*Awards[\s\S]*Academic Service(?:\s*&amp;\s*|\s*&\s*)Teaching[\s\S]*Selected Publications[\s\S]*Projects/,
+		/About me[\s\S]*Experience[\s\S]*Awards[\s\S]*Academic Service(?:\s*&amp;\s*|\s*&\s*)Teaching[\s\S]*Selected Publications/,
 	);
 	assert.match(html, /guohq \(at\) shanghaitech\.edu\.cn/);
 	assert.match(html, /guohq46 \(at\) qq\.com/);
@@ -55,7 +55,6 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /National Scholarship for Doctoral Students/);
 	assert.match(html, /Tencent Rhino-Bird Elite Talent Program/);
 	assert.match(html, /RLChina 2022/);
-	assert.match(html, /href="\/projects\/block"/);
 	assert.match(html, /Research Intern/);
 	assert.match(html, /2025\.06 - 2026\.02/);
 	assert.match(
@@ -78,6 +77,8 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.doesNotMatch(html, /Work Experience/);
 	assert.doesNotMatch(html, /Made in Germany/);
 	assert.doesNotMatch(html, /Project Placeholder/);
+	assert.doesNotMatch(html, /project-figure-link/);
+	assert.doesNotMatch(html, />Projects<\/h2>/);
 });
 
 test("publications route and homepage navigation expose full publications", async () => {
@@ -115,6 +116,23 @@ test("publications route and homepage navigation expose full publications", asyn
 		blockProjectHtml,
 		/I[’']m iterating and working on generating Minecraft skins end-to-end\. If you are also interested, feel free to contact me\./,
 	);
+	assert.match(blockProjectHtml, /Current Results/);
+	assert.match(blockProjectHtml, /Example 1/);
+	assert.match(
+		blockProjectHtml,
+		/This is the current effect on a relatively simple character concept\./,
+	);
+	assert.match(blockProjectHtml, /Example 2/);
+	assert.match(
+		blockProjectHtml,
+		/This is the current effect on a more detailed fantasy-style character with fine-grained clothing and hair cues\./,
+	);
+	assert.match(blockProjectHtml, /Example 3/);
+	assert.match(
+		blockProjectHtml,
+		/This is the current effect on a harder sports-jersey example where some preview details are still compressed\./,
+	);
+	assert.doesNotMatch(blockProjectHtml, /Figure 2: Overview of BLOCK/);
 });
 
 test("homepage groups selected publications by research area with real venue badges", async () => {

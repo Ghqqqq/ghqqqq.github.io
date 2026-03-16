@@ -12,7 +12,6 @@ import PublicationTeaser from "../components/PublicationTeaser.astro";
 
 const [
 	publications,
-	projects,
 	about,
 	quickInfo,
 	socials,
@@ -22,7 +21,6 @@ const [
 ] =
 	await Promise.all([
 		getCollection("publications"),
-		getCollection("projects"),
 		getEntry("other", "about"),
 		getCollection("quickInfo"),
 		getCollection("socials"),
@@ -73,10 +71,6 @@ const publicationSections = [
 		(publication) => publication.data.homepageCategory === section.id,
 	),
 }));
-
-const featuredProject = [...projects].sort(
-	(a, b) => b.data.date.getTime() - a.data.date.getTime(),
-)[0];
 ---
 
 <Layout
@@ -304,36 +298,6 @@ const featuredProject = [...projects].sort(
 					)
 				}
 			</div>
-		</Card>
-		<Card>
-			<div class="header-container">
-				<Icon
-					type="lucide"
-					name="folder-git"
-					width={24}
-					height={24}
-					class="glow-icon"
-				/>
-				<h2>Projects</h2>
-			</div>
-			{
-				featuredProject && (
-					<a
-						href={`/projects/${featuredProject.id}`}
-						class="project-figure-link"
-						aria-label={`Open ${featuredProject.data.title} project page`}
-					>
-						<ImageGlow
-							src={featuredProject.data.image!}
-							alt="Figure 2: Overview of BLOCK"
-							class="project-figure-image"
-							width={1185}
-							height={500}
-							quality={100}
-						/>
-					</a>
-				)
-			}
 		</Card>
 	</div>
 </Layout>
