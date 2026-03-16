@@ -176,10 +176,12 @@ test("homepage groups selected publications by research area with real venue bad
 		html,
 		/Triple-Optimistic Learning for Stochastic Contextual Bandits with General Constraints/,
 	);
-	assert.match(html, /publication-badge[^>]*>\s*NeurIPS\s*</);
-	assert.match(html, /publication-badge[^>]*>\s*ICLR\s*</);
-	assert.match(html, /publication-badge[^>]*>\s*ICML\s*</);
-	assert.match(html, /publication-badge[^>]*>\s*COLT\s*</);
+	assert.match(
+		html,
+		/Agent \/ LLM Alignment[\s\S]*publication-teaser list[\s\S]*Recommendation(?:\s*&amp;\s*|\s*&\s*)Bidding[\s\S]*publication-teaser list[\s\S]*Reinforcement Learning(?:\s*&amp;\s*|\s*&\s*)Bandits[\s\S]*publication-teaser list/,
+	);
+	assert.doesNotMatch(html, /publication-teaser compact/);
+	assert.doesNotMatch(html, /publication-cover/);
 });
 
 test("homepage shell exposes the refreshed avatar and theme toggle", async () => {

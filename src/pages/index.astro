@@ -285,13 +285,13 @@ const publicationSections = [
 									<div class="content-container">
 										{
 											section.publications.map((publication) => (
-												<PublicationTeaser
-													publication={publication}
-													href={`/publications/${publication.id}`}
-													variant="compact"
-												/>
-											))
-										}
+											<PublicationTeaser
+												publication={publication}
+												href={`/publications/${publication.id}`}
+												variant="list"
+											/>
+										))
+									}
 									</div>
 								</section>
 							),
