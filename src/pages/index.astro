@@ -34,6 +34,17 @@ const [
 const { Content: About } = await render(about!);
 const formatKindLabel = (kind: "service" | "teaching" | "talk") =>
 	kind.charAt(0).toUpperCase() + kind.slice(1);
+const splitAwardMeta = (meta?: string, year?: number) => {
+	const compactMeta = meta?.trim();
+	const yearLabel = year
+		? String(year)
+		: compactMeta && /^\d{4}\s*-\s*\d{4}$/.test(compactMeta)
+			? compactMeta
+			: undefined;
+	const inlineMeta = yearLabel === compactMeta ? undefined : compactMeta;
+
+	return { inlineMeta, yearLabel };
+};
 
 const selectedPublications = publications
 	.filter((publication) => publication.data.selected)
@@ -193,19 +204,28 @@ const publicationSections = [
 				{
 					awards
 						.sort((a, b) => (b.data.year ?? 0) - (a.data.year ?? 0))
-						.map((award) => (
-							<li class="awards-text-item">
-								<div class="awards-text-line">
-									<strong>{award.data.title}</strong>
-									{award.data.year && (
-										<span class="awards-text-year">{award.data.year}</span>
-									)}
-								</div>
-								{award.data.meta && (
-									<span class="awards-text-meta">{award.data.meta}</span>
-								)}
-							</li>
-						))
+						.map((award) => {
+							const { inlineMeta, yearLabel } = splitAwardMeta(
+								award.data.meta,
+								award.data.year,
+							);
+
+							return (
+								<li class="awards-text-item">
+									<div class="awards-text-row">
+										<span class="awards-text-main">
+											<strong>{award.data.title}</strong>
+											{inlineMeta && (
+												<span class="awards-text-meta">{inlineMeta}</span>
+											)}
+										</span>
+										{yearLabel && (
+											<span class="awards-text-year">{yearLabel}</span>
+										)}
+									</div>
+								</li>
+							);
+						})
 				}
 			</ul>
 		</Card>
