@@ -21,9 +21,10 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /ShanghaiTech University/);
 	assert.match(html, /Reinforcement Learning/);
 	assert.match(html, /LLM Alignment/);
+	assert.match(html, /Research Interests/);
 	assert.match(
 		html,
-		/About me[\s\S]*Awards[\s\S]*Academic Service(?:\s*&amp;\s*|\s*&\s*)Teaching[\s\S]*Experience[\s\S]*Selected Publications[\s\S]*Projects/,
+		/About me[\s\S]*Experience[\s\S]*Awards[\s\S]*Academic Service(?:\s*&amp;\s*|\s*&\s*)Teaching[\s\S]*Selected Publications[\s\S]*Projects/,
 	);
 	assert.match(html, /guohq \(at\) shanghaitech\.edu\.cn/);
 	assert.match(
@@ -37,6 +38,10 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /Project Placeholder 2/);
 	assert.match(html, /Project Placeholder 3/);
 	assert.match(html, /Research Intern/);
+	assert.match(html, /Hengquan Guo[\s\S]*ShanghaiTech University[\s\S]*Google Scholar/);
+	assert.doesNotMatch(html, /GitHub \(Coming soon\)/);
+	assert.doesNotMatch(html, /CV \(Coming soon\)/);
+	assert.doesNotMatch(html, /<h3[^>]*>\s*Links\s*<\/h3>/);
 	assert.doesNotMatch(html, /mailto:/);
 	assert.doesNotMatch(html, /tel:/);
 	assert.doesNotMatch(html, /PhD Researcher/);
@@ -101,6 +106,9 @@ test("homepage shell exposes the refreshed avatar and theme toggle", async () =>
 	const html = await readBuilt("index.html");
 
 	assert.ok(html, "expected built homepage HTML");
-	assert.match(html, /profile-bird/);
+	assert.match(html, /profile-bird-original/);
 	assert.match(html, /theme-toggle/);
+	assert.match(html, /data-avatar-parallax/);
+	assert.match(html, /awards-text-list/);
+	assert.doesNotMatch(html, /award-entry/);
 });
