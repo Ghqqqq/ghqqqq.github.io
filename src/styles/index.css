@@ -18,6 +18,61 @@
 	flex-direction: column;
 }
 
+.profile-identity-card {
+	gap: 1rem;
+}
+
+.profile-avatar {
+	display: block;
+	width: 8.25rem;
+	height: 8.25rem;
+	object-fit: cover;
+}
+
+.profile-copy {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.profile-copy h2 {
+	margin: 0;
+}
+
+.profile-affiliation {
+	margin: 0;
+	color: var(--text-secondary);
+	font-size: 1rem;
+}
+
+.profile-links {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.55rem 0.8rem;
+}
+
+.profile-inline-link {
+	color: var(--text-primary);
+	font-family: "Geist Mono", "Courier New", Courier, monospace;
+	font-size: 0.82rem;
+	letter-spacing: 0.02em;
+}
+
+.profile-inline-link:hover,
+.profile-inline-link:focus-visible {
+	color: var(--primary-light);
+	text-decoration: none;
+}
+
+.profile-inline-text {
+	color: var(--text-secondary);
+}
+
+.research-interest-list {
+	gap: 0.9rem;
+}
+
 .header-container {
 	display: flex;
 	flex-direction: row;
@@ -86,25 +141,6 @@
 	margin-bottom: 0.75rem;
 }
 
-.socials-link {
-	color: var(--text-primary);
-	display: flex;
-	flex-direction: row;
-	gap: 0.75rem;
-	align-items: center;
-}
-
-.socials-item {
-	display: flex;
-	flex-direction: row;
-	gap: 0.75rem;
-	align-items: center;
-}
-
-.socials-text {
-	color: var(--text-primary);
-}
-
 .section-list {
 	display: flex;
 	flex-direction: column;
@@ -149,37 +185,47 @@
 	color: var(--text-primary);
 }
 
-.awards-list {
-	gap: 0.7rem;
-}
-
-.award-entry {
-	padding: 0.75rem 0.9rem;
-	gap: 0.35rem;
-}
-
-.award-row {
-	display: flex;
-	align-items: baseline;
-	justify-content: space-between;
-	gap: 1rem;
-}
-
-.award-row h3 {
+.awards-text-list {
+	list-style: none;
 	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+}
+
+.awards-text-item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+}
+
+.awards-text-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.65rem;
+}
+
+.awards-text-line strong {
 	font-size: 1rem;
 }
 
-.award-year {
+.awards-text-year,
+.awards-text-meta {
+	color: var(--text-secondary);
 	font-family: "Geist Mono", "Courier New", Courier, monospace;
 	font-size: 0.82rem;
-	color: var(--text-secondary);
-	white-space: nowrap;
 }
 
 @media screen and (max-width: 640px) {
-	.award-row {
+	.profile-avatar {
+		width: 7rem;
+		height: 7rem;
+	}
+
+	.awards-text-line {
 		flex-direction: column;
-		gap: 0.3rem;
+		gap: 0.2rem;
 	}
 }

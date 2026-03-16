@@ -2,28 +2,71 @@
 import type { LocalImageProps, RemoteImageProps } from "astro:assets";
 import { Image } from "astro:assets";
 
-type Props = LocalImageProps | RemoteImageProps;
+type Props = (LocalImageProps | RemoteImageProps) & {
+	parallax?: boolean;
+};
 
-const { ...props } = Astro.props;
+const { parallax = false, ...props } = Astro.props as Props;
 
 const width = props.width;
 const height = props.height;
 ---
 
-<div class="glow-image">
-  <Image {...props} />
-  <Image
-    width={width ? ((typeof width === 'number' ? width : Number.parseInt(width)) / 4) : undefined} 
-    height={height ? ((typeof height === 'number' ? height : Number.parseInt(height)) / 4) : undefined}
-    {...props}
-    class='glow'
-    class:list={[props.class]}
-    quality={75}
-  />
+<div class="glow-image" data-avatar-parallax={parallax || undefined}>
+  <div class="glow-image-motion" data-avatar-parallax-layer={parallax || undefined}>
+    <Image {...props} />
+    <Image
+      width={width ? ((typeof width === 'number' ? width : Number.parseInt(width)) / 4) : undefined}
+      height={height ? ((typeof height === 'number' ? height : Number.parseInt(height)) / 4) : undefined}
+      {...props}
+      class='glow'
+      class:list={[props.class]}
+      quality={75}
+    />
+  </div>
 </div>
+<script is:inline>
+  (() => {
+    const canAnimate =
+      window.matchMedia("(pointer: fine)").matches &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const reset = (element) => {
+      element.style.setProperty("--avatar-shift-x", "0px");
+      element.style.setProperty("--avatar-shift-y", "0px");
+    };
+
+    for (const element of document.querySelectorAll("[data-avatar-parallax]")) {
+      if (element.dataset.avatarParallaxBound === "true") continue;
+      element.dataset.avatarParallaxBound = "true";
+      reset(element);
+
+      if (!canAnimate) continue;
+
+      element.addEventListener("pointermove", (event) => {
+        const rect = element.getBoundingClientRect();
+        const dx = (event.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
+        const dy = (event.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
+        element.style.setProperty("--avatar-shift-x", `${(dx * 7).toFixed(2)}px`);
+        element.style.setProperty("--avatar-shift-y", `${(dy * 7).toFixed(2)}px`);
+      });
+
+      element.addEventListener("pointerleave", () => reset(element));
+    }
+  })();
+</script>
 <style>
   .glow-image {
     position: relative;
+    --avatar-shift-x: 0px;
+    --avatar-shift-y: 0px;
+  }
+
+  .glow-image-motion {
+    position: relative;
+    transform: translate3d(var(--avatar-shift-x), var(--avatar-shift-y), 0);
+    transition: transform .24s ease-out;
+    will-change: transform;
   }
 
   .glow-image img {
@@ -46,5 +89,11 @@ const height = props.height;
 
   :global(html[data-theme="dark"]) .glow {
     opacity: .65;
+  }
+
+  @media (pointer: coarse), (prefers-reduced-motion: reduce) {
+    .glow-image-motion {
+      transform: none;
+    }
   }
 </style>
