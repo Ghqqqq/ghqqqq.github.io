@@ -129,5 +129,7 @@ test("homepage shell exposes the refreshed avatar and theme toggle", async () =>
 	assert.match(html, /href="\/favicon-bird\.png"/);
 	assert.match(html, /awards-text-list/);
 	assert.match(html, /awards-text-main/);
+	assert.match(html, /service-text-list/);
+	assert.match(html, /service-text-kind/);
 	assert.doesNotMatch(html, /award-entry/);
 });
