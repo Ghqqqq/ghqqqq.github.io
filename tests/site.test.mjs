@@ -16,14 +16,15 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 
 	assert.ok(html, "expected built homepage HTML");
 	assert.match(html, /Hengquan Guo/);
+	assert.match(html, /data-theme="light"/);
+	assert.match(html, /id="theme-toggle"/);
 	assert.match(html, /ShanghaiTech University/);
 	assert.match(html, /Reinforcement Learning/);
 	assert.match(html, /LLM Alignment/);
-	assert.match(html, /About me/);
-	assert.match(html, /Selected Publications/);
-	assert.match(html, /Awards/);
-	assert.match(html, /Experience/);
-	assert.match(html, /Academic Service(?:\s*&amp;\s*|\s*&\s*)Teaching/);
+	assert.match(
+		html,
+		/About me[\s\S]*Awards[\s\S]*Academic Service(?:\s*&amp;\s*|\s*&\s*)Teaching[\s\S]*Experience[\s\S]*Selected Publications[\s\S]*Projects/,
+	);
 	assert.match(html, /guohq \(at\) shanghaitech\.edu\.cn/);
 	assert.match(
 		html,
@@ -35,8 +36,10 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /Project Placeholder 1/);
 	assert.match(html, /Project Placeholder 2/);
 	assert.match(html, /Project Placeholder 3/);
+	assert.match(html, /Research Intern/);
 	assert.doesNotMatch(html, /mailto:/);
 	assert.doesNotMatch(html, /tel:/);
+	assert.doesNotMatch(html, /PhD Researcher/);
 	assert.doesNotMatch(html, /Xiangtan University/);
 	assert.doesNotMatch(html, /Latest Posts/);
 	assert.doesNotMatch(html, /Work Experience/);
@@ -53,6 +56,15 @@ test("publications route and homepage navigation expose full publications", asyn
 		publicationsHtml,
 		/Triple-Optimistic Learning|Online convex optimization with hard constraints/i,
 	);
+	assert.match(
+		publicationsHtml,
+		/POBO: Safe and Optimal Resource Management for Cloud Microservices/,
+	);
+	assert.match(
+		publicationsHtml,
+		/SABO: Safe and Aggressive Bayesian Optimization for Automatic Legged Locomotion Controller Tuning/,
+	);
+	assert.match(publicationsHtml, /Submitted|Preprint|ArXiv|Journal/);
 
 	assert.ok(homepageHtml, "expected built homepage HTML");
 	assert.match(homepageHtml, /href="\/publications"/);
@@ -83,4 +95,12 @@ test("homepage groups selected publications by research area with real venue bad
 	assert.match(html, /publication-badge[^>]*>\s*ICLR\s*</);
 	assert.match(html, /publication-badge[^>]*>\s*ICML\s*</);
 	assert.match(html, /publication-badge[^>]*>\s*COLT\s*</);
+});
+
+test("homepage shell exposes the refreshed avatar and theme toggle", async () => {
+	const html = await readBuilt("index.html");
+
+	assert.ok(html, "expected built homepage HTML");
+	assert.match(html, /profile-bird/);
+	assert.match(html, /theme-toggle/);
 });
