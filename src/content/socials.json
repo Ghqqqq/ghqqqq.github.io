@@ -15,21 +15,5 @@
 			"name": "mail"
 		},
 		"text": "guohq (at) shanghaitech.edu.cn"
-	},
-	{
-		"id": 3,
-		"icon": {
-			"type": "lucide",
-			"name": "github"
-		},
-		"text": "GitHub (Coming soon)"
-	},
-	{
-		"id": 4,
-		"icon": {
-			"type": "lucide",
-			"name": "file-text"
-		},
-		"text": "CV (Coming soon)"
 	}
 ]

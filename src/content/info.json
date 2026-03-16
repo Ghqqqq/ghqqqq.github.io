@@ -3,9 +3,9 @@
 		"id": 1,
 		"icon": {
 			"type": "lucide",
-			"name": "building-2"
+			"name": "brain"
 		},
-		"text": "ShanghaiTech University"
+		"text": "Reinforcement Learning"
 	},
 	{
 		"id": 2,
@@ -13,18 +13,10 @@
 			"type": "lucide",
 			"name": "brain"
 		},
-		"text": "Reinforcement Learning"
-	},
-	{
-		"id": 3,
-		"icon": {
-			"type": "lucide",
-			"name": "brain"
-		},
 		"text": "LLM Alignment"
 	},
 	{
-		"id": 4,
+		"id": 3,
 		"icon": {
 			"type": "lucide",
 			"name": "chart-no-axes-combined"
@@ -32,7 +24,7 @@
 		"text": "Constrained Optimization"
 	},
 	{
-		"id": 5,
+		"id": 4,
 		"icon": {
 			"type": "lucide",
 			"name": "waypoints"
