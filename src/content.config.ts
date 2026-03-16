@@ -1,4 +1,4 @@
-import { defineCollection, reference, z } from "astro:content";
+import { defineCollection, z } from "astro:content";
 import type { icons as lucideIcons } from "@iconify-json/lucide/icons.json";
 import type { icons as simpleIcons } from "@iconify-json/simple-icons/icons.json";
 import { file, glob } from "astro/loaders";
@@ -36,35 +36,18 @@ const socials = defineCollection({
 	}),
 });
 
-const workExperience = defineCollection({
-	loader: file("src/content/work.json"),
-	schema: z.object({
-		id: z.number(),
-		title: z.string(),
-		company: z.string(),
-		duration: z.string(),
-		description: z.string(),
-	}),
-});
-
-const tags = defineCollection({
-	loader: file("src/content/tags.json"),
-	schema: z.object({
-		id: z.string(),
-	}),
-});
-
-const posts = defineCollection({
-	loader: glob({ base: "src/content/posts", pattern: "**/*.{md,mdx}" }),
+const publications = defineCollection({
+	loader: glob({ base: "src/content/publications", pattern: "**/*.{md,mdx}" }),
 	schema: ({ image }) =>
 		z.object({
 			title: z.string(),
-			createdAt: z.coerce.date(),
-			updatedAt: z.coerce.date().optional(),
 			description: z.string(),
-			tags: z.array(reference("tags")),
-			draft: z.boolean().optional().default(false),
-			image: image(),
+			venue: z.string(),
+			year: z.number(),
+			authors: z.string(),
+			createdAt: z.coerce.date(),
+			image: image().optional(),
+			link: z.string().url().optional(),
 		}),
 });
 
@@ -75,7 +58,7 @@ const projects = defineCollection({
 			title: z.string(),
 			description: z.string(),
 			date: z.coerce.date(),
-			image: image(),
+			image: image().optional(),
 			link: z.string().url().optional(),
 			info: z.array(
 				z.object({
@@ -88,11 +71,9 @@ const projects = defineCollection({
 });
 
 export const collections = {
-	tags,
-	posts,
+	publications,
 	projects,
 	other,
 	quickInfo,
 	socials,
-	workExperience,
 };

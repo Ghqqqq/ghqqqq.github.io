@@ -3,9 +3,36 @@
 		"id": 1,
 		"icon": {
 			"type": "lucide",
+			"name": "book-open"
+		},
+		"text": "Google Scholar",
+		"link": "https://scholar.google.com/citations?user=8bGinucAAAAJ&hl=zh-CN"
+	},
+	{
+		"id": 2,
+		"icon": {
+			"type": "lucide",
+			"name": "mail"
+		},
+		"text": "Email (placeholder)",
+		"link": "https://example.com/email-placeholder"
+	},
+	{
+		"id": 3,
+		"icon": {
+			"type": "lucide",
 			"name": "github"
 		},
-		"text": "GitHub",
-		"link": "https://github.com/louisescher/spectre"
+		"text": "GitHub (placeholder)",
+		"link": "https://github.com/placeholder"
+	},
+	{
+		"id": 4,
+		"icon": {
+			"type": "lucide",
+			"name": "file-text"
+		},
+		"text": "CV (placeholder)",
+		"link": "https://example.com/cv-placeholder"
 	}
 ]

@@ -9,12 +9,11 @@ import Icon from "../components/Icon.astro";
 import ImageGlow from "../components/ImageGlow.astro";
 import Layout from "../layouts/Layout.astro";
 
-const [posts, projects, about, workExperience, quickInfo, socials] =
+const [publications, projects, about, quickInfo, socials] =
 	await Promise.all([
-		getCollection("posts", (post) => post.data.draft !== true),
+		getCollection("publications"),
 		getCollection("projects"),
 		getEntry("other", "about"),
-		getCollection("workExperience"),
 		getCollection("quickInfo"),
 		getCollection("socials"),
 	]);
@@ -34,7 +33,7 @@ const { Content: About } = await render(about!);
 				width={120}
 				height={120}
 				src={ProfilePicture}
-				alt="A purple, minimalist looking ghost."
+				alt="Placeholder profile illustration"
 				loading="eager"
 			/>
 			<h2>{name}</h2>
@@ -56,7 +55,7 @@ const { Content: About } = await render(about!);
 			</ul>
 		</Card>
 		<Card>
-			<h3 class="no-mt">Socials</h3>
+			<h3 class="no-mt">Links</h3>
 			<ul class="overview-list">
 				{
 					socials.map((item) => (
@@ -97,29 +96,33 @@ const { Content: About } = await render(about!);
 			<div class="header-container">
 				<Icon
 					type="lucide"
-					name="rss"
+					name="book-open"
 					width={24}
 					height={24}
 					class="glow-icon"
 				/>
-				<h2>Latest Posts</h2>
+				<h2>Selected Publications</h2>
 			</div>
 			<div class="content-container">
 				{
-					posts
+					publications
 						.sort(
 							(a, b) => b.data.createdAt.getTime() - a.data.createdAt.getTime(),
 						)
-						.slice(0, 2)
-						.map((post) => (
-							<a href={`/blog/${post.id}`} class="post-container">
+						.slice(0, 5)
+						.map((publication) => (
+							<a href={`/publications/${publication.id}`} class="post-container">
 								<div class="post-header">
-									<h3>{post.data.title}</h3>
+									<h3>{publication.data.title}</h3>
 									<span class="post-date">
-										{post.data.createdAt.toLocaleDateString()}
+										{publication.data.year}
 									</span>
 								</div>
-								<span>{post.data.description}</span>
+								<span>
+									{publication.data.venue}
+									{" / "}
+									{publication.data.authors}
+								</span>
 							</a>
 						))
 				}
@@ -134,13 +137,13 @@ const { Content: About } = await render(about!);
 					height={24}
 					class="glow-icon"
 				/>
-				<h2>Latest Projects</h2>
+				<h2>Projects</h2>
 			</div>
 			<div class="content-container">
 				{
 					projects
 						.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
-						.slice(0, 2)
+						.slice(0, 3)
 						.map((project) => (
 							<a href={`/projects/${project.id}`} class="post-container">
 								<div class="post-header">
@@ -152,32 +155,6 @@ const { Content: About } = await render(about!);
 								<span>{project.data.description}</span>
 							</a>
 						))
-				}
-			</div>
-		</Card>
-		<Card>
-			<div class="header-container">
-				<Icon
-					type="lucide"
-					name="briefcase-business"
-					width={24}
-					height={24}
-					class="glow-icon"
-				/>
-				<h2>Work Experience</h2>
-			</div>
-			<div class="work-experience-container">
-				{
-					workExperience.reverse().map((entry) => (
-						<div class="work-experience-entry">
-							<span class="work-experience-duration">
-								{entry.data.duration}
-							</span>
-							<h3 class="work-experience-company">{entry.data.company}</h3>
-							<span class="work-experience-role">{entry.data.title}</span>
-							<p class="work-experience-desc">{entry.data.description}</p>
-						</div>
-					))
 				}
 			</div>
 		</Card>

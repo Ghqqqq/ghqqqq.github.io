@@ -8,7 +8,7 @@ import { spectreDark } from './src/ec-theme';
 
 // https://astro.build/config
 const config = defineConfig({
-	site: 'https://spectre.lou.gg',
+	site: 'https://example.com',
 	output: 'static',
 	integrations: [
 		expressiveCode({
@@ -17,18 +17,19 @@ const config = defineConfig({
 		mdx(),
 		sitemap(),
 		spectre({
-			name: 'Spectre',
+			name: 'Hengquan Guo',
 			openGraph: {
 				home: {
-					title: 'Spectre',
-					description: 'A minimalistic theme for Astro.',
+					title: 'Hengquan Guo',
+					description: 'Academic homepage for Hengquan Guo.',
 				},
 				blog: {
-					title: 'Blog',
-					description: 'News and guides for Spectre.',
+					title: 'Publications',
+					description: 'Selected publications and research outputs.',
 				},
 				projects: {
 					title: 'Projects',
+					description: 'Research and engineering projects in progress.',
 				},
 			},
 			giscus: false,

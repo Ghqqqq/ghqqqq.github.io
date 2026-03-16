@@ -26,7 +26,7 @@ test("homepage exposes academic identity instead of Spectre demo copy", async ()
 });
 
 test("publications page exists and project placeholders are visible", async () => {
-	const publicationsHtml = await readBuilt(resolve("publications", "index.html"));
+	const publicationsHtml = await readBuilt("publications/index.html");
 	const homepageHtml = await readBuilt("index.html");
 
 	assert.ok(publicationsHtml, "expected built publications index");

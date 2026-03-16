@@ -3,17 +3,40 @@
 		"id": 1,
 		"icon": {
 			"type": "lucide",
-			"name": "cake"
+			"name": "building-2"
 		},
-		"text": "1 year old"
+		"text": "ShanghaiTech University"
 	},
 	{
 		"id": 2,
 		"icon": {
 			"type": "lucide",
-			"name": "earth"
+			"name": "brain"
 		},
-		"type": "lucide",
-		"text": "Made in Germany"
+		"text": "Reinforcement Learning"
+	},
+	{
+		"id": 3,
+		"icon": {
+			"type": "lucide",
+			"name": "brain"
+		},
+		"text": "LLM Alignment"
+	},
+	{
+		"id": 4,
+		"icon": {
+			"type": "lucide",
+			"name": "brain"
+		},
+		"text": "Constrained Optimization"
+	},
+	{
+		"id": 5,
+		"icon": {
+			"type": "lucide",
+			"name": "brain"
+		},
+		"text": "Online Learning / Bandit"
 	}
 ]
