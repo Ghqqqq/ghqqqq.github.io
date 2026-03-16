@@ -39,6 +39,10 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /Project Placeholder 3/);
 	assert.match(html, /Research Intern/);
 	assert.match(html, /2025\.06 - 2026\.02/);
+	assert.match(
+		html,
+		/Tencent CDG \(Tencent Rhino-Bird Elite Talent Program\)/,
+	);
 	assert.match(html, /Hengquan Guo[\s\S]*ShanghaiTech University[\s\S]*Google Scholar/);
 	assert.doesNotMatch(html, /GitHub \(Coming soon\)/);
 	assert.doesNotMatch(html, /CV \(Coming soon\)/);
@@ -122,6 +126,7 @@ test("homepage shell exposes the refreshed avatar and theme toggle", async () =>
 	assert.match(html, /profile-bird-original/);
 	assert.match(html, /theme-toggle/);
 	assert.match(html, /data-avatar-parallax/);
+	assert.match(html, /href="\/favicon-bird\.png"/);
 	assert.match(html, /awards-text-list/);
 	assert.match(html, /awards-text-main/);
 	assert.doesNotMatch(html, /award-entry/);
