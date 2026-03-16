@@ -36,7 +36,7 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	);
 	assert.match(
 		html,
-		/Tencent Rhino-Bird Elite Talent Program[\s\S]*reinforcement learning and recommender systems/i,
+		/Tencent Rhino-Bird Elite Talent Program, where I worked on the intersection of reinforcement learning and recommender systems under the guidance of/i,
 	);
 	assert.match(
 		html,
