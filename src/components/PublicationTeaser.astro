@@ -18,6 +18,16 @@ const venueLabel =
 			.join("")
 			.slice(0, 8)
 	) || "PAPER";
+const statusLabel =
+	publication.data.status === "journal"
+		? "Journal"
+		: publication.data.status === "submitted"
+			? "Submitted"
+			: publication.data.status === "preprint"
+				? "ArXiv"
+				: publication.data.status === "conference"
+					? "Published"
+					: undefined;
 ---
 
 <a
@@ -36,7 +46,12 @@ const venueLabel =
 			<span class="post-date">{publication.data.year}</span>
 		</div>
 		<p class="publication-authors">{publication.data.authors}</p>
-		<p class="publication-meta">{publication.data.venue}</p>
+		<div class="publication-meta-row">
+			<p class="publication-meta">{publication.data.venue}</p>
+			{variant === "full" && statusLabel && (
+				<span class="publication-status">{statusLabel}</span>
+			)}
+		</div>
 	</div>
 </a>
 
@@ -46,8 +61,10 @@ const venueLabel =
 		grid-template-columns: 5.5rem minmax(0, 1fr);
 		gap: 1rem;
 		padding: 1rem;
-		border: 1px solid #353535;
-		color: #fff;
+		border: 1px solid var(--border-color);
+		background-color: var(--surface-bg);
+		box-shadow: var(--card-shadow);
+		color: var(--text-primary);
 		text-decoration: none;
 		transition:
 			background-color 0.15s ease,
@@ -57,7 +74,7 @@ const venueLabel =
 
 	.publication-teaser:hover,
 	.publication-teaser:focus-visible {
-		background-color: rgba(140, 92, 245, 0.125);
+		background-color: var(--surface-accent);
 		border-color: var(--primary);
 		outline: none;
 		transform: translateY(-1px);
@@ -70,16 +87,16 @@ const venueLabel =
 		justify-content: space-between;
 		padding: 0.75rem;
 		background:
-			linear-gradient(160deg, rgba(140, 92, 245, 0.24), rgba(33, 245, 166, 0.08)),
-			#191919;
-		border: 1px solid rgba(140, 92, 245, 0.4);
+			linear-gradient(160deg, rgba(var(--primary-rgb), 0.22), rgba(var(--primary-rgb), 0.05)),
+			var(--surface-bg-strong);
+		border: 1px solid rgba(var(--primary-rgb), 0.28);
 	}
 
 	.publication-badge {
 		display: inline-flex;
 		width: fit-content;
 		padding: 0.2rem 0.45rem;
-		background: rgba(255, 255, 255, 0.08);
+		background: rgba(255, 255, 255, 0.35);
 		font-size: 0.72rem;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -105,7 +122,7 @@ const venueLabel =
 	.publication-authors,
 	.publication-meta {
 		margin: 0;
-		color: #c7c7c7;
+		color: var(--text-secondary);
 		line-height: 1.5;
 	}
 
@@ -113,8 +130,28 @@ const venueLabel =
 		font-size: 0.96rem;
 	}
 
+	.publication-meta-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.65rem;
+	}
+
 	.publication-meta {
 		font-size: 0.92rem;
+	}
+
+	.publication-status {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.18rem 0.5rem;
+		border: 1px solid rgba(var(--primary-rgb), 0.22);
+		background: rgba(var(--primary-rgb), 0.1);
+		font-size: 0.78rem;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--text-primary);
 	}
 
 	.publication-teaser.compact {

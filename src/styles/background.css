@@ -13,7 +13,11 @@
 	pointer-events: none;
 }
 
-#overlay-canvas {
+#bg-canvas {
 	opacity: 1;
+}
+
+#overlay-canvas {
+	opacity: 0.96;
 	z-index: -1 !important;
 }

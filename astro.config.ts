@@ -10,6 +10,9 @@ import { spectreDark } from './src/ec-theme';
 const config = defineConfig({
 	site: 'https://example.com',
 	output: 'static',
+	devToolbar: {
+		enabled: false,
+	},
 	integrations: [
 		expressiveCode({
 			themes: [spectreDark],

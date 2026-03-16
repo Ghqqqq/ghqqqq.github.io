@@ -30,6 +30,9 @@ class PageBackground {
 	private letterInstances: LetterInstance[] = [];
 
 	private primaryRgb: string;
+	private baseLetterRgb: string;
+	private baseLetterAlpha: number;
+	private overlayAlpha: number;
 
 	/**
 	 * Initializes the background on the page.
@@ -62,16 +65,39 @@ class PageBackground {
 			.getComputedStyle(document.documentElement)
 			.getPropertyValue("--primary-rgb")
 			.trim();
+		this.baseLetterRgb = "";
+		this.baseLetterAlpha = 0;
+		this.overlayAlpha = 0;
+		this.readThemeTokens();
 
 		this.initBackground();
 
 		requestAnimationFrame(this.redrawBackground);
 	}
 
+	private readThemeTokens = () => {
+		const computedStyle = window.getComputedStyle(document.documentElement);
+		this.primaryRgb = computedStyle.getPropertyValue("--primary-rgb").trim();
+		this.baseLetterRgb = computedStyle
+			.getPropertyValue("--background-letter-rgb")
+			.trim();
+		this.baseLetterAlpha = Number.parseFloat(
+			computedStyle.getPropertyValue("--background-letter-alpha").trim() || "0.02",
+		);
+		this.overlayAlpha = Number.parseFloat(
+			computedStyle.getPropertyValue("--background-overlay-alpha").trim() || "0.3",
+		);
+	};
+
 	/**
 	 * Sets up the background canvases. The text is decided based on the title of the page.
 	 */
 	private initBackground = () => {
+		this.baseCtx.clearRect(0, 0, this.baseCanvas.width, this.baseCanvas.height);
+		this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+		this.letterPositions = [];
+		this.letterInstances = [];
+
 		let text: string =
 			document.title.toLowerCase().split(" | ")[0].replace(/\s/g, "_") ||
 			"spectre";
@@ -89,7 +115,7 @@ class PageBackground {
 		this.baseCtx.font = "28px Geist Mono";
 		this.baseCtx.textAlign = "start";
 		this.baseCtx.textBaseline = "top";
-		this.baseCtx.fillStyle = "rgba(255, 255, 255, 0.01)";
+		this.baseCtx.fillStyle = `rgba(${this.baseLetterRgb}, ${this.baseLetterAlpha})`;
 
 		for (let i = 0; i < lines; i++) {
 			for (let j = 0; j < letters; j++) {
@@ -240,12 +266,17 @@ class PageBackground {
 				});
 			}
 
-			this.overlayCtx.fillStyle = `rgba(${this.primaryRgb}, ${alpha})`;
-			this.overlayCtx.shadowColor = `rgba(${this.primaryRgb}, ${alpha})`;
+			this.overlayCtx.fillStyle = `rgba(${this.primaryRgb}, ${alpha * this.overlayAlpha})`;
+			this.overlayCtx.shadowColor = `rgba(${this.primaryRgb}, ${alpha * this.overlayAlpha})`;
 			this.overlayCtx.fillText(letter.letter, letter.x, letter.y);
 		}
 
 		requestAnimationFrame(this.redrawBackground);
+	};
+
+	public refreshTheme = () => {
+		this.readThemeTokens();
+		this.initBackground();
 	};
 
 	/**
@@ -302,6 +333,9 @@ async function initializeBackground() {
 
 	window.addEventListener("resize", () => {
 		background.resizeBackground();
+	});
+	window.addEventListener("spectre-theme-change", () => {
+		background.refreshTheme();
 	});
 }
 

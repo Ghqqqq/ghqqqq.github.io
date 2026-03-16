@@ -36,6 +36,15 @@ const height = props.height;
     top: 0;
     left: 0;
     z-index: 0 !important;
-    filter: blur(8px);
+    opacity: .55;
+    filter: blur(14px);
+  }
+
+  :global(html[data-theme="light"]) .glow {
+    opacity: .3;
+  }
+
+  :global(html[data-theme="dark"]) .glow {
+    opacity: .65;
   }
 </style>

@@ -12,6 +12,16 @@ interface Props {
 }
 
 const { publication } = Astro.props;
+const statusLabel =
+	publication.data.status === "journal"
+		? "Journal"
+		: publication.data.status === "submitted"
+			? "Submitted"
+			: publication.data.status === "preprint"
+				? "ArXiv"
+				: publication.data.status === "conference"
+					? "Published"
+					: undefined;
 
 export const getStaticPaths = (async () => {
 	const publications = await getCollection("publications");
@@ -40,6 +50,7 @@ const { Content } = await render(publication);
 				<li><span>{publication.data.authors}</span></li>
 				<li><span>{publication.data.venue}</span></li>
 				<li><span>{publication.data.year}</span></li>
+				{statusLabel && <li><span>{statusLabel}</span></li>}
 			</ul>
 		</Card>
 	</div>
@@ -56,6 +67,12 @@ const { Content } = await render(publication);
 						<span>{publication.data.venue}</span>
 						<span>/</span>
 						<span>{publication.data.year}</span>
+						{statusLabel && (
+							<>
+								<span>/</span>
+								<span>{statusLabel}</span>
+							</>
+						)}
 					</div>
 				</div>
 			</div>

@@ -2,7 +2,7 @@
 import "../styles/reset.css";
 import "../styles/globals.css";
 
-import { name, themeColor, twitterHandle } from "spectre:globals";
+import { name, twitterHandle } from "spectre:globals";
 import Background from "../components/Background.astro";
 import LayoutGrid from "../components/LayoutGrid.astro";
 import Navbar from "../components/Navbar.astro";
@@ -19,10 +19,11 @@ interface Props {
 }
 
 const { title, description, image, pagefindIgnore, article } = Astro.props;
+const lightThemeColor = "#f4eee2";
 ---
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 	<head>
 		<link rel="preload" href="/fonts/Geist.woff2" as="font" type="font/woff2" crossorigin="">
 		<link rel="preload" href="/fonts/GeistMono.woff2" as="font" type="font/woff2" crossorigin="">
@@ -34,7 +35,20 @@ const { title, description, image, pagefindIgnore, article } = Astro.props;
 
 		<title>{title}</title>
 		{description && <meta name="description" content={description} />}
-		<meta name="theme-color" content={themeColor}>
+		<meta name="theme-color" content={lightThemeColor}>
+		<script is:inline>
+			(() => {
+				const storageKey = "spectre-theme";
+				const storedTheme = localStorage.getItem(storageKey);
+				const theme = storedTheme === "dark" ? "dark" : "light";
+				document.documentElement.dataset.theme = theme;
+				document.documentElement.style.colorScheme = theme;
+				const themeMeta = document.querySelector('meta[name="theme-color"]');
+				if (themeMeta) {
+					themeMeta.setAttribute("content", theme === "dark" ? "#0c1118" : "#f4eee2");
+				}
+			})();
+		</script>
 
 		<link rel="canonical" href={Astro.url} />
 
