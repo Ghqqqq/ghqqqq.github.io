@@ -231,6 +231,50 @@
 	white-space: nowrap;
 }
 
+.service-text-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+}
+
+.service-text-item {
+	display: block;
+}
+
+.service-text-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.35rem 0.65rem;
+}
+
+.service-text-main {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.35rem 0.55rem;
+	min-width: 0;
+}
+
+.service-text-main strong {
+	font-size: 0.98rem;
+}
+
+.service-text-meta,
+.service-text-kind {
+	color: var(--text-secondary);
+	font-family: "Geist Mono", "Courier New", Courier, monospace;
+	font-size: 0.82rem;
+}
+
+.service-text-kind {
+	margin-left: auto;
+	white-space: nowrap;
+}
+
 @media screen and (max-width: 640px) {
 	.profile-avatar {
 		width: 7rem;
@@ -242,6 +286,14 @@
 	}
 
 	.awards-text-year {
+		margin-left: 0;
+	}
+
+	.service-text-row {
+		align-items: flex-start;
+	}
+
+	.service-text-kind {
 		margin-left: 0;
 	}
 }

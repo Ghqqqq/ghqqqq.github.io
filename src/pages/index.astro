@@ -240,21 +240,23 @@ const publicationSections = [
 				/>
 				<h2>Academic Service &amp; Teaching</h2>
 			</div>
-			<div class="section-list">
+			<ul class="service-text-list">
 				{
 					serviceTeaching
 						.sort((a, b) => a.data.id - b.data.id)
 						.map((item) => (
-							<div class="section-entry">
-								<div class="post-header">
-									<h3>{item.data.title}</h3>
-									<span class="post-date">{formatKindLabel(item.data.kind)}</span>
+							<li class="service-text-item">
+								<div class="service-text-row">
+									<span class="service-text-main">
+										<strong>{item.data.title}</strong>
+										<span class="service-text-meta">{item.data.meta}</span>
+									</span>
+									<span class="service-text-kind">{formatKindLabel(item.data.kind)}</span>
 								</div>
-								<span class="section-meta">{item.data.meta}</span>
-							</div>
+							</li>
 						))
 				}
-			</div>
+			</ul>
 		</Card>
 		<Card>
 			<div class="header-container">
