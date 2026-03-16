@@ -1,5 +1,6 @@
 ---
 import { name } from "spectre:globals";
+import BrandBird from "../assets/profile-bird-original.png";
 import Icon from "./Icon.astro";
 import ThemeToggle from "./ThemeToggle.astro";
 
@@ -8,7 +9,16 @@ const path = Astro.url.pathname;
 <nav>
   <div class="nav-brand">
     <ThemeToggle />
-    <a class="site-title" href="/">{name}</a>
+    <a class="site-title" href="/">
+      <img
+        src={BrandBird.src}
+        alt="Blue bird brand mark"
+        width="28"
+        height="28"
+        class="brand-bird-icon brand-bird-mark"
+      />
+      <span>{name}</span>
+    </a>
   </div>
   <ul>
     <li>
@@ -177,10 +187,21 @@ const path = Astro.url.pathname;
   }
 
   .site-title {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
     font-weight: 800;
     text-decoration: none;
     font-size: 1.25em;
     z-index: 2;
+  }
+
+  .brand-bird-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    object-fit: contain;
+    flex: 0 0 auto;
+    filter: drop-shadow(0 0 12px rgba(var(--primary-rgb), 0.18));
   }
 
   nav ul {

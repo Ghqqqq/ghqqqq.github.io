@@ -149,9 +149,12 @@ test("homepage shell exposes the refreshed avatar and theme toggle", async () =>
 
 	assert.ok(html, "expected built homepage HTML");
 	assert.match(html, /profile-bird-original/);
+	assert.match(html, /brand-bird-icon/);
+	assert.match(html, /brand-bird-mark/);
 	assert.match(html, /theme-toggle/);
 	assert.match(html, /data-avatar-parallax/);
 	assert.match(html, /href="\/favicon-bird\.png"/);
+	assert.match(html, /rel="shortcut icon"/);
 	assert.match(html, /awards-text-list/);
 	assert.match(html, /awards-text-main/);
 	assert.match(html, /service-text-list/);
