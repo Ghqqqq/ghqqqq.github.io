@@ -133,10 +133,34 @@ const { Content } = await render(project);
 		background: var(--surface-bg);
 	}
 
+	:global(.project-result-pair) {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1rem;
+	}
+
+	:global(.project-result-panel) {
+		display: flex;
+		flex-direction: column;
+		gap: 0.65rem;
+		padding: 0.9rem;
+		border: 1px solid var(--border-color);
+		background: rgba(255, 255, 255, 0.92);
+	}
+
+	:global(.project-result-label) {
+		font-family: "Geist Mono", "Courier New", Courier, monospace;
+		font-size: 0.78rem;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: #5f6472;
+	}
+
 	:global(.project-result-image) {
 		display: block;
 		width: 100%;
 		height: auto;
+		object-fit: contain;
 	}
 
 	:global(.project-result-caption) {
@@ -147,5 +171,11 @@ const { Content } = await render(project);
 
 	:global(.project-result-caption strong) {
 		color: var(--text-primary);
+	}
+
+	@media screen and (max-width: 720px) {
+		:global(.project-result-pair) {
+			grid-template-columns: minmax(0, 1fr);
+		}
 	}
 </style>

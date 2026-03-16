@@ -118,21 +118,28 @@ test("publications route and homepage navigation expose full publications", asyn
 	);
 	assert.match(blockProjectHtml, /Current Results/);
 	assert.match(blockProjectHtml, /Example 1/);
+	assert.match(blockProjectHtml, /block-hf-ex1-preview/);
+	assert.match(blockProjectHtml, /block-hf-ex1-skin/);
 	assert.match(
 		blockProjectHtml,
 		/This is the current effect on a relatively simple character concept\./,
 	);
 	assert.match(blockProjectHtml, /Example 2/);
+	assert.match(blockProjectHtml, /block-hf-ex2-preview/);
+	assert.match(blockProjectHtml, /block-hf-ex2-skin/);
 	assert.match(
 		blockProjectHtml,
 		/This is the current effect on a more detailed fantasy-style character with fine-grained clothing and hair cues\./,
 	);
 	assert.match(blockProjectHtml, /Example 3/);
+	assert.match(blockProjectHtml, /block-hf-ex3-preview/);
+	assert.match(blockProjectHtml, /block-hf-ex3-skin/);
 	assert.match(
 		blockProjectHtml,
 		/This is the current effect on a harder sports-jersey example where some preview details are still compressed\./,
 	);
 	assert.doesNotMatch(blockProjectHtml, /Figure 2: Overview of BLOCK/);
+	assert.doesNotMatch(blockProjectHtml, /block-example-1|block-example-2|block-example-3/);
 });
 
 test("homepage groups selected publications by research area with real venue badges", async () => {

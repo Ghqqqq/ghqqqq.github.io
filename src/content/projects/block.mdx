@@ -18,9 +18,12 @@ info:
 ---
 
 import { Image } from "astro:assets";
-import Example1 from "../assets/block-example-1.png";
-import Example2 from "../assets/block-example-2.png";
-import Example3 from "../assets/block-example-3.png";
+import Example1Preview from "../assets/block-hf-ex1-preview.png";
+import Example1Skin from "../assets/block-hf-ex1-skin.png";
+import Example2Preview from "../assets/block-hf-ex2-preview.png";
+import Example2Skin from "../assets/block-hf-ex2-skin.png";
+import Example3Preview from "../assets/block-hf-ex3-preview.png";
+import Example3Skin from "../assets/block-hf-ex3-skin.png";
 
 BLOCK is an open-source bi-stage MLLM pipeline for translating character concepts into Minecraft-ready skins. The system first synthesizes structured preview images and then converts them into valid skin atlases with a deterministic decoder.
 
@@ -30,39 +33,84 @@ I'm iterating and working on generating Minecraft skins end-to-end. If you are a
 
 <div class="project-result-grid">
   <figure class="project-result-card">
-    <Image
-      src={Example1}
-      alt="BLOCK current result on a simple dark-clothed character concept"
-      class="project-result-image"
-      widths={[1120]}
-      sizes="(min-width: 900px) 860px, 100vw"
-    />
+    <div class="project-result-pair">
+      <div class="project-result-panel">
+        <span class="project-result-label">Preview</span>
+        <Image
+          src={Example1Preview}
+          alt="Hugging Face BLOCK example 1 preview"
+          class="project-result-image"
+          widths={[1024]}
+          sizes="(min-width: 900px) 420px, 100vw"
+        />
+      </div>
+      <div class="project-result-panel">
+        <span class="project-result-label">Generated skin</span>
+        <Image
+          src={Example1Skin}
+          alt="Hugging Face BLOCK example 1 generated skin"
+          class="project-result-image"
+          widths={[1024]}
+          sizes="(min-width: 900px) 420px, 100vw"
+        />
+      </div>
+    </div>
     <figcaption class="project-result-caption">
       <strong>Example 1.</strong> This is the current effect on a relatively simple character concept.
     </figcaption>
   </figure>
 
   <figure class="project-result-card">
-    <Image
-      src={Example2}
-      alt="BLOCK current result on a detailed fantasy-style character concept"
-      class="project-result-image"
-      widths={[1120]}
-      sizes="(min-width: 900px) 860px, 100vw"
-    />
+    <div class="project-result-pair">
+      <div class="project-result-panel">
+        <span class="project-result-label">Preview</span>
+        <Image
+          src={Example2Preview}
+          alt="Hugging Face BLOCK example 2 preview"
+          class="project-result-image"
+          widths={[1024]}
+          sizes="(min-width: 900px) 420px, 100vw"
+        />
+      </div>
+      <div class="project-result-panel">
+        <span class="project-result-label">Generated skin</span>
+        <Image
+          src={Example2Skin}
+          alt="Hugging Face BLOCK example 2 generated skin"
+          class="project-result-image"
+          widths={[1024]}
+          sizes="(min-width: 900px) 420px, 100vw"
+        />
+      </div>
+    </div>
     <figcaption class="project-result-caption">
       <strong>Example 2.</strong> This is the current effect on a more detailed fantasy-style character with fine-grained clothing and hair cues.
     </figcaption>
   </figure>
 
   <figure class="project-result-card">
-    <Image
-      src={Example3}
-      alt="BLOCK current result on a sports-jersey character concept"
-      class="project-result-image"
-      widths={[1090]}
-      sizes="(min-width: 900px) 860px, 100vw"
-    />
+    <div class="project-result-pair">
+      <div class="project-result-panel">
+        <span class="project-result-label">Preview</span>
+        <Image
+          src={Example3Preview}
+          alt="Hugging Face BLOCK example 3 preview"
+          class="project-result-image"
+          widths={[288]}
+          sizes="(min-width: 900px) 420px, 100vw"
+        />
+      </div>
+      <div class="project-result-panel">
+        <span class="project-result-label">Generated skin</span>
+        <Image
+          src={Example3Skin}
+          alt="Hugging Face BLOCK example 3 generated skin"
+          class="project-result-image"
+          widths={[1024]}
+          sizes="(min-width: 900px) 420px, 100vw"
+        />
+      </div>
+    </div>
     <figcaption class="project-result-caption">
       <strong>Example 3.</strong> This is the current effect on a harder sports-jersey example where some preview details are still compressed.
     </figcaption>
