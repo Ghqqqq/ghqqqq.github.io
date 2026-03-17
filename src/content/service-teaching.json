@@ -18,6 +18,12 @@
 		"kind": "talk"
 	},
 	{
+		"id": 5,
+		"title": "Invited Talk, Stochastic Constrained Contextual Bandits via Lyapunov Optimization Based Estimation to Decision Framework",
+		"meta": "POMS-HK 2025",
+		"kind": "talk"
+	},
+	{
 		"id": 4,
 		"title": "Teaching Assistant, Online Optimization and Learning (CS245)",
 		"meta": "2022 - 2025",
