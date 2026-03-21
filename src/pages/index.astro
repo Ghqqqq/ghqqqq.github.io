@@ -253,17 +253,30 @@ const publicationSections = [
 					serviceTeaching
 						.sort((a, b) => a.data.id - b.data.id)
 						.map((item) => (
-							<li class="service-text-item">
-								<div class="service-text-heading">
-									<strong>{item.data.title}</strong>
-									<span class="service-text-kind">{formatKindLabel(item.data.kind)}</span>
-								</div>
-								<div class="service-text-meta">{item.data.meta}</div>
-							</li>
-						))
-				}
-			</ul>
-		</Card>
+								<li class="service-text-item">
+									<div class="service-text-heading">
+										<strong>{item.data.title}</strong>
+										<span class="service-text-kind">{formatKindLabel(item.data.kind)}</span>
+									</div>
+									<div class="service-text-meta">{item.data.meta}</div>
+									{item.data.notePrefix && (
+										<div class="service-text-note">
+											{item.data.notePrefix}
+											{item.data.noteLink && item.data.noteLinkLabel ? (
+												<a href={item.data.noteLink} class="service-text-link">
+													{item.data.noteLinkLabel}
+												</a>
+											) : (
+												item.data.noteLinkLabel
+											)}
+											{item.data.noteSuffix}
+										</div>
+									)}
+								</li>
+							))
+					}
+				</ul>
+			</Card>
 		<Card>
 			<div class="header-container">
 				<Icon

@@ -65,6 +65,10 @@ const serviceTeaching = defineCollection({
 		title: z.string(),
 		meta: z.string(),
 		kind: z.enum(["service", "teaching", "talk"]),
+		notePrefix: z.string().optional(),
+		noteLinkLabel: z.string().optional(),
+		noteLink: z.string().url().optional(),
+		noteSuffix: z.string().optional(),
 	}),
 });
 

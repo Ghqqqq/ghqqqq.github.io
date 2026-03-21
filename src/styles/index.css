@@ -292,6 +292,24 @@
 	font-size: 0.82rem;
 }
 
+.service-text-note {
+	color: var(--text-secondary);
+	font-size: 0.86rem;
+	line-height: 1.55;
+}
+
+.service-text-link {
+	color: var(--primary);
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 0.12em;
+}
+
+.service-text-link:hover,
+.service-text-link:focus-visible {
+	color: var(--text-primary);
+}
+
 .service-text-kind {
 	margin-left: auto;
 	white-space: nowrap;
