@@ -1,9 +1,21 @@
 ---
+interface Props {
+  variant?: "split" | "single";
+}
+
+const { variant = "split" } = Astro.props;
 ---
-<div class="layout-grid">
-  <slot name="left" />
-  <slot name="right" />
-</div>
+
+{variant === "single" ? (
+  <div class="layout-single">
+    <slot />
+  </div>
+) : (
+  <div class="layout-grid">
+    <slot name="left" />
+    <slot name="right" />
+  </div>
+)}
 
 <style>
   .layout-grid {
@@ -11,9 +23,14 @@
     align-items: start;
     align-content: stretch;
     display: grid;
-    gap: 2rem;
+    gap: 2.5rem;
     grid-template-columns: 2fr 5fr;
     grid-template-rows: auto;
+  }
+
+  .layout-single {
+    position: relative;
+    width: 100%;
   }
 
   @media screen and (max-width: 1380px) {
@@ -25,7 +42,11 @@
   @media screen and (max-width: 640px) {
     .layout-grid {
       margin: 0 1rem;
-      gap: 1rem;
+      gap: 1.5rem;
+    }
+
+    .layout-single {
+      margin: 0 1rem;
     }
   }
 </style>

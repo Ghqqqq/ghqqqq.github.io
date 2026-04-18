@@ -22,5 +22,8 @@ pnpm-debug.log*
 .worktrees/
 worktrees/
 
+# local playwright screenshots / traces
+.playwright-cli/
+
 # jetbrains setting folder
 .idea/

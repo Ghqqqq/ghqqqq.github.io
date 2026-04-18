@@ -3,25 +3,25 @@
 		"id": 1,
 		"icon": {
 			"type": "lucide",
-			"name": "bot"
+			"name": "brain"
 		},
-		"text": "Agentic RL"
+		"text": "Reinforcement Learning"
 	},
 	{
 		"id": 2,
 		"icon": {
 			"type": "lucide",
-			"name": "image"
+			"name": "waypoints"
 		},
-		"text": "MLLMs"
+		"text": "Bandits & Online Learning"
 	},
 	{
 		"id": 3,
 		"icon": {
 			"type": "lucide",
-			"name": "brain"
+			"name": "chart-no-axes-combined"
 		},
-		"text": "Reinforcement Learning"
+		"text": "Safe / Constrained Learning"
 	},
 	{
 		"id": 4,
@@ -35,16 +35,8 @@
 		"id": 5,
 		"icon": {
 			"type": "lucide",
-			"name": "chart-no-axes-combined"
+			"name": "bot"
 		},
-		"text": "Constrained Optimization"
-	},
-	{
-		"id": 6,
-		"icon": {
-			"type": "lucide",
-			"name": "waypoints"
-		},
-		"text": "Online Learning / Bandit"
+		"text": "Agentic & Multimodal LLMs"
 	}
 ]

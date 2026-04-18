@@ -8,13 +8,13 @@
 	{
 		"id": 2,
 		"title": "National Scholarship for Doctoral Students",
-		"meta": "China",
+		"meta": "MoE, China",
 		"year": 2025
 	},
 	{
 		"id": 3,
 		"title": "Tencent Rhino-Bird Elite Talent Program",
-		"meta": "Selected among 70+ researchers nationwide",
+		"meta": "Selected among 70+",
 		"year": 2025
 	},
 	{
@@ -29,7 +29,7 @@
 	},
 	{
 		"id": 6,
-		"title": "ACM SIGMETRICS/IFIP Performance Travel Grant",
+		"title": "ACM SIGMETRICS / IFIP Performance Travel Grant",
 		"year": 2023
 	},
 	{

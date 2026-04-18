@@ -17,13 +17,13 @@
 	},
 	{
 		"id": 3,
-		"title": "Invited Talk, Safe, Efficient and Adaptive Online Sequential Decision Making",
+		"title": "Invited Talk, Safe and Adaptive Online Decision-Making",
 		"meta": "Tencent Rhino-Bird Elite Talent Forum 2025",
 		"kind": "talk"
 	},
 	{
 		"id": 4,
-		"title": "Invited Talk, Stochastic Constrained Contextual Bandits via Lyapunov Optimization Based Estimation to Decision Framework",
+		"title": "Invited Talk, Constrained Contextual Bandits via Lyapunov Optimization",
 		"meta": "POMS-HK 2025",
 		"kind": "talk"
 	},

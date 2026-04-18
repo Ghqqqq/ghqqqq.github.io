@@ -2,10 +2,8 @@
 import "../styles/article-list.css";
 
 import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
 import { openGraph } from "spectre:globals";
-import Card from "../components/Card.astro";
-import Icon from "../components/Icon.astro";
-import ImageGlow from "../components/ImageGlow.astro";
 import Layout from "../layouts/Layout.astro";
 
 const projects = await getCollection("projects");
@@ -13,101 +11,183 @@ const sortedProjects = [...projects].sort(
 	(a, b) => b.data.date.getTime() - a.data.date.getTime(),
 );
 ---
+
 <Layout
 	title={openGraph.projects.title || "Projects"}
 	description={openGraph.projects.description}
-	pagefindIgnore
+	layout="single"
 >
-  <div class="layout-grid-left" slot="left">
-    <Card class="flex-col-card">
-      <h2 class="no-mt">Stats</h2>
-			<div class="stats-div">
-				<div class="stat">
-					<h3 class="text-glow">{projects.length}</h3>
-					<span>Project{projects.length === 1 ? '' : 's'}</span>
-				</div>
-			</div>
-    </Card>
-  </div>
-	<div class="layout-grid-right" slot="right">
-		<Card>
-			<div class="header-container">
-				<Icon type='lucide' name="folder-git" width={24} height={24} class='glow-icon' />
-				<h2>Projects</h2>
-			</div>
-			<div class="projects-spotlight-list">
-				{sortedProjects.map((post) => (
-					<a href={`/projects/${post.id}`} class="post-container project-spotlight-card">
+	<article class="page-index">
+		<header class="page-hero">
+			<p class="page-eyebrow">Index</p>
+			<h1 class="page-title">Projects</h1>
+			<p class="page-lede">
+				Things I'm building, iterating on, or thinking through.
+			</p>
+		</header>
+
+		<hr class="hairline" />
+
+		<div class="projects-list">
+			{
+				sortedProjects.map((post) => (
+					<a href={`/projects/${post.id}`} class="project-item">
 						{post.data.image && (
-							<ImageGlow
-								src={post.data.image}
-								alt="Figure 2: Overview of BLOCK"
-								class="project-spotlight-image"
-								width={1185}
-								height={500}
-								quality={100}
-							/>
-						)}
-						<div class="project-spotlight-copy">
-							<div class="post-header">
-								<h3>{post.data.title}</h3>
-								<span class="post-date">{post.data.date.toLocaleDateString()}</span>
+							<div class="project-image">
+								<Image
+									src={post.data.image}
+									alt={post.data.title}
+									width={1185}
+									height={500}
+									quality={90}
+								/>
 							</div>
-							<span>{post.data.description}</span>
-							<p class="project-spotlight-note">
-								I'm iterating and working on generating Minecraft skins end-to-end. If you are also interested, feel free to contact me.
-							</p>
+						)}
+						<div class="project-copy">
+							<div class="project-header">
+								<h2 class="project-title">{post.data.title}</h2>
+								<span class="project-date">
+									{post.data.date.toLocaleDateString()}
+								</span>
+							</div>
+							<p class="project-description">{post.data.description}</p>
 						</div>
 					</a>
-				))}
-			</div>
-		</Card>
-  </div>
+				))
+			}
+		</div>
+	</article>
 </Layout>
+
 <style>
-	.stats-div {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
+	.page-index {
+		width: 100%;
 	}
 
-	.stat {
+	.page-hero {
+		padding: 3rem 0 1.5rem;
 		display: flex;
 		flex-direction: column;
+		gap: 0.6rem;
 	}
 
-	.stat h3 {
-		font-size: 2em;
+	.page-eyebrow {
 		margin: 0;
-		margin-bottom: .5rem;
+		font-family: var(--font-mono);
+		font-size: 0.76rem;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--text-tertiary);
 	}
 
-	.projects-spotlight-list {
+	.page-title {
+		margin: 0;
+		font-family: var(--font-display);
+		font-weight: 450;
+		font-size: clamp(2.4rem, 5vw, 3.5rem);
+		letter-spacing: -0.02em;
+		line-height: 1.05;
+		font-variation-settings:
+			"opsz" 144,
+			"SOFT" 30;
+	}
+
+	.page-lede {
+		margin: 0.25rem 0 0;
+		color: var(--text-secondary);
+		font-family: var(--font-display);
+		font-style: italic;
+		font-size: 1rem;
+	}
+
+	.projects-list {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
 	}
 
-	.project-spotlight-card {
-		gap: 1.1rem;
+	.project-item {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+		padding: 2rem 0;
+		border-top: 1px solid var(--hairline);
+		color: var(--text-primary);
+		text-decoration: none;
+		transition: color 0.15s ease;
 	}
 
-	.project-spotlight-image {
+	.project-item:first-child {
+		border-top: none;
+	}
+
+	.project-item:hover,
+	.project-item:focus-visible {
+		color: var(--primary);
+		outline: none;
+		text-decoration: none;
+	}
+
+	.project-item:hover .project-title,
+	.project-item:focus-visible .project-title {
+		color: var(--primary);
+	}
+
+	.project-image {
+		overflow: hidden;
+	}
+
+	.project-image :global(img) {
 		width: 100%;
 		height: auto;
 		display: block;
 	}
 
-	.project-spotlight-copy {
+	.project-copy {
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
+		gap: 0.6rem;
 	}
 
-	.project-spotlight-note {
+	.project-header {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0.35rem 1rem;
+	}
+
+	.project-title {
 		margin: 0;
-		line-height: 1.6;
-		color: var(--text-secondary);
+		font-family: var(--font-display);
+		font-weight: 450;
+		font-size: clamp(1.6rem, 2.5vw, 2rem);
+		letter-spacing: -0.015em;
+		line-height: 1.15;
+		color: var(--text-primary);
+		transition: color 0.15s ease;
 	}
 
+	.project-date {
+		font-family: var(--font-mono);
+		font-size: 0.8rem;
+		color: var(--text-tertiary);
+		letter-spacing: 0.04em;
+		white-space: nowrap;
+	}
+
+	.project-description {
+		margin: 0;
+		color: var(--text-secondary);
+		line-height: 1.6;
+	}
+
+	@media screen and (max-width: 640px) {
+		.page-hero {
+			padding: 1.5rem 0 1rem;
+		}
+
+		.project-item {
+			padding: 1.5rem 0;
+		}
+	}
 </style>

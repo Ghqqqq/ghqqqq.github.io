@@ -11,16 +11,22 @@ interface Props {
 	title: string;
 	description?: string;
 	image?: ImageMetadata;
-	pagefindIgnore?: boolean;
+	layout?: "split" | "single";
 	article?: {
 		createdAt: Date;
 		updatedAt?: Date;
 	};
 }
 
-const { title, description, image, pagefindIgnore, article } = Astro.props;
-const lightThemeColor = "#f4eee2";
-const darkThemeColor = "#0c1118";
+const {
+	title,
+	description,
+	image,
+	article,
+	layout = "split",
+} = Astro.props;
+const lightThemeColor = "#f4efe4";
+const darkThemeColor = "#15130f";
 ---
 
 <!DOCTYPE html>
@@ -28,6 +34,13 @@ const darkThemeColor = "#0c1118";
 	<head>
 		<link rel="preload" href="/fonts/Geist.woff2" as="font" type="font/woff2" crossorigin="">
 		<link rel="preload" href="/fonts/GeistMono.woff2" as="font" type="font/woff2" crossorigin="">
+
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..700,0..100;1,9..144,300..600,0..100&display=swap"
+		/>
 
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
@@ -39,7 +52,7 @@ const darkThemeColor = "#0c1118";
 		<title>{title}</title>
 		{description && <meta name="description" content={description} />}
 		<meta name="theme-color" content={darkThemeColor}>
-		<script is:inline>
+		<script is:inline define:vars={{ lightThemeColor, darkThemeColor }}>
 			(() => {
 				const storageKey = "spectre-theme";
 				const storedTheme = localStorage.getItem(storageKey);
@@ -48,7 +61,10 @@ const darkThemeColor = "#0c1118";
 				document.documentElement.style.colorScheme = theme;
 				const themeMeta = document.querySelector('meta[name="theme-color"]');
 				if (themeMeta) {
-					themeMeta.setAttribute("content", theme === "dark" ? "#0c1118" : "#f4eee2");
+					themeMeta.setAttribute(
+						"content",
+						theme === "dark" ? darkThemeColor : lightThemeColor,
+					);
 				}
 			})();
 		</script>
@@ -82,14 +98,78 @@ const darkThemeColor = "#0c1118";
 		<meta name="twitter:image" content={image?.src || '/img/og.png'} />
 	</head>
 	<body>
-		<main data-pagefind-ignore={pagefindIgnore}>
+		<main class:list={[layout === "single" && "main-single"]}>
 			<Navbar />
-			<LayoutGrid>
-				<slot name="left" slot="left" />
-				<slot name="right" slot="right" />
-			</LayoutGrid>
+			{layout === "single" ? (
+				<LayoutGrid variant="single">
+					<slot />
+				</LayoutGrid>
+			) : (
+				<LayoutGrid>
+					<slot name="left" slot="left" />
+					<slot name="right" slot="right" />
+				</LayoutGrid>
+			)}
 			<slot name="404" />
+			<footer class:list={["site-footer", layout === "single" && "site-footer-single"]}>
+				<hr class="hairline" />
+				<p>
+					Powered by
+					<a href="https://openai.com/codex/" target="_blank" rel="noopener noreferrer">Codex</a>
+					&amp;
+					<a href="https://www.anthropic.com/claude-code" target="_blank" rel="noopener noreferrer">Claude Code</a>.
+				</p>
+			</footer>
 		</main>
 		<Background />
 	</body>
 </html>
+
+<style is:global>
+	.site-footer {
+		margin-top: 2.5rem;
+		padding-bottom: 2.5rem;
+		font-family: var(--font-sans);
+		font-size: 0.78rem;
+		letter-spacing: 0.02em;
+		color: var(--text-tertiary);
+		text-align: center;
+	}
+
+	.site-footer .hairline {
+		margin-bottom: 1.25rem;
+	}
+
+	.site-footer p {
+		margin: 0;
+	}
+
+	.site-footer a {
+		color: var(--text-secondary);
+		text-decoration: none;
+		border-bottom: 1px solid transparent;
+		transition: color 0.15s ease, border-color 0.15s ease;
+	}
+
+	.site-footer a:hover,
+	.site-footer a:focus-visible {
+		color: var(--text-primary);
+		border-bottom-color: var(--primary);
+		outline: none;
+	}
+
+	.site-footer-single {
+		max-width: 960px;
+		margin-left: auto;
+		margin-right: auto;
+		padding-left: 1.5rem;
+		padding-right: 1.5rem;
+	}
+
+	@media screen and (max-width: 640px) {
+		.site-footer {
+			margin-top: 2rem;
+			padding-bottom: 2rem;
+		}
+	}
+</style>

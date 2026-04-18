@@ -1,12 +1,10 @@
 ---
 import "../styles/index.css";
 
+import { Image } from "astro:assets";
 import { getCollection, getEntry, render } from "astro:content";
 import { name, openGraph } from "spectre:globals";
 import ProfilePicture from "../assets/profile-bird-original.png";
-import Card from "../components/Card.astro";
-import Icon from "../components/Icon.astro";
-import ImageGlow from "../components/ImageGlow.astro";
 import Layout from "../layouts/Layout.astro";
 import PublicationTeaser from "../components/PublicationTeaser.astro";
 
@@ -18,20 +16,21 @@ const [
 	awards,
 	experience,
 	serviceTeaching,
-] =
-	await Promise.all([
-		getCollection("publications"),
-		getEntry("other", "about"),
-		getCollection("quickInfo"),
-		getCollection("socials"),
-		getCollection("awards"),
-		getCollection("experience"),
-		getCollection("serviceTeaching"),
-	]);
+] = await Promise.all([
+	getCollection("publications"),
+	getEntry("other", "about"),
+	getCollection("quickInfo"),
+	getCollection("socials"),
+	getCollection("awards"),
+	getCollection("experience"),
+	getCollection("serviceTeaching"),
+]);
 
 const { Content: About } = await render(about!);
+
 const formatKindLabel = (kind: "service" | "teaching" | "talk") =>
 	kind.charAt(0).toUpperCase() + kind.slice(1);
+
 const splitAwardMeta = (meta?: string, year?: number) => {
 	const compactMeta = meta?.trim();
 	const yearLabel = year
@@ -71,246 +70,273 @@ const publicationSections = [
 		(publication) => publication.data.homepageCategory === section.id,
 	),
 }));
+
+const sortedSocials = [...socials].sort((a, b) => a.data.id - b.data.id);
+const sortedQuickInfo = [...quickInfo].sort((a, b) => a.data.id - b.data.id);
+const sortedExperience = [...experience].sort(
+	(a, b) => a.data.id - b.data.id,
+);
+const sortedAwards = [...awards].sort(
+	(a, b) => (b.data.year ?? 0) - (a.data.year ?? 0),
+);
+const sortedServiceTeaching = [...serviceTeaching].sort(
+	(a, b) => a.data.id - b.data.id,
+);
+
+type Section = {
+	num: string;
+	title: string;
+};
+
+const sections: Section[] = [
+	{ num: "01", title: "About" },
+	{ num: "02", title: "Experience" },
+	{ num: "03", title: "Awards" },
+	{ num: "04", title: "Service & Teaching" },
+	{ num: "05", title: "Selected Publications" },
+];
 ---
 
 <Layout
 	title={openGraph.home.title || name}
 	description={openGraph.home.description}
-	pagefindIgnore
+	layout="single"
 >
-	<div class="layout-grid-left" slot="left">
-		<Card class="flex-col-card profile-identity-card">
-			<ImageGlow
-				quality={100}
-				width={132}
-				height={132}
-				src={ProfilePicture}
-				alt="Blue bird profile avatar for Hengquan Guo"
-				class="profile-avatar"
-				parallax
-				loading="eager"
-			/>
-			<div class="profile-copy">
-				<h2>{name}</h2>
-				<p class="profile-affiliation">ShanghaiTech University</p>
-				<div class="profile-links" aria-label="Profile links">
+	<article class="home">
+		<header class="hero">
+			<div class="hero-text">
+				<h1 class="hero-name">{name}</h1>
+				<p class="hero-tagline">
+					PhD student, ShanghaiTech University
+				</p>
+				<p class="hero-lede">
+					Working on reinforcement learning under uncertainty and
+					constraints — from theory to LLMs and markets.
+				</p>
+				<div class="hero-links" aria-label="Profile links">
 					{
-						socials
-							.sort((a, b) => a.data.id - b.data.id)
-							.map((item) =>
-								item.data.link ? (
-									<a href={item.data.link} class="profile-inline-link">
+						sortedSocials.map((item, i) => (
+							<>
+								{item.data.link ? (
+									<a
+										href={item.data.link}
+										class="hero-link"
+										target={
+											item.data.link.startsWith("http")
+												? "_blank"
+												: undefined
+										}
+										rel={
+											item.data.link.startsWith("http")
+												? "noopener noreferrer"
+												: undefined
+										}
+									>
 										{item.data.text}
 									</a>
 								) : (
-									<span class="profile-inline-link profile-inline-text">
+									<span class="hero-link hero-link-text">
 										{item.data.text}
 									</span>
-								),
-							)
+								)}
+								{i < sortedSocials.length - 1 && (
+									<span class="hero-link-sep" aria-hidden="true">·</span>
+								)}
+							</>
+						))
 					}
 				</div>
 			</div>
-		</Card>
-		<Card>
-			<div class="header-container">
-				<Icon
-					type="lucide"
-					name="compass"
-					width={24}
-					height={24}
-					class="glow-icon research-interest-heading-icon"
+			<div class="hero-avatar">
+				<Image
+					src={ProfilePicture}
+					alt="Blue bird portrait of Hengquan Guo"
+					width={288}
+					height={288}
+					quality={100}
+					loading="eager"
 				/>
-				<h2>Research Interests</h2>
 			</div>
-			<ul class="overview-list research-interest-list">
-				{
-					quickInfo
-						.sort((a, b) => a.data.id - b.data.id)
-						.map((info) => (
-						<li>
-							<Icon
-								type={info.data.icon.type}
-								name={info.data.icon.name as any}
-								width={24}
-								height={24}
-								class="glow-icon"
-							/>
-							<span>{info.data.text}</span>
-						</li>
-					))
-				}
-			</ul>
-		</Card>
-	</div>
-	<div class="layout-grid-right" slot="right">
-		<Card>
-			<div class="header-container">
-				<Icon
-					type="lucide"
-					name="user"
-					width={24}
-					height={24}
-					class="glow-icon"
-				/>
-				<h2>About me</h2>
+		</header>
+
+		<hr class="hairline hero-hairline" />
+
+		<section class="home-section" id="about">
+			<header class="section-head">
+				<span class="section-num">{sections[0].num}</span>
+				<h2 class="section-title">{sections[0].title}</h2>
+			</header>
+			<div class="section-body">
+				<div class="prose">
+					<About />
+				</div>
+				<p class="interest-inline">
+					<span class="interest-inline-label">Research interests</span>
+					<span class="interest-inline-sep" aria-hidden="true">—</span>
+					<span class="interest-inline-items">
+						{
+							sortedQuickInfo.map((info, i) => (
+								<>
+									<span>{info.data.text}</span>
+									{i < sortedQuickInfo.length - 1 && (
+										<span class="interest-inline-bullet" aria-hidden="true">
+											·
+										</span>
+									)}
+								</>
+							))
+						}
+					</span>
+				</p>
 			</div>
-			<div class="prose">
-				<About />
-			</div>
-		</Card>
-		<Card>
-			<div class="header-container">
-				<Icon
-					type="lucide"
-					name="briefcase-business"
-					width={24}
-					height={24}
-					class="glow-icon"
-				/>
-				<h2>Experience</h2>
-			</div>
-			<div class="section-list">
-				{
-					experience
-						.sort((a, b) => a.data.id - b.data.id)
-						.map((item) => (
-							<div class="section-entry">
-								<div class="post-header">
-									<h3>{item.data.title}</h3>
-									<span class="post-date">{item.data.period}</span>
+		</section>
+
+		<hr class="hairline" />
+
+		<section class="home-section" id="experience">
+			<header class="section-head">
+				<span class="section-num">{sections[1].num}</span>
+				<h2 class="section-title">{sections[1].title}</h2>
+			</header>
+			<div class="section-body">
+				<div class="entry-list">
+					{
+						sortedExperience.map((item) => (
+							<div class="entry">
+								<div class="entry-header">
+									<h3 class="entry-title">{item.data.title}</h3>
+									<span class="entry-date">{item.data.period}</span>
 								</div>
-								<span class="section-meta">{item.data.organization}</span>
+								<p class="entry-meta">{item.data.organization}</p>
 								{item.data.description && (
-									<p class="section-description">{item.data.description}</p>
+									<p class="entry-description">{item.data.description}</p>
 								)}
 								{item.data.outcomes && item.data.outcomes.length > 0 && (
-									<div class="experience-outcomes">
-										<span class="experience-outcomes-label">Outcomes:</span>
-										<ul class="experience-outcomes-list">
-											{item.data.outcomes.map((outcome) => <li>{outcome}</li>)}
+									<div class="entry-outcomes">
+										<span class="entry-outcomes-label">Outcomes</span>
+										<ul class="entry-outcomes-list">
+											{item.data.outcomes.map((outcome) => (
+												<li>{outcome}</li>
+											))}
 										</ul>
 									</div>
 								)}
 							</div>
 						))
-				}
+					}
+				</div>
 			</div>
-		</Card>
-		<Card>
-			<div class="header-container">
-				<Icon
-					type="lucide"
-					name="trophy"
-					width={24}
-					height={24}
-					class="glow-icon"
-				/>
-				<h2>Awards</h2>
-			</div>
-			<ul class="awards-text-list">
-				{
-					awards
-						.sort((a, b) => (b.data.year ?? 0) - (a.data.year ?? 0))
-						.map((award) => {
+		</section>
+
+		<hr class="hairline" />
+
+		<section class="home-section" id="awards">
+			<header class="section-head">
+				<span class="section-num">{sections[2].num}</span>
+				<h2 class="section-title">{sections[2].title}</h2>
+			</header>
+			<div class="section-body">
+				<ul class="award-list">
+					{
+						sortedAwards.map((award) => {
 							const { inlineMeta, yearLabel } = splitAwardMeta(
 								award.data.meta,
 								award.data.year,
 							);
 
 							return (
-								<li class="awards-text-item">
-									<div class="awards-text-row">
-										<span class="awards-text-main">
-											<strong>{award.data.title}</strong>
+								<li class="award-item">
+									<div class="award-title">{award.data.title}</div>
+									{(inlineMeta || yearLabel) && (
+										<div class="award-sub">
 											{inlineMeta && (
-												<span class="awards-text-meta">{inlineMeta}</span>
+												<span class="award-meta">{inlineMeta}</span>
 											)}
-										</span>
-										{yearLabel && (
-											<span class="awards-text-year">{yearLabel}</span>
-										)}
-									</div>
-								</li>
-							);
-						})
-				}
-			</ul>
-		</Card>
-		<Card>
-			<div class="header-container">
-				<Icon
-					type="lucide"
-					name="graduation-cap"
-					width={24}
-					height={24}
-					class="glow-icon"
-				/>
-				<h2>Academic Service &amp; Teaching</h2>
-			</div>
-			<ul class="service-text-list">
-				{
-					serviceTeaching
-						.sort((a, b) => a.data.id - b.data.id)
-						.map((item) => (
-								<li class="service-text-item">
-									<div class="service-text-heading">
-										<strong>{item.data.title}</strong>
-										<span class="service-text-kind">{formatKindLabel(item.data.kind)}</span>
-									</div>
-									<div class="service-text-meta">{item.data.meta}</div>
-									{item.data.notePrefix && (
-										<div class="service-text-note">
-											{item.data.notePrefix}
-											{item.data.noteLink && item.data.noteLinkLabel ? (
-												<a href={item.data.noteLink} class="service-text-link">
-													{item.data.noteLinkLabel}
-												</a>
-											) : (
-												item.data.noteLinkLabel
+											{inlineMeta && yearLabel && (
+												<span class="award-sep" aria-hidden="true">·</span>
 											)}
-											{item.data.noteSuffix}
+											{yearLabel && (
+												<span class="award-year">{yearLabel}</span>
+											)}
 										</div>
 									)}
 								</li>
-							))
+							);
+						})
 					}
 				</ul>
-			</Card>
-		<Card>
-			<div class="header-container">
-				<Icon
-					type="lucide"
-					name="book-open"
-					width={24}
-					height={24}
-					class="glow-icon"
-				/>
-				<h2>Selected Publications</h2>
 			</div>
-			<div class="publication-groups">
-				{
-					publicationSections.map(
-						(section) =>
-							section.publications.length > 0 && (
-								<section class="publication-group">
-									<h3 class="publication-group-title">{section.title}</h3>
-									<div class="content-container">
-										{
-											section.publications.map((publication) => (
-											<PublicationTeaser
-												publication={publication}
-												href={`/publications/${publication.id}`}
-												variant="list"
-											/>
-										))
-									}
+		</section>
+
+		<hr class="hairline" />
+
+		<section class="home-section" id="service">
+			<header class="section-head">
+				<span class="section-num">{sections[3].num}</span>
+				<h2 class="section-title">{sections[3].title}</h2>
+			</header>
+			<div class="section-body">
+				<ul class="entry-list-compact service-list">
+					{
+						sortedServiceTeaching.map((item) => (
+							<li class="entry-compact service-item">
+								<div class="service-heading">
+									<span class="entry-compact-title">{item.data.title}</span>
+									<span class="service-kind">
+										{formatKindLabel(item.data.kind)}
+									</span>
+								</div>
+								<div class="service-meta">{item.data.meta}</div>
+								{item.data.notePrefix && (
+									<div class="service-note">
+										{item.data.notePrefix}
+										{item.data.noteLink && item.data.noteLinkLabel ? (
+											<a href={item.data.noteLink}>
+												{item.data.noteLinkLabel}
+											</a>
+										) : (
+											item.data.noteLinkLabel
+										)}
+										{item.data.noteSuffix}
 									</div>
-								</section>
-							),
-					)
-				}
+								)}
+							</li>
+						))
+					}
+				</ul>
 			</div>
-		</Card>
-	</div>
+		</section>
+
+		<hr class="hairline" />
+
+		<section class="home-section" id="publications">
+			<header class="section-head">
+				<span class="section-num">{sections[4].num}</span>
+				<h2 class="section-title">{sections[4].title}</h2>
+			</header>
+			<div class="section-body">
+				<div class="publication-groups">
+					{
+						publicationSections.map(
+							(section) =>
+								section.publications.length > 0 && (
+									<section class="publication-group">
+										<h3 class="publication-group-title">{section.title}</h3>
+										<div class="publication-list">
+											{section.publications.map((publication) => (
+												<PublicationTeaser
+													publication={publication}
+													href={`/publications/${publication.id}`}
+													variant="list"
+												/>
+											))}
+										</div>
+									</section>
+								),
+						)
+					}
+				</div>
+			</div>
+		</section>
+	</article>
 </Layout>

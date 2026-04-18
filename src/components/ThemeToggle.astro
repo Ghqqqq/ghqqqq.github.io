@@ -27,7 +27,7 @@ import Icon from "./Icon.astro";
 				label.textContent = theme === "dark" ? "Dark" : "Light";
 			}
 			if (themeMeta) {
-				themeMeta.setAttribute("content", theme === "dark" ? "#0c1118" : "#f4eee2");
+				themeMeta.setAttribute("content", theme === "dark" ? "#15130f" : "#f4efe4");
 			}
 			window.dispatchEvent(
 				new CustomEvent("spectre-theme-change", {
@@ -56,28 +56,18 @@ import Icon from "./Icon.astro";
 	#theme-toggle {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.45rem;
-		padding: 0.45rem 0.75rem;
-		border: 1px solid var(--border-color);
-		background: var(--toggle-bg);
-		color: var(--text-primary);
-		backdrop-filter: blur(16px);
+		gap: 0.4rem;
+		padding: 0.25rem 0.1rem;
+		border: none;
+		background: transparent;
+		color: var(--text-secondary);
 		cursor: pointer;
-		transition:
-			background-color 0.2s ease,
-			border-color 0.2s ease,
-			color 0.2s ease,
-			transform 0.2s ease;
+		transition: color 0.15s ease;
 	}
 
 	#theme-toggle:hover,
 	#theme-toggle:focus-visible {
-		border-color: var(--primary);
-		background: var(--toggle-bg-hover);
-		transform: translateY(-1px);
-	}
-
-	#theme-toggle:focus-visible {
+		color: var(--text-primary);
 		outline: none;
 	}
 
@@ -100,9 +90,9 @@ import Icon from "./Icon.astro";
 	}
 
 	.theme-toggle-label {
-		font-family: "Geist Mono", "Courier New", Courier, monospace;
+		font-family: var(--font-sans);
 		font-size: 0.8rem;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
+		letter-spacing: 0.02em;
+		text-transform: none;
 	}
 </style>
