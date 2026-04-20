@@ -16,12 +16,15 @@
 
 :root,
 html[data-theme="light"] {
-	--font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Inter",
-		"Helvetica Neue", Arial, sans-serif;
-	--font-display: "Fraunces", "Source Serif 4", "Iowan Old Style",
-		"Palatino Linotype", Georgia, "Times New Roman", serif;
-	--font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", "Courier New",
-		Courier, monospace;
+	--font-sans:
+		"Geist", -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue",
+		Arial, sans-serif;
+	--font-display:
+		"Fraunces", "Source Serif 4", "Iowan Old Style", "Palatino Linotype",
+		Georgia, "Times New Roman", serif;
+	--font-mono:
+		"Geist Mono", ui-monospace, "SFMono-Regular", "Courier New", Courier,
+		monospace;
 
 	--primary: #a24a2c;
 	--primary-rgb: 162, 74, 44;
@@ -169,4 +172,15 @@ pre.astro-code code {
 	flex-direction: column;
 	font-size: 0.875em;
 	gap: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+	}
 }
