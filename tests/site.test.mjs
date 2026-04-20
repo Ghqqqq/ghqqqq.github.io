@@ -29,32 +29,31 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /data-theme="dark"/);
 	assert.match(html, /id="theme-toggle"/);
 	assert.match(html, /ShanghaiTech University/);
-	assert.match(html, /research-interest-heading-icon/);
 	assert.match(
 		html,
-		/Research Interests[\s\S]*Agentic RL[\s\S]*MLLMs[\s\S]*Reinforcement Learning[\s\S]*LLM Alignment/,
+		/Research interests[\s\S]*Reinforcement Learning[\s\S]*Bandits(?:\s*&amp;\s*|\s*&\s*)Online Learning[\s\S]*Safe \/ Constrained Learning[\s\S]*LLM Alignment[\s\S]*Agentic(?:\s*&amp;\s*|\s*&\s*)Multimodal LLMs/i,
 	);
 	assert.match(html, /Reinforcement Learning/);
 	assert.match(html, /LLM Alignment/);
-	assert.match(html, /Research Interests/);
+	assert.match(html, /Research interests/i);
 	assert.match(html, /href="https:\/\/www\.shanghaitech\.edu\.cn\/"/);
 	assert.match(html, /href="https:\/\/liuxincell\.github\.io\/"/);
 	assert.match(html, /href="https:\/\/junwei-pan\.github\.io\/"/);
 	assert.match(
 		html,
-		/research focuses on reinforcement learning and bandits/i,
+		/research centers on reinforcement learning and bandits, spanning theoretical foundations and applications\./i,
 	);
 	assert.match(
 		html,
-		/Tencent Rhino-Bird Elite Talent Program, where I worked on the intersection of reinforcement learning and recommender systems under the guidance of/i,
+		/In 2025[\s\S]*Tencent Rhino-Bird Elite Talent Program[\s\S]*advised by/i,
 	);
 	assert.match(
 		html,
-		/agentic LLMs[\s\S]*multimodal large models[\s\S]*embodied intelligence/i,
+		/current research interest is in reinforcement learning for agentic LLMs and multimodal large models/i,
 	);
 	assert.match(
 		html,
-		/About me[\s\S]*Experience[\s\S]*Awards[\s\S]*Academic Service(?:\s*&amp;\s*|\s*&\s*)Teaching[\s\S]*Selected Publications/,
+		/About[\s\S]*Experience[\s\S]*Awards[\s\S]*Service(?:\s*&amp;\s*|\s*&\s*)Teaching[\s\S]*Selected Publications/,
 	);
 	assert.match(html, /guohq \(at\) shanghaitech\.edu\.cn/);
 	assert.match(html, /guohq46 \(at\) qq\.com/);
@@ -69,12 +68,9 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /2025\.06 - 2026\.02/);
 	assert.match(
 		html,
-		/Experience[\s\S]*Studying reinforcement learning for recommendation and bidding\.[\s\S]*Outcomes:[\s\S]*Towards Safe and Optimal Online Bidding[\s\S]*ICLR 2026, accepted[\s\S]*GRB[\s\S]*submitted to KDD[\s\S]*Towards Temporal Interest Modeling in Recommendation via Reinforcement Learning/i,
+		/Experience[\s\S]*Research Intern[\s\S]*Reinforcement learning for recommendation and online bidding; produced three research works, with one accepted at ICLR 2026 and two under submission\./i,
 	);
-	assert.match(
-		html,
-		/Tencent CDG \(Tencent Rhino-Bird Elite Talent Program\)/,
-	);
+	assert.match(html, /Tencent CDG · Tencent Rhino-Bird Elite Talent Program/);
 	assert.match(html, /Hengquan Guo[\s\S]*ShanghaiTech University[\s\S]*Google Scholar/);
 	assert.doesNotMatch(html, /GitHub \(Coming soon\)/);
 	assert.doesNotMatch(html, /CV \(Coming soon\)/);
@@ -201,17 +197,62 @@ test("homepage shell exposes the refreshed avatar and theme toggle", async () =>
 	assert.ok(html, "expected built homepage HTML");
 	assert.match(html, /profile-bird-original/);
 	assert.match(html, /theme-toggle/);
-	assert.match(html, /data-avatar-parallax/);
+	assert.match(html, /theme-toggle-glyph/);
 	assert.match(html, /href="\/favicon-bird\.png"/);
 	assert.match(html, /rel="shortcut icon"/);
-	assert.match(html, /awards-text-list/);
-	assert.match(html, /awards-text-main/);
-	assert.match(html, /service-text-list/);
-	assert.match(html, /service-text-heading/);
-	assert.match(html, /service-text-kind/);
+	assert.match(html, /award-list/);
+	assert.match(html, /award-title/);
+	assert.match(html, /service-list/);
+	assert.match(html, /service-heading/);
+	assert.match(html, /service-kind/);
 	assert.doesNotMatch(html, /brand-bird-icon|brand-bird-mark/);
-	assert.doesNotMatch(html, /darkThemeColor|lightThemeColor/);
 	assert.doesNotMatch(html, /award-entry/);
+});
+
+test("homepage implements the editorial art and motion proposal hooks", async () => {
+	const html = await readBuilt("index.html");
+	const indexPage = await readRepo("src/pages/index.astro");
+	const indexCss = await readRepo("src/styles/index.css");
+	const resetCss = await readRepo("src/styles/reset.css");
+	const themeToggle = await readRepo("src/components/ThemeToggle.astro");
+
+	assert.ok(html, "expected built homepage HTML");
+	assert.ok(indexPage, "expected homepage source");
+	assert.ok(indexCss, "expected homepage CSS source");
+	assert.ok(resetCss, "expected reset CSS source");
+	assert.ok(themeToggle, "expected theme toggle source");
+
+	assert.match(html, /data-home-motion/);
+	assert.match(html, /data-reveal/);
+	assert.match(html, /data-draw-line/);
+	assert.match(indexPage, /IntersectionObserver/);
+	assert.match(indexPage, /prefers-reduced-motion:\s*reduce/);
+
+	assert.match(indexCss, /body::before/);
+	assert.match(indexCss, /paper-grain/);
+	assert.match(indexCss, /mix-blend-mode:\s*multiply/);
+	assert.match(indexCss, /\.home\[data-motion-ready\]\s+\[data-reveal\]/);
+	assert.match(indexCss, /\.section-head::after/);
+	assert.match(indexCss, /\.section-head:hover::after/);
+	assert.match(indexCss, /\.section-head:hover\s+\.section-num/);
+	assert.doesNotMatch(indexCss, /\.section-head:hover\s+\.section-title/);
+
+	assert.match(resetCss, /prefers-reduced-motion:\s*reduce/);
+	assert.match(resetCss, /transition-duration:\s*0\.01ms\s*!important/);
+	assert.match(resetCss, /scroll-behavior:\s*auto\s*!important/);
+
+	assert.match(themeToggle, /theme-toggle-glyph/);
+	assert.match(themeToggle, /theme-toggle-rays/);
+	assert.match(themeToggle, /theme-toggle-moon-body/);
+	assert.doesNotMatch(themeToggle, /lucide/);
+});
+
+test("single-column layout accounts for mobile side margins", async () => {
+	const layoutGrid = await readRepo("src/components/LayoutGrid.astro");
+
+	assert.ok(layoutGrid, "expected LayoutGrid source");
+	assert.match(layoutGrid, /@media screen and \(max-width:\s*640px\)/);
+	assert.match(layoutGrid, /\.layout-single\s*{[\s\S]*width:\s*calc\(100%\s*-\s*2rem\)/);
 });
 
 test("repository is configured for GitHub Pages deployment", async () => {

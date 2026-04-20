@@ -10,14 +10,18 @@ interface Props {
 const { publication, href, variant = "compact" } = Astro.props;
 const isExternal = href.startsWith("http://") || href.startsWith("https://");
 const venueLabel =
-	(
-		publication.data.venueShort ??
+	(publication.data.venueShort ??
 		publication.data.venue
 			.split(/\s+/)
-			.map((part) => part.replace(/[^A-Za-z0-9]/g, "").slice(0, 1).toUpperCase())
+			.map((part) =>
+				part
+					.replace(/[^A-Za-z0-9]/g, "")
+					.slice(0, 1)
+					.toUpperCase(),
+			)
 			.join("")
-			.slice(0, 8)
-	) || "PAPER";
+			.slice(0, 8)) ||
+	"PAPER";
 const statusLabel =
 	publication.data.status === "journal"
 		? "Journal"
@@ -72,12 +76,16 @@ const hasEqualContribution = publication.data.authors.includes("*");
 		border-top: 1px solid var(--hairline);
 		color: var(--text-primary);
 		text-decoration: none;
-		transition: color 0.15s ease;
+		transition:
+			color 0.15s ease,
+			transform 0.18s ease 40ms;
 	}
 
 	.publication-teaser:hover,
 	.publication-teaser:focus-visible {
 		color: var(--primary);
+		transform: translateX(2px);
+		transition-delay: 0ms;
 		outline: none;
 	}
 

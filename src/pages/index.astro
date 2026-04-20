@@ -5,8 +5,8 @@ import { Image } from "astro:assets";
 import { getCollection, getEntry, render } from "astro:content";
 import { name, openGraph } from "spectre:globals";
 import ProfilePicture from "../assets/profile-bird-original.png";
-import Layout from "../layouts/Layout.astro";
 import PublicationTeaser from "../components/PublicationTeaser.astro";
+import Layout from "../layouts/Layout.astro";
 
 const [
 	publications,
@@ -73,9 +73,7 @@ const publicationSections = [
 
 const sortedSocials = [...socials].sort((a, b) => a.data.id - b.data.id);
 const sortedQuickInfo = [...quickInfo].sort((a, b) => a.data.id - b.data.id);
-const sortedExperience = [...experience].sort(
-	(a, b) => a.data.id - b.data.id,
-);
+const sortedExperience = [...experience].sort((a, b) => a.data.id - b.data.id);
 const sortedAwards = [...awards].sort(
 	(a, b) => (b.data.year ?? 0) - (a.data.year ?? 0),
 );
@@ -102,8 +100,8 @@ const sections: Section[] = [
 	description={openGraph.home.description}
 	layout="single"
 >
-	<article class="home">
-		<header class="hero">
+	<article class="home" data-home-motion>
+		<header class="hero" data-reveal>
 			<div class="hero-text">
 				<h1 class="hero-name">{name}</h1>
 				<p class="hero-tagline">
@@ -159,9 +157,9 @@ const sections: Section[] = [
 			</div>
 		</header>
 
-		<hr class="hairline hero-hairline" />
+		<hr class="hairline hero-hairline" data-draw-line />
 
-		<section class="home-section" id="about">
+		<section class="home-section" id="about" data-reveal>
 			<header class="section-head">
 				<span class="section-num">{sections[0].num}</span>
 				<h2 class="section-title">{sections[0].title}</h2>
@@ -191,9 +189,9 @@ const sections: Section[] = [
 			</div>
 		</section>
 
-		<hr class="hairline" />
+		<hr class="hairline" data-draw-line />
 
-		<section class="home-section" id="experience">
+		<section class="home-section" id="experience" data-reveal>
 			<header class="section-head">
 				<span class="section-num">{sections[1].num}</span>
 				<h2 class="section-title">{sections[1].title}</h2>
@@ -228,9 +226,9 @@ const sections: Section[] = [
 			</div>
 		</section>
 
-		<hr class="hairline" />
+		<hr class="hairline" data-draw-line />
 
-		<section class="home-section" id="awards">
+		<section class="home-section" id="awards" data-reveal>
 			<header class="section-head">
 				<span class="section-num">{sections[2].num}</span>
 				<h2 class="section-title">{sections[2].title}</h2>
@@ -268,9 +266,9 @@ const sections: Section[] = [
 			</div>
 		</section>
 
-		<hr class="hairline" />
+		<hr class="hairline" data-draw-line />
 
-		<section class="home-section" id="service">
+		<section class="home-section" id="service" data-reveal>
 			<header class="section-head">
 				<span class="section-num">{sections[3].num}</span>
 				<h2 class="section-title">{sections[3].title}</h2>
@@ -307,9 +305,9 @@ const sections: Section[] = [
 			</div>
 		</section>
 
-		<hr class="hairline" />
+		<hr class="hairline" data-draw-line />
 
-		<section class="home-section" id="publications">
+		<section class="home-section" id="publications" data-reveal>
 			<header class="section-head">
 				<span class="section-num">{sections[4].num}</span>
 				<h2 class="section-title">{sections[4].title}</h2>
@@ -339,4 +337,61 @@ const sections: Section[] = [
 			</div>
 		</section>
 	</article>
+
+	<script is:inline>
+		(() => {
+			const root = document.querySelector("[data-home-motion]");
+
+			if (!root) return;
+
+			const prefersReducedMotion = window.matchMedia(
+				"(prefers-reduced-motion: reduce)",
+			).matches;
+			const revealItems = Array.from(root.querySelectorAll("[data-reveal]"));
+			const drawnLines = Array.from(root.querySelectorAll("[data-draw-line]"));
+
+			const finishImmediately = () => {
+				for (const item of revealItems) item.classList.add("is-in");
+				for (const line of drawnLines) line.classList.add("is-drawn");
+			};
+
+			if (prefersReducedMotion || !("IntersectionObserver" in window)) {
+				finishImmediately();
+				return;
+			}
+
+			root.setAttribute("data-motion-ready", "");
+
+			const revealObserver = new IntersectionObserver(
+				(entries, observer) => {
+					for (const entry of entries) {
+						if (!entry.isIntersecting) continue;
+
+						entry.target.classList.add("is-in");
+						observer.unobserve(entry.target);
+					}
+				},
+				{ rootMargin: "0px 0px -10% 0px", threshold: 0.12 },
+			);
+
+			const lineObserver = new IntersectionObserver(
+				(entries, observer) => {
+					for (const entry of entries) {
+						if (!entry.isIntersecting) continue;
+
+						entry.target.classList.add("is-drawn");
+						observer.unobserve(entry.target);
+					}
+				},
+				{ rootMargin: "0px 0px -8% 0px", threshold: 0.2 },
+			);
+
+			revealItems.forEach((item, index) => {
+				item.style.setProperty("--reveal-delay", `${Math.min(index, 5) * 45}ms`);
+				revealObserver.observe(item);
+			});
+
+			for (const line of drawnLines) lineObserver.observe(line);
+		})();
+	</script>
 </Layout>
