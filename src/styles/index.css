@@ -144,11 +144,17 @@ a.hero-link:focus-visible {
 	height: 9rem;
 	object-fit: cover;
 	border-radius: 9999px;
-	filter: grayscale(0.15) contrast(1.03);
+	filter: grayscale(0.08) saturate(1.04) contrast(1.02);
 }
 
 .hero-avatar {
-	margin-top: 1.15rem;
+	width: fit-content;
+	margin-top: 0.35rem;
+	padding: 0.28rem;
+	border: 1px solid rgba(var(--primary-rgb), 0.2);
+	border-radius: 9999px;
+	line-height: 0;
+	justify-self: end;
 }
 
 .hero-hairline {
@@ -161,7 +167,8 @@ a.hero-link:focus-visible {
 	display: grid;
 	grid-template-columns: minmax(9rem, 11rem) minmax(0, 1fr);
 	column-gap: 2.25rem;
-	padding: 1.8rem 0;
+	padding: clamp(2rem, 3vw, 2.4rem) 0;
+	scroll-margin-top: 4.5rem;
 }
 
 .section-head {
@@ -176,18 +183,21 @@ a.hero-link:focus-visible {
 	content: "";
 	width: 2rem;
 	height: 1px;
-	background-color: rgba(var(--primary-rgb), 0.72);
-	opacity: 0;
-	transform: scaleX(0);
+	background-color: var(--hairline);
+	opacity: 0.5;
+	transform: scaleX(0.72);
 	transform-origin: left center;
 	transition:
 		opacity 0.18s ease,
+		background-color 0.18s ease,
 		transform 0.18s ease;
 }
 
+.section-head.is-active-section::after,
 .section-head:hover::after,
 .section-head:focus-within::after {
 	opacity: 1;
+	background-color: rgba(var(--primary-rgb), 0.72);
 	transform: scaleX(1);
 }
 
@@ -200,6 +210,7 @@ a.hero-link:focus-visible {
 	transition: color 0.18s ease;
 }
 
+.section-head.is-active-section .section-num,
 .section-head:hover .section-num,
 .section-head:focus-within .section-num {
 	color: var(--primary);
@@ -265,7 +276,7 @@ a.hero-link:focus-visible {
 	color: var(--text-secondary);
 	font-family: var(--font-display);
 	font-size: clamp(1.08rem, 1.6vw, 1.24rem);
-	font-style: italic;
+	font-style: normal;
 	line-height: 1.45;
 	font-variation-settings:
 		"opsz" 72,
@@ -324,14 +335,15 @@ a.hero-link:focus-visible {
 .research-map-node.core {
 	width: min(100%, 30rem);
 	margin: 0 auto;
-	padding: 0.72rem 1rem;
+	padding: 0.92rem 1.35rem;
 	text-align: center;
-	border-top: 1px solid rgba(var(--primary-rgb), 0.5);
-	border-bottom: 1px solid rgba(var(--primary-rgb), 0.28);
+	border: 1px solid rgba(var(--primary-rgb), 0.3);
+	border-radius: 8px;
 	background: linear-gradient(
 		90deg,
-		rgba(var(--primary-rgb), 0.1),
-		transparent 72%
+		rgba(var(--primary-rgb), 0.11),
+		rgba(var(--primary-rgb), 0.035) 52%,
+		transparent 100%
 	);
 }
 
@@ -342,14 +354,14 @@ a.hero-link:focus-visible {
 	bottom: -0.85rem;
 	width: 1px;
 	height: 0.85rem;
-	background-color: var(--hairline);
+	background-color: rgba(var(--primary-rgb), 0.14);
 }
 
 .research-map-node-label {
 	display: block;
 	font-family: var(--font-display);
 	font-size: clamp(1.18rem, 2vw, 1.42rem);
-	font-style: italic;
+	font-style: normal;
 	font-weight: 460;
 	line-height: 1.16;
 	letter-spacing: 0;
@@ -373,7 +385,7 @@ a.hero-link:focus-visible {
 	left: 25%;
 	right: 25%;
 	height: 1px;
-	background-color: var(--hairline);
+	background-color: rgba(var(--primary-rgb), 0.14);
 }
 
 .research-map-branch {
@@ -391,7 +403,7 @@ a.hero-link:focus-visible {
 	left: 50%;
 	width: 1px;
 	height: 0.75rem;
-	background-color: var(--hairline);
+	background-color: rgba(var(--primary-rgb), 0.14);
 }
 
 .research-map-branch-title {
@@ -435,17 +447,21 @@ a.hero-link:focus-visible {
 	color: var(--text-secondary);
 	font-family: var(--font-display);
 	font-size: 0.94rem;
-	font-style: italic;
+	font-style: normal;
 	line-height: 1.25;
-	background: var(--surface-accent);
+	background-color: var(--surface-accent);
 	transition:
+		background-color 0.18s ease,
 		border-color 0.18s ease,
-		color 0.18s ease;
+		color 0.18s ease,
+		transform 0.18s ease;
 }
 
 .research-map-node.leaf:hover {
+	background-color: rgba(var(--primary-rgb), 0.055);
 	border-color: rgba(var(--primary-rgb), 0.62);
 	color: var(--text-primary);
+	transform: translateY(-1px);
 }
 
 /* ---------- Experience entries ---------- */
@@ -473,7 +489,6 @@ a.hero-link:focus-visible {
 .entry-title {
 	margin: 0;
 	font-family: var(--font-display);
-	font-style: italic;
 	font-weight: 500;
 	font-size: 1.15rem;
 	letter-spacing: -0.005em;
@@ -572,7 +587,6 @@ a.hero-link:focus-visible {
 .entry-compact-meta {
 	color: var(--text-secondary);
 	font-size: 0.86rem;
-	font-style: italic;
 }
 
 .entry-compact-year {
@@ -584,26 +598,26 @@ a.hero-link:focus-visible {
 	white-space: nowrap;
 }
 
-/* Awards: CSS multi-column so uneven items flow naturally instead of
-   being forced into row-pair alignment like a grid would do. */
 .award-list {
 	list-style: none;
 	margin: 0;
 	padding: 0;
-	column-count: 2;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	column-gap: 2.5rem;
-	column-fill: balance;
+	row-gap: 0.95rem;
 }
 
 .award-item {
-	break-inside: avoid;
-	page-break-inside: avoid;
-	margin: 0 0 0.95rem;
+	margin: 0;
+	padding-bottom: 0.95rem;
+	border-bottom: 1px solid var(--hairline);
 	line-height: 1.4;
 }
 
 .award-item:last-child {
-	margin-bottom: 0;
+	padding-bottom: 0;
+	border-bottom: none;
 }
 
 .award-title {
@@ -624,7 +638,7 @@ a.hero-link:focus-visible {
 }
 
 .award-meta {
-	font-style: italic;
+	font-style: normal;
 }
 
 .award-sep {
@@ -641,14 +655,21 @@ a.hero-link:focus-visible {
 /* ---------- Service & Teaching specific ---------- */
 
 .service-list {
-	gap: 0.9rem;
+	gap: 1.05rem;
 }
 
 .service-item {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
-	gap: 0.15rem;
+	gap: 0.22rem;
+	padding-bottom: 0.95rem;
+	border-bottom: 1px solid var(--hairline);
+}
+
+.service-item:last-child {
+	padding-bottom: 0;
+	border-bottom: none;
 }
 
 .service-heading {
@@ -671,7 +692,6 @@ a.hero-link:focus-visible {
 .service-meta {
 	color: var(--text-secondary);
 	font-size: 0.86rem;
-	font-style: italic;
 }
 
 .service-note {
@@ -783,6 +803,7 @@ a.hero-link:focus-visible {
 	.hero-avatar {
 		order: -1;
 		margin-top: 0;
+		justify-self: start;
 	}
 
 	.hero-avatar img {
@@ -813,11 +834,11 @@ a.hero-link:focus-visible {
 	}
 
 	.award-list {
-		column-count: 1;
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	.award-item {
-		margin-bottom: 0.75rem;
+		padding-bottom: 0.75rem;
 	}
 
 	.research-map-branches {

@@ -132,7 +132,7 @@ test("publications route and homepage navigation expose full publications", asyn
 
 	assert.ok(homepageHtml, "expected built homepage HTML");
 	assert.match(homepageHtml, /href="\/publications"/);
-	assert.match(homepageHtml, />Full Publications</);
+	assert.match(homepageHtml, />\s*Full Publications\s*</);
 	assert.ok(projectsHtml, "expected built projects index");
 	assert.match(projectsHtml, /BLOCK/);
 	assert.doesNotMatch(projectsHtml, /Project Placeholder/);
@@ -247,6 +247,7 @@ test("homepage implements the editorial art and motion proposal hooks", async ()
 	const indexPage = await readRepo("src/pages/index.astro");
 	const indexCss = await readRepo("src/styles/index.css");
 	const resetCss = await readRepo("src/styles/reset.css");
+	const navbar = await readRepo("src/components/Navbar.astro");
 	const themeToggle = await readRepo("src/components/ThemeToggle.astro");
 	const contentConfig = await readRepo("src/content.config.ts");
 	const publicationTeaser = await readRepo("src/components/PublicationTeaser.astro");
@@ -255,6 +256,7 @@ test("homepage implements the editorial art and motion proposal hooks", async ()
 	assert.ok(indexPage, "expected homepage source");
 	assert.ok(indexCss, "expected homepage CSS source");
 	assert.ok(resetCss, "expected reset CSS source");
+	assert.ok(navbar, "expected navbar source");
 	assert.ok(themeToggle, "expected theme toggle source");
 	assert.ok(contentConfig, "expected content config source");
 	assert.ok(publicationTeaser, "expected publication teaser source");
@@ -264,27 +266,55 @@ test("homepage implements the editorial art and motion proposal hooks", async ()
 	assert.match(html, /data-draw-line/);
 	assert.match(indexPage, /IntersectionObserver/);
 	assert.match(indexPage, /prefers-reduced-motion:\s*reduce/);
+	assert.match(indexPage, /is-active-section/);
 
 	assert.match(indexCss, /body::before/);
 	assert.match(indexCss, /paper-grain/);
 	assert.match(indexCss, /mix-blend-mode:\s*multiply/);
 	assert.match(indexCss, /\.home\[data-motion-ready\]\s+\[data-reveal\]/);
+	assert.match(indexCss, /\.hero-avatar\s*{[^}]*border:\s*1px solid/);
+	assert.match(indexCss, /\.hero-avatar img\s*{[^}]*grayscale\(0\.08\)/);
 	assert.match(indexCss, /\.about-pull-quote/);
 	assert.match(indexCss, /\.research-map/);
 	assert.match(indexCss, /\.research-map-node\.core\s*{[\s\S]*text-align:\s*center/);
+	assert.match(indexCss, /\.research-map-node\.core\s*{[^}]*border-radius:\s*8px/);
 	assert.match(indexCss, /\.research-map-branch/);
+	assert.match(indexCss, /\.research-map-node\.leaf:hover\s*{[^}]*translateY\(-1px\)/);
 	assert.doesNotMatch(indexCss, /\.research-map-node-index/);
 	assert.doesNotMatch(indexCss, /\.interest-inline/);
 	assert.match(indexCss, /\.section-head::after/);
+	assert.match(indexCss, /\.section-head\.is-active-section::after/);
+	assert.match(indexCss, /\.section-head\.is-active-section\s+\.section-num/);
 	assert.match(indexCss, /\.section-head:hover::after/);
 	assert.match(indexCss, /\.section-head:hover\s+\.section-num/);
 	assert.doesNotMatch(indexCss, /\.section-head:hover\s+\.section-title/);
+	assert.match(indexCss, /\.award-list\s*{[^}]*display:\s*grid/);
+	assert.doesNotMatch(indexCss, /column-count:\s*2/);
 	assert.match(indexCss, /\.publication-group-title/);
 	assert.match(indexCss, /\.publication-group-index/);
 	assert.match(indexCss, /\.publication-group-rule/);
 	assert.match(indexCss, /\.publication-group-name/);
+	assert.match(indexCss, /\.hero-tagline\s*{[^}]*font-style:\s*italic/);
+	assert.match(indexCss, /\.publication-group-name\s*{[^}]*font-style:\s*italic/);
+	assert.doesNotMatch(indexCss, /\.research-map-node\.leaf\s*{[^}]*font-style:\s*italic/);
+	assert.doesNotMatch(indexCss, /\.entry-title\s*{[^}]*font-style:\s*italic/);
+	assert.doesNotMatch(indexCss, /\.award-meta\s*{[^}]*font-style:\s*italic/);
+	assert.doesNotMatch(indexCss, /\.service-meta\s*{[^}]*font-style:\s*italic/);
 	assert.match(contentConfig, /lineage:\s*z[\s\S]*\.object/);
 	assert.match(publicationTeaser, /publication-lineage/);
+	assert.doesNotMatch(publicationTeaser, /\.publication-meta\s*{[^}]*font-style:\s*italic/);
+	assert.doesNotMatch(publicationTeaser, /\.publication-lineage-text\s*{[^}]*font-style:\s*italic/);
+	assert.doesNotMatch(publicationTeaser, /translateX\(2px\)/);
+	assert.match(publicationTeaser, /background-color 0\.18s ease/);
+
+	assert.match(navbar, /class="site-nav"/);
+	assert.match(navbar, /position:\s*sticky/);
+	assert.match(navbar, /backdrop-filter:\s*blur/);
+	assert.match(navbar, /\.site-nav::after/);
+	assert.match(navbar, /nav a::after/);
+	assert.match(navbar, /nav a\.active::after/);
+	assert.match(navbar, /--nav-item-index/);
+	assert.match(navbar, /transition-delay:\s*calc\(var\(--nav-item-index\)/);
 
 	assert.match(resetCss, /prefers-reduced-motion:\s*reduce/);
 	assert.match(resetCss, /transition-duration:\s*0\.01ms\s*!important/);
@@ -293,6 +323,7 @@ test("homepage implements the editorial art and motion proposal hooks", async ()
 	assert.match(themeToggle, /theme-toggle-glyph/);
 	assert.match(themeToggle, /theme-toggle-rays/);
 	assert.match(themeToggle, /theme-toggle-moon-body/);
+	assert.match(themeToggle, /\.theme-toggle-label\s*{[^}]*position:\s*absolute/);
 	assert.doesNotMatch(themeToggle, /lucide/);
 });
 

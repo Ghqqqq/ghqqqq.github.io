@@ -388,10 +388,24 @@ const sections: Section[] = [
 			).matches;
 			const revealItems = Array.from(root.querySelectorAll("[data-reveal]"));
 			const drawnLines = Array.from(root.querySelectorAll("[data-draw-line]"));
+			const homeSections = Array.from(root.querySelectorAll(".home-section"));
+			const sectionHeads = homeSections
+				.map((section) => section.querySelector(".section-head"))
+				.filter(Boolean);
+
+			const setActiveSection = (section) => {
+				for (const head of sectionHeads) {
+					head.classList.toggle(
+						"is-active-section",
+						head === section.querySelector(".section-head"),
+					);
+				}
+			};
 
 			const finishImmediately = () => {
 				for (const item of revealItems) item.classList.add("is-in");
 				for (const line of drawnLines) line.classList.add("is-drawn");
+				sectionHeads[0]?.classList.add("is-active-section");
 			};
 
 			if (prefersReducedMotion || !("IntersectionObserver" in window)) {
@@ -425,12 +439,24 @@ const sections: Section[] = [
 				{ rootMargin: "0px 0px -8% 0px", threshold: 0.2 },
 			);
 
+			const activeSectionObserver = new IntersectionObserver(
+				(entries) => {
+					for (const entry of entries) {
+						if (!entry.isIntersecting) continue;
+
+						setActiveSection(entry.target);
+					}
+				},
+				{ rootMargin: "-35% 0px -45% 0px", threshold: 0 },
+			);
+
 			revealItems.forEach((item, index) => {
 				item.style.setProperty("--reveal-delay", `${Math.min(index, 5) * 45}ms`);
 				revealObserver.observe(item);
 			});
 
 			for (const line of drawnLines) lineObserver.observe(line);
+			for (const section of homeSections) activeSectionObserver.observe(section);
 		})();
 	</script>
 </Layout>
