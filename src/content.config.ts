@@ -80,7 +80,9 @@ const publications = defineCollection({
 			description: z.string(),
 			venue: z.string(),
 			venueShort: z.string().optional(),
-			status: z.enum(["conference", "journal", "submitted", "preprint"]).optional(),
+			status: z
+				.enum(["conference", "journal", "submitted", "preprint"])
+				.optional(),
 			year: z.number(),
 			authors: z.string(),
 			createdAt: z.coerce.date(),
@@ -91,6 +93,14 @@ const publications = defineCollection({
 					"recommendation-bidding",
 					"reinforcement-learning-bandits",
 				])
+				.optional(),
+			lineage: z
+				.object({
+					label: z.string(),
+					text: z.string(),
+					sourceTitle: z.string(),
+					sourceId: z.string(),
+				})
 				.optional(),
 			image: image().optional(),
 			link: z.string().url().optional(),

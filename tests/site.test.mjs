@@ -124,6 +124,11 @@ test("publications route and homepage navigation expose full publications", asyn
 		/SABO: Safe and Aggressive Bayesian Optimization for Automatic Legged Locomotion Controller Tuning/,
 	);
 	assert.match(publicationsHtml, /Submitted|Preprint|ArXiv|Journal/);
+	assert.doesNotMatch(publicationsHtml, /class="publication-lineage"/);
+	assert.doesNotMatch(
+		publicationsHtml,
+		/Hard constraints\s*→\s*rectified policy optimization/,
+	);
 
 	assert.ok(homepageHtml, "expected built homepage HTML");
 	assert.match(homepageHtml, /href="\/publications"/);
@@ -173,6 +178,13 @@ test("homepage groups selected publications by research area with real venue bad
 	assert.match(
 		html,
 		/Enhancing Safety in Reinforcement Learning with Human Feedback via Rectified Policy Optimization/,
+	);
+	assert.match(html, /class="publication-lineage"/);
+	assert.match(html, /Idea lineage/);
+	assert.match(html, /Hard constraints\s*→\s*rectified policy optimization/);
+	assert.match(
+		html,
+		/href="\/publications\/online-convex-optimization-hard-constraints"[\s\S]*Online Convex Optimization with Hard Constraints/,
 	);
 	assert.match(
 		html,
@@ -236,12 +248,16 @@ test("homepage implements the editorial art and motion proposal hooks", async ()
 	const indexCss = await readRepo("src/styles/index.css");
 	const resetCss = await readRepo("src/styles/reset.css");
 	const themeToggle = await readRepo("src/components/ThemeToggle.astro");
+	const contentConfig = await readRepo("src/content.config.ts");
+	const publicationTeaser = await readRepo("src/components/PublicationTeaser.astro");
 
 	assert.ok(html, "expected built homepage HTML");
 	assert.ok(indexPage, "expected homepage source");
 	assert.ok(indexCss, "expected homepage CSS source");
 	assert.ok(resetCss, "expected reset CSS source");
 	assert.ok(themeToggle, "expected theme toggle source");
+	assert.ok(contentConfig, "expected content config source");
+	assert.ok(publicationTeaser, "expected publication teaser source");
 
 	assert.match(html, /data-home-motion/);
 	assert.match(html, /data-reveal/);
@@ -267,6 +283,8 @@ test("homepage implements the editorial art and motion proposal hooks", async ()
 	assert.match(indexCss, /\.publication-group-index/);
 	assert.match(indexCss, /\.publication-group-rule/);
 	assert.match(indexCss, /\.publication-group-name/);
+	assert.match(contentConfig, /lineage:\s*z[\s\S]*\.object/);
+	assert.match(publicationTeaser, /publication-lineage/);
 
 	assert.match(resetCss, /prefers-reduced-motion:\s*reduce/);
 	assert.match(resetCss, /transition-duration:\s*0\.01ms\s*!important/);

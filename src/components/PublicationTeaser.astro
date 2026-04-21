@@ -5,9 +5,15 @@ interface Props {
 	publication: CollectionEntry<"publications">;
 	href: string;
 	variant?: "compact" | "full" | "list";
+	showLineage?: boolean;
 }
 
-const { publication, href, variant = "compact" } = Astro.props;
+const {
+	publication,
+	href,
+	variant = "compact",
+	showLineage = false,
+} = Astro.props;
 const isExternal = href.startsWith("http://") || href.startsWith("https://");
 const venueLabel =
 	(publication.data.venueShort ??
@@ -33,27 +39,43 @@ const statusLabel =
 					? "Published"
 					: undefined;
 const hasEqualContribution = publication.data.authors.includes("*");
+const lineage = showLineage ? publication.data.lineage : undefined;
+const lineageSourceHref = lineage
+	? `/publications/${lineage.sourceId}`
+	: undefined;
 ---
 
-<a
-	href={href}
+<article
 	class:list={["publication-teaser", variant]}
-	target={isExternal ? "_blank" : undefined}
-	rel={isExternal ? "noopener noreferrer" : undefined}
 >
 	{
 		variant !== "list" && (
-			<div class="publication-cover" aria-hidden="true">
-				<span class="publication-badge">{venueLabel}</span>
-				<strong>{publication.data.year}</strong>
-			</div>
+			<a
+				href={href}
+				class="publication-cover-link"
+				target={isExternal ? "_blank" : undefined}
+				rel={isExternal ? "noopener noreferrer" : undefined}
+				aria-label={publication.data.title}
+			>
+				<div class="publication-cover" aria-hidden="true">
+					<span class="publication-badge">{venueLabel}</span>
+					<strong>{publication.data.year}</strong>
+				</div>
+			</a>
 		)
 	}
 	<div class="publication-copy">
-		<div class="post-header">
-			<h3>{publication.data.title}</h3>
-			<span class="post-date">{publication.data.year}</span>
-		</div>
+		<a
+			href={href}
+			class="publication-main-link"
+			target={isExternal ? "_blank" : undefined}
+			rel={isExternal ? "noopener noreferrer" : undefined}
+		>
+			<div class="post-header">
+				<h3>{publication.data.title}</h3>
+				<span class="post-date">{publication.data.year}</span>
+			</div>
+		</a>
 		<p class="publication-authors">{publication.data.authors}</p>
 		{hasEqualContribution && (
 			<p class="publication-author-note">* equal contribution</p>
@@ -64,8 +86,22 @@ const hasEqualContribution = publication.data.authors.includes("*");
 				<span class="publication-status">{statusLabel}</span>
 			)}
 		</div>
+		{
+			lineage && lineageSourceHref && (
+				<div class="publication-lineage">
+					<span class="publication-lineage-label">{lineage.label}</span>
+					<p class="publication-lineage-text">{lineage.text}</p>
+					<p class="publication-lineage-source-line">
+						<span>Stems from </span>
+						<a href={lineageSourceHref} class="publication-lineage-source">
+							{lineage.sourceTitle}
+						</a>
+					</p>
+				</div>
+			)
+		}
 	</div>
-</a>
+</article>
 
 <style>
 	.publication-teaser {
@@ -81,17 +117,37 @@ const hasEqualContribution = publication.data.authors.includes("*");
 			transform 0.18s ease 40ms;
 	}
 
-	.publication-teaser:hover,
-	.publication-teaser:focus-visible {
+	.publication-teaser:has(.publication-main-link:hover),
+	.publication-teaser:has(.publication-main-link:focus-visible),
+	.publication-teaser:has(.publication-cover-link:hover),
+	.publication-teaser:has(.publication-cover-link:focus-visible) {
 		color: var(--primary);
 		transform: translateX(2px);
 		transition-delay: 0ms;
-		outline: none;
 	}
 
-	.publication-teaser:hover h3,
-	.publication-teaser:focus-visible h3 {
+	.publication-main-link,
+	.publication-cover-link {
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.publication-main-link:focus-visible,
+	.publication-cover-link:focus-visible,
+	.publication-lineage-source:focus-visible {
+		outline: 1px solid rgba(var(--primary-rgb), 0.75);
+		outline-offset: 3px;
+	}
+
+	.publication-main-link:hover h3,
+	.publication-main-link:focus-visible h3,
+	.publication-teaser:has(.publication-cover-link:hover) h3,
+	.publication-teaser:has(.publication-cover-link:focus-visible) h3 {
 		color: var(--primary);
+	}
+
+	.publication-cover-link {
+		display: block;
 	}
 
 	.publication-cover {
@@ -193,6 +249,58 @@ const hasEqualContribution = publication.data.authors.includes("*");
 		content: "·";
 		margin-right: 0.5rem;
 		color: var(--text-tertiary);
+	}
+
+	.publication-lineage {
+		margin-top: 0.1rem;
+		padding: 0.18rem 0 0.05rem 0.75rem;
+		border-left: 1px solid var(--hairline);
+		display: grid;
+		gap: 0.16rem;
+	}
+
+	.publication-lineage-label {
+		font-family: var(--font-mono);
+		font-size: 0.68rem;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--text-tertiary);
+	}
+
+	.publication-lineage-text,
+	.publication-lineage-source-line {
+		margin: 0;
+		line-height: 1.4;
+	}
+
+	.publication-lineage-text {
+		color: var(--text-secondary);
+		font-family: var(--font-display);
+		font-size: 0.92rem;
+		font-style: italic;
+	}
+
+	.publication-lineage-source-line {
+		color: var(--text-tertiary);
+		font-size: 0.82rem;
+	}
+
+	.publication-lineage-source {
+		color: var(--text-secondary);
+		background-image: linear-gradient(var(--primary), var(--primary));
+		background-position: 0 100%;
+		background-repeat: no-repeat;
+		background-size: 0% 1px;
+		text-decoration: none;
+		transition:
+			background-size 0.18s ease,
+			color 0.15s ease;
+	}
+
+	.publication-lineage-source:hover,
+	.publication-lineage-source:focus-visible {
+		color: var(--primary);
+		background-size: 100% 1px;
 	}
 
 	.publication-teaser.compact {
