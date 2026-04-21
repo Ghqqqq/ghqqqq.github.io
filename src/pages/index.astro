@@ -8,23 +8,15 @@ import ProfilePicture from "../assets/profile-bird-original.png";
 import PublicationTeaser from "../components/PublicationTeaser.astro";
 import Layout from "../layouts/Layout.astro";
 
-const [
-	publications,
-	about,
-	quickInfo,
-	socials,
-	awards,
-	experience,
-	serviceTeaching,
-] = await Promise.all([
-	getCollection("publications"),
-	getEntry("other", "about"),
-	getCollection("quickInfo"),
-	getCollection("socials"),
-	getCollection("awards"),
-	getCollection("experience"),
-	getCollection("serviceTeaching"),
-]);
+const [publications, about, socials, awards, experience, serviceTeaching] =
+	await Promise.all([
+		getCollection("publications"),
+		getEntry("other", "about"),
+		getCollection("socials"),
+		getCollection("awards"),
+		getCollection("experience"),
+		getCollection("serviceTeaching"),
+	]);
 
 const { Content: About } = await render(about!);
 
@@ -71,8 +63,31 @@ const publicationSections = [
 	),
 }));
 
+const visiblePublicationSections = publicationSections.filter(
+	(section) => section.publications.length > 0,
+);
+
+const researchMap = {
+	label: "Research interests",
+	core: "Reinforcement Learning & Bandits",
+	branches: [
+		{
+			label: "Foundations",
+			nodes: ["Bandits & Online Learning", "Safe / Constrained Learning"],
+		},
+		{
+			label: "Applications",
+			nodes: [
+				"Recommendation & Bidding",
+				"LLM Alignment",
+				"Agentic LLMs",
+				"Multimodal LLMs",
+			],
+		},
+	],
+};
+
 const sortedSocials = [...socials].sort((a, b) => a.data.id - b.data.id);
-const sortedQuickInfo = [...quickInfo].sort((a, b) => a.data.id - b.data.id);
 const sortedExperience = [...experience].sort((a, b) => a.data.id - b.data.id);
 const sortedAwards = [...awards].sort(
 	(a, b) => (b.data.year ?? 0) - (a.data.year ?? 0),
@@ -168,24 +183,44 @@ const sections: Section[] = [
 				<div class="prose">
 					<About />
 				</div>
-				<p class="interest-inline">
-					<span class="interest-inline-label">Research interests</span>
-					<span class="interest-inline-sep" aria-hidden="true">—</span>
-					<span class="interest-inline-items">
-						{
-							sortedQuickInfo.map((info, i) => (
-								<>
-									<span>{info.data.text}</span>
-									{i < sortedQuickInfo.length - 1 && (
-										<span class="interest-inline-bullet" aria-hidden="true">
-											·
-										</span>
-									)}
-								</>
-							))
-						}
-					</span>
-				</p>
+				<blockquote class="about-pull-quote">
+					<p>Learning under constraints, feedback, and changing environments.</p>
+				</blockquote>
+				<div class="research-map" aria-labelledby="research-map-title">
+					<div class="research-map-topline">
+						<span class="research-map-kicker" id="research-map-title">
+							{researchMap.label}
+						</span>
+					</div>
+					<div class="research-map-flow">
+						<div class="research-map-node core">
+							<span class="research-map-node-label">{researchMap.core}</span>
+						</div>
+						<div class="research-map-branches">
+							{
+								researchMap.branches.map((branch, branchIndex) => (
+									<section class="research-map-branch">
+										<h3 class="research-map-branch-title">
+											<span class="research-map-branch-index">
+												{String(branchIndex + 1).padStart(2, "0")}
+											</span>
+											<span
+												class="research-map-branch-rule"
+												aria-hidden="true"
+											/>
+											<span>{branch.label}</span>
+										</h3>
+										<ul class="research-map-nodes">
+											{branch.nodes.map((node) => (
+												<li class="research-map-node leaf">{node}</li>
+											))}
+										</ul>
+									</section>
+								))
+							}
+						</div>
+					</div>
+				</div>
 			</div>
 		</section>
 
@@ -315,23 +350,26 @@ const sections: Section[] = [
 			<div class="section-body">
 				<div class="publication-groups">
 					{
-						publicationSections.map(
-							(section) =>
-								section.publications.length > 0 && (
-									<section class="publication-group">
-										<h3 class="publication-group-title">{section.title}</h3>
-										<div class="publication-list">
-											{section.publications.map((publication) => (
-												<PublicationTeaser
-													publication={publication}
-													href={`/publications/${publication.id}`}
-													variant="list"
-												/>
-											))}
-										</div>
-									</section>
-								),
-						)
+						visiblePublicationSections.map((section, sectionIndex) => (
+							<section class="publication-group">
+								<h3 class="publication-group-title">
+									<span class="publication-group-index">
+										{String(sectionIndex + 1).padStart(2, "0")}
+									</span>
+									<span class="publication-group-rule" aria-hidden="true" />
+									<span class="publication-group-name">{section.title}</span>
+								</h3>
+								<div class="publication-list">
+									{section.publications.map((publication) => (
+										<PublicationTeaser
+											publication={publication}
+											href={`/publications/${publication.id}`}
+											variant="list"
+										/>
+									))}
+								</div>
+							</section>
+						))
 					}
 				</div>
 			</div>

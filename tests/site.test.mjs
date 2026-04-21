@@ -31,7 +31,15 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /ShanghaiTech University/);
 	assert.match(
 		html,
-		/Research interests[\s\S]*Reinforcement Learning[\s\S]*Bandits(?:\s*&amp;\s*|\s*&\s*)Online Learning[\s\S]*Safe \/ Constrained Learning[\s\S]*LLM Alignment[\s\S]*Agentic(?:\s*&amp;\s*|\s*&\s*)Multimodal LLMs/i,
+		/Research interests[\s\S]*Reinforcement Learning(?:\s*&amp;\s*|\s*&\s*)Bandits[\s\S]*Foundations[\s\S]*Bandits(?:\s*&amp;\s*|\s*&\s*)Online Learning[\s\S]*Safe \/ Constrained Learning[\s\S]*Applications[\s\S]*Recommendation(?:\s*&amp;\s*|\s*&\s*)Bidding[\s\S]*LLM Alignment[\s\S]*Agentic LLMs[\s\S]*Multimodal LLMs/i,
+	);
+	assert.match(html, /class="research-map"/);
+	assert.match(html, /class="research-map-node core"/);
+	assert.match(html, /class="research-map-branch"/);
+	assert.doesNotMatch(html, /class="research-map-node-index"/);
+	assert.match(
+		html,
+		/class="research-map-node core"[\s\S]*class="research-map-node-label"[\s\S]*Reinforcement Learning(?:\s*&amp;\s*|\s*&\s*)Bandits/,
 	);
 	assert.match(html, /Reinforcement Learning/);
 	assert.match(html, /LLM Alignment/);
@@ -50,6 +58,11 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(
 		html,
 		/current research interest is in reinforcement learning for agentic LLMs and multimodal large models/i,
+	);
+	assert.match(html, /class="about-pull-quote"/);
+	assert.match(
+		html,
+		/Learning under constraints, feedback, and changing environments\./,
 	);
 	assert.match(
 		html,
@@ -187,6 +200,14 @@ test("homepage groups selected publications by research area with real venue bad
 		html,
 		/Agent \/ LLM Alignment[\s\S]*publication-teaser list[\s\S]*Recommendation(?:\s*&amp;\s*|\s*&\s*)Bidding[\s\S]*publication-teaser list[\s\S]*Reinforcement Learning(?:\s*&amp;\s*|\s*&\s*)Bandits[\s\S]*publication-teaser list/,
 	);
+	assert.match(
+		html,
+		/class="publication-group-index"[\s\S]*01[\s\S]*class="publication-group-rule"[\s\S]*class="publication-group-name"[\s\S]*Agent \/ LLM Alignment/,
+	);
+	assert.match(
+		html,
+		/class="publication-group-index"[\s\S]*02[\s\S]*class="publication-group-rule"[\s\S]*class="publication-group-name"[\s\S]*Recommendation(?:\s*&amp;\s*|\s*&\s*)Bidding/,
+	);
 	assert.doesNotMatch(html, /publication-teaser compact/);
 	assert.doesNotMatch(html, /publication-cover/);
 });
@@ -232,10 +253,20 @@ test("homepage implements the editorial art and motion proposal hooks", async ()
 	assert.match(indexCss, /paper-grain/);
 	assert.match(indexCss, /mix-blend-mode:\s*multiply/);
 	assert.match(indexCss, /\.home\[data-motion-ready\]\s+\[data-reveal\]/);
+	assert.match(indexCss, /\.about-pull-quote/);
+	assert.match(indexCss, /\.research-map/);
+	assert.match(indexCss, /\.research-map-node\.core\s*{[\s\S]*text-align:\s*center/);
+	assert.match(indexCss, /\.research-map-branch/);
+	assert.doesNotMatch(indexCss, /\.research-map-node-index/);
+	assert.doesNotMatch(indexCss, /\.interest-inline/);
 	assert.match(indexCss, /\.section-head::after/);
 	assert.match(indexCss, /\.section-head:hover::after/);
 	assert.match(indexCss, /\.section-head:hover\s+\.section-num/);
 	assert.doesNotMatch(indexCss, /\.section-head:hover\s+\.section-title/);
+	assert.match(indexCss, /\.publication-group-title/);
+	assert.match(indexCss, /\.publication-group-index/);
+	assert.match(indexCss, /\.publication-group-rule/);
+	assert.match(indexCss, /\.publication-group-name/);
 
 	assert.match(resetCss, /prefers-reduced-motion:\s*reduce/);
 	assert.match(resetCss, /transition-duration:\s*0\.01ms\s*!important/);
