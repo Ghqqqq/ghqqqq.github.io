@@ -103,13 +103,26 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 
 test("publications route and homepage navigation expose full publications", async () => {
 	const publicationsHtml = await readBuilt("publications/index.html");
+	const publicationsPage = await readRepo("src/pages/publications.astro");
 	const homepageHtml = await readBuilt("index.html");
 	const projectsHtml = await readBuilt("projects/index.html");
 	const blockProjectHtml = await readBuilt("projects/block/index.html");
 
 	assert.ok(publicationsHtml, "expected built publications index");
+	assert.ok(publicationsPage, "expected publications page source");
 	assert.match(publicationsHtml, /Full Publications|Publications/);
 	assert.match(publicationsHtml, /full-publications-list/);
+	assert.match(publicationsHtml, /publication-archive/);
+	assert.match(publicationsHtml, /publication-year-group/);
+	assert.match(publicationsHtml, /publication-year-label/);
+	assert.match(
+		publicationsHtml,
+		/id="publications-2026"[\s\S]*BLOCK: An Open-Source Bi-Stage MLLM Character-to-Skin Pipeline/,
+	);
+	assert.match(
+		publicationsHtml,
+		/id="publications-2025"[\s\S]*Enhancing Safety in Reinforcement Learning with Human Feedback via Rectified Policy Optimization/,
+	);
 	assert.doesNotMatch(publicationsHtml, /class="publication-cover"/);
 	assert.match(
 		publicationsHtml,
@@ -128,6 +141,33 @@ test("publications route and homepage navigation expose full publications", asyn
 	assert.doesNotMatch(
 		publicationsHtml,
 		/Hard constraints\s*→\s*rectified policy optimization/,
+	);
+	assert.match(publicationsPage, /publicationYearGroups/);
+	assert.match(publicationsPage, /\.publication-year-label\s*{[^}]*position:\s*sticky/);
+	assert.match(
+		publicationsPage,
+		/\.publication-year-group\s*{[^}]*grid-template-columns:\s*minmax\(4\.75rem,\s*6rem\)\s+minmax\(0,\s*1fr\)/,
+	);
+	assert.match(publicationsPage, /\.page-lede\s*{[^}]*font-style:\s*normal/);
+	assert.match(
+		publicationsPage,
+		/\.publication-archive\s+:global\(\.publication-teaser\.list\)\s*{[^}]*padding:\s*1\.2rem\s+0/,
+	);
+	assert.match(
+		publicationsPage,
+		/\.publication-archive\s+:global\(\.publication-teaser\.list::before\)/,
+	);
+	assert.match(
+		publicationsPage,
+		/\.publication-archive\s+:global\(\.publication-teaser\.list:has\(\.publication-main-link:hover\)\)[\s\S]*background-color:\s*transparent/,
+	);
+	assert.match(
+		publicationsPage,
+		/\.publication-archive\s+:global\(\.publication-teaser\.list\s+\.publication-copy h3\)\s*{[^}]*font-size:\s*1\.16rem/,
+	);
+	assert.match(
+		publicationsPage,
+		/@media screen and \(max-width:\s*640px\)[\s\S]*\.publication-archive\s+:global\(\.publication-teaser\.list\s+\.post-header\)\s*{[^}]*display:\s*grid/,
 	);
 
 	assert.ok(homepageHtml, "expected built homepage HTML");
