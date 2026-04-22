@@ -108,7 +108,12 @@ const currentYear = new Date().getFullYear();
 			<slot name="404" />
 			<footer class:list={["site-footer", layout === "single" && "site-footer-single"]}>
 				<hr class="hairline" />
-				<p>&copy; {currentYear} Hengquan Guo.</p>
+				<p>
+					&copy; {currentYear} Hengquan Guo. Powered by
+					<a href="https://openai.com/codex/" target="_blank" rel="noopener noreferrer">Codex</a>
+					&amp;
+					<a href="https://www.anthropic.com/claude-code" target="_blank" rel="noopener noreferrer">Claude Code</a>.
+				</p>
 			</footer>
 		</main>
 		<Background />

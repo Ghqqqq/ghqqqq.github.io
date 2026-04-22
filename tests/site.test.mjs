@@ -375,7 +375,7 @@ test("single-column layout accounts for mobile side margins", async () => {
 	assert.match(layoutGrid, /\.layout-single\s*{[\s\S]*width:\s*calc\(100%\s*-\s*2rem\)/);
 });
 
-test("public-facing repository text omits template and AI attribution traces", async () => {
+test("public-facing repository text omits template traces and keeps footer attribution", async () => {
 	const html = await readBuilt("index.html");
 	const readme = await readRepo("README.md");
 	const packageReadme = await readRepo("package/README.md");
@@ -397,9 +397,12 @@ test("public-facing repository text omits template and AI attribution traces", a
 
 	for (const source of [html, layout]) {
 		assert.doesNotMatch(source, /spectre/i);
-		assert.doesNotMatch(source, /Codex|Claude|OpenAI|Anthropic/i);
-		assert.doesNotMatch(source, /Powered by/i);
 	}
+	assert.match(
+		html,
+		/(?:©|&copy;)\s*2026\s*Hengquan Guo\.[\s\S]*Powered by[\s\S]*Codex[\s\S]*Claude Code/,
+	);
+	assert.match(layout, /Powered by[\s\S]*Codex[\s\S]*Claude Code/);
 	assert.doesNotMatch(packageJson, /"name":\s*"spectre"/i);
 });
 
