@@ -2,8 +2,8 @@ import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { defineConfig } from 'astro/config';
 import expressiveCode from 'astro-expressive-code';
-import spectre from './package/src';
-import { spectreDark } from './src/ec-theme';
+import homepageIntegration from './package/src';
+import { homepageCodeTheme } from './src/ec-theme';
 
 // https://astro.build/config
 const config = defineConfig({
@@ -14,11 +14,11 @@ const config = defineConfig({
 	},
 	integrations: [
 		expressiveCode({
-			themes: [spectreDark],
+			themes: [homepageCodeTheme],
 		}),
 		mdx(),
 		sitemap(),
-		spectre({
+		homepageIntegration({
 			name: 'Hengquan Guo',
 			openGraph: {
 				home: {

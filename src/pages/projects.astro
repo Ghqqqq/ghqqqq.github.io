@@ -1,9 +1,9 @@
 ---
 import "../styles/article-list.css";
 
-import { getCollection } from "astro:content";
 import { Image } from "astro:assets";
-import { openGraph } from "spectre:globals";
+import { getCollection } from "astro:content";
+import { openGraph } from "homepage:globals";
 import Layout from "../layouts/Layout.astro";
 
 const projects = await getCollection("projects");

@@ -375,6 +375,34 @@ test("single-column layout accounts for mobile side margins", async () => {
 	assert.match(layoutGrid, /\.layout-single\s*{[\s\S]*width:\s*calc\(100%\s*-\s*2rem\)/);
 });
 
+test("public-facing repository text omits template and AI attribution traces", async () => {
+	const html = await readBuilt("index.html");
+	const readme = await readRepo("README.md");
+	const packageReadme = await readRepo("package/README.md");
+	const packageJson = await readRepo("package.json");
+	const layout = await readRepo("src/layouts/Layout.astro");
+
+	assert.ok(html, "expected built homepage HTML");
+	assert.ok(readme, "expected README source");
+	assert.ok(packageReadme, "expected package README source");
+	assert.ok(packageJson, "expected package.json source");
+	assert.ok(layout, "expected layout source");
+
+	for (const source of [readme, packageReadme]) {
+		assert.doesNotMatch(source, /Spectre/i);
+		assert.doesNotMatch(source, /louisescher/i);
+		assert.doesNotMatch(source, /StackBlitz|CodeSandbox/i);
+		assert.doesNotMatch(source, /template/i);
+	}
+
+	for (const source of [html, layout]) {
+		assert.doesNotMatch(source, /spectre/i);
+		assert.doesNotMatch(source, /Codex|Claude|OpenAI|Anthropic/i);
+		assert.doesNotMatch(source, /Powered by/i);
+	}
+	assert.doesNotMatch(packageJson, /"name":\s*"spectre"/i);
+});
+
 test("repository is configured for GitHub Pages deployment", async () => {
 	const astroConfig = await readRepo("astro.config.ts");
 	const deployWorkflow = await readRepo(".github/workflows/deploy.yml");

@@ -71,7 +71,7 @@ interface GiscusOptions {
 	commentsInput: "bottom" | "top";
 }
 
-declare module "spectre:globals" {
+declare module "homepage:globals" {
 	/**
 	 * The name that should be displayed on the main page.
 	 */

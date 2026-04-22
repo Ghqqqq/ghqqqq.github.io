@@ -61,7 +61,7 @@ const giscusObjectSchema = z
 		 */
 		emitMetadata: z.boolean(),
 		/**
-		 * The theme to use for the comments. Defaults to `https://spectre.louisescher.dev/styles/giscus`.
+		 * The theme to use for the comments.
 		 */
 		theme: z.string().optional(),
 		/**
@@ -141,8 +141,8 @@ export default function integration(
 	const validatedOptions = optionsSchema.parse(options);
 
 	const globals = viteVirtualModulePluginBuilder(
-		"spectre:globals",
-		"spectre-theme-globals",
+		"homepage:globals",
+		"homepage-globals",
 		`
     export const name = ${JSON.stringify(validatedOptions.name)};
     export const themeColor = ${JSON.stringify(validatedOptions.themeColor ?? "#8c5cf5")};
@@ -157,7 +157,7 @@ export default function integration(
 	);
 
 	return {
-		name: "spectre-theme",
+		name: "homepage-integration",
 		hooks: {
 			"astro:config:setup": ({ updateConfig }) => {
 				updateConfig({

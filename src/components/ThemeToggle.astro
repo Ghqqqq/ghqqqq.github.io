@@ -20,7 +20,7 @@
 
 <script is:inline>
 	(() => {
-		const storageKey = "spectre-theme";
+		const storageKey = "homepage-theme";
 		const button = document.querySelector("#theme-toggle");
 		const label = button?.querySelector(".theme-toggle-label");
 		const themeMeta = document.querySelector('meta[name="theme-color"]');
@@ -36,7 +36,7 @@
 				themeMeta.setAttribute("content", theme === "dark" ? "#15130f" : "#f4efe4");
 			}
 			window.dispatchEvent(
-				new CustomEvent("spectre-theme-change", {
+				new CustomEvent("homepage-theme-change", {
 					detail: { theme },
 				}),
 			);

@@ -82,10 +82,12 @@ class PageBackground {
 			.getPropertyValue("--background-letter-rgb")
 			.trim();
 		this.baseLetterAlpha = Number.parseFloat(
-			computedStyle.getPropertyValue("--background-letter-alpha").trim() || "0.02",
+			computedStyle.getPropertyValue("--background-letter-alpha").trim() ||
+				"0.02",
 		);
 		this.overlayAlpha = Number.parseFloat(
-			computedStyle.getPropertyValue("--background-overlay-alpha").trim() || "0.3",
+			computedStyle.getPropertyValue("--background-overlay-alpha").trim() ||
+				"0.3",
 		);
 	};
 
@@ -94,13 +96,18 @@ class PageBackground {
 	 */
 	private initBackground = () => {
 		this.baseCtx.clearRect(0, 0, this.baseCanvas.width, this.baseCanvas.height);
-		this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+		this.overlayCtx.clearRect(
+			0,
+			0,
+			this.overlayCanvas.width,
+			this.overlayCanvas.height,
+		);
 		this.letterPositions = [];
 		this.letterInstances = [];
 
 		let text: string =
 			document.title.toLowerCase().split(" | ")[0].replace(/\s/g, "_") ||
-			"spectre";
+			"homepage";
 
 		// Add additional underscore to separate words
 		if (text.includes("_")) {
@@ -334,7 +341,7 @@ async function initializeBackground() {
 	window.addEventListener("resize", () => {
 		background.resizeBackground();
 	});
-	window.addEventListener("spectre-theme-change", () => {
+	window.addEventListener("homepage-theme-change", () => {
 		background.refreshTheme();
 	});
 }
