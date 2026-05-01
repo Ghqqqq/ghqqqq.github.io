@@ -266,8 +266,10 @@ test("homepage groups selected publications by research area with real venue bad
 
 test("homepage shell exposes the refreshed avatar and theme toggle", async () => {
 	const html = await readBuilt("index.html");
+	const snakeGame = await readRepo("src/components/SnakeGame.astro");
 
 	assert.ok(html, "expected built homepage HTML");
+	assert.ok(snakeGame, "expected snake game source");
 	assert.match(html, /profile-bird-original/);
 	assert.match(html, /theme-toggle/);
 	assert.match(html, /theme-toggle-glyph/);
@@ -278,6 +280,12 @@ test("homepage shell exposes the refreshed avatar and theme toggle", async () =>
 	assert.match(html, /service-list/);
 	assert.match(html, /service-heading/);
 	assert.match(html, /service-kind/);
+	assert.match(html, /id="snake-trigger"/);
+	assert.match(html, /id="snake-board-wrap"/);
+	assert.match(html, /id="snake-board"/);
+	assert.match(snakeGame, /const COLS = 36/);
+	assert.match(snakeGame, /const ROWS = 8/);
+	assert.match(snakeGame, /document\.addEventListener\("keydown"/);
 	assert.doesNotMatch(html, /brand-bird-icon|brand-bird-mark/);
 	assert.doesNotMatch(html, /award-entry/);
 });

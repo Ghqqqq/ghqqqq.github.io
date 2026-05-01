@@ -1,0 +1,256 @@
+---
+---
+
+<span class="snake-trigger" id="snake-trigger" aria-hidden="true"><span class="snake-trigger-dot"></span><span class="snake-trigger-dot"></span></span>
+
+<style is:global>
+	.snake-trigger {
+		display: inline-flex;
+		gap: 2px;
+		cursor: pointer;
+		padding: 4px 6px;
+		vertical-align: middle;
+		margin-left: 0.4rem;
+	}
+
+	.snake-trigger-dot {
+		display: block;
+		width: 4px;
+		height: 8px;
+		background: #33ff00;
+		opacity: 0.6;
+		transition: opacity 0.2s ease;
+	}
+
+	.snake-trigger:hover .snake-trigger-dot {
+		animation: snake-blink 0.6s ease-in-out infinite alternate;
+	}
+
+	@keyframes snake-blink {
+		from { opacity: 0.4; }
+		to { opacity: 1; }
+	}
+
+	.snake-board-wrap {
+		overflow: hidden;
+		max-height: 0;
+		transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+			opacity 0.3s ease;
+		opacity: 0;
+		margin-top: 0;
+	}
+
+	.snake-board-wrap.open {
+		max-height: 200px;
+		opacity: 1;
+		margin-top: 1rem;
+	}
+
+	.snake-board {
+		display: grid;
+		grid-template-columns: repeat(36, 1fr);
+		gap: 2px;
+		padding: 6px;
+		width: 100%;
+		max-width: 720px;
+		margin: 0 auto;
+	}
+
+	html[data-theme="dark"] .snake-board { background: #000; }
+	html[data-theme="light"] .snake-board { background: #fff; }
+
+	.snake-cell {
+		aspect-ratio: 1 / 1;
+	}
+
+	html[data-theme="dark"] .snake-cell { background: #000; }
+	html[data-theme="light"] .snake-cell { background: #fff; }
+
+	.snake-cell.s {
+		background: #33ff00;
+		border-radius: 1px;
+		box-shadow:
+			inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+			inset 0 0 2px rgba(180, 255, 150, 0.6);
+	}
+
+	.snake-cell.h {
+		background: #5fff33;
+		border-radius: 1px;
+		box-shadow:
+			inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+			inset 0 0 3px rgba(220, 255, 200, 0.85);
+	}
+
+	.snake-cell.f {
+		background: transparent;
+		border: 1px solid #33ff00;
+		border-radius: 1px;
+	}
+
+	@media (max-width: 768px) {
+		.snake-trigger { display: none; }
+		.snake-board-wrap { display: none; }
+	}
+</style>
+
+<script>
+	(() => {
+		const COLS = 36;
+		const ROWS = 8;
+		const TOTAL = COLS * ROWS;
+		const TICK = 160;
+
+		const board = document.getElementById("snake-board")!;
+		const wrap = document.getElementById("snake-board-wrap")!;
+		const trigger = document.getElementById("snake-trigger")!;
+
+		const cells: HTMLDivElement[] = [];
+		for (let i = 0; i < TOTAL; i++) {
+			const cell = document.createElement("div");
+			cell.className = "snake-cell";
+			board.appendChild(cell);
+			cells.push(cell);
+		}
+
+		let snake: number[] = [];
+		let dir = 1; // 1=right, -1=left, COLS=down, -COLS=up
+		let food = -1;
+		let alive = false;
+		let wandering = true;
+		let timer: number | null = null;
+		let open = false;
+
+		function idx(r: number, c: number) { return r * COLS + c; }
+		function row(i: number) { return Math.floor(i / COLS); }
+		function col(i: number) { return i % COLS; }
+
+		function placeFood() {
+			let pos: number;
+			do {
+				pos = Math.floor(Math.random() * TOTAL);
+			} while (snake.includes(pos));
+			food = pos;
+		}
+
+		function reset() {
+			const startR = Math.floor(ROWS / 2);
+			const startC = Math.floor(COLS / 4);
+			snake = [idx(startR, startC), idx(startR, startC - 1), idx(startR, startC - 2), idx(startR, startC - 3)];
+			dir = 1;
+			wandering = true;
+			placeFood();
+		}
+
+		function render() {
+			for (let i = 0; i < TOTAL; i++) {
+				const cl = cells[i].classList;
+				cl.remove("s", "h", "f");
+			}
+			for (let i = 1; i < snake.length; i++) {
+				cells[snake[i]].classList.add("s");
+			}
+			cells[snake[0]].classList.add("h");
+			if (food >= 0) cells[food].classList.add("f");
+		}
+
+		function wanderDir(): number {
+			const head = snake[0];
+			const r = row(head);
+			const c = col(head);
+
+			const possible: number[] = [];
+			if (c < COLS - 1) possible.push(1);
+			if (c > 0) possible.push(-1);
+			if (r < ROWS - 1) possible.push(COLS);
+			if (r > 0) possible.push(-COLS);
+
+			// filter out reverse
+			const reverse = -dir;
+			const filtered = possible.filter(d => d !== reverse);
+
+			// prefer current direction
+			if (filtered.includes(dir)) {
+				if (Math.random() < 0.7) return dir;
+			}
+			return filtered[Math.floor(Math.random() * filtered.length)];
+		}
+
+		function tick() {
+			if (!alive) return;
+
+			if (wandering) {
+				dir = wanderDir();
+			}
+
+			const head = snake[0];
+			const nextHead = head + dir;
+			const headR = row(head);
+			const headC = col(head);
+
+			// wall collision
+			if (dir === 1 && headC === COLS - 1) { reset(); render(); return; }
+			if (dir === -1 && headC === 0) { reset(); render(); return; }
+			if (dir === COLS && headR === ROWS - 1) { reset(); render(); return; }
+			if (dir === -COLS && headR === 0) { reset(); render(); return; }
+
+			// self collision
+			if (snake.includes(nextHead)) { reset(); render(); return; }
+
+			snake.unshift(nextHead);
+			if (nextHead === food) {
+				placeFood();
+			} else {
+				snake.pop();
+			}
+			render();
+		}
+
+		function start() {
+			if (alive) return;
+			reset();
+			alive = true;
+			render();
+			timer = window.setInterval(tick, TICK);
+		}
+
+		function stop() {
+			alive = false;
+			if (timer !== null) { clearInterval(timer); timer = null; }
+		}
+
+		function toggle() {
+			open = !open;
+			if (open) {
+				wrap.classList.add("open");
+				start();
+			} else {
+				wrap.classList.remove("open");
+				stop();
+			}
+		}
+
+		trigger.addEventListener("click", toggle);
+
+		document.addEventListener("keydown", (e) => {
+			if (!open || !alive) return;
+
+			if (e.key === "Escape") {
+				toggle();
+				return;
+			}
+
+			let newDir: number | null = null;
+			if (e.key === "ArrowRight") newDir = 1;
+			else if (e.key === "ArrowLeft") newDir = -1;
+			else if (e.key === "ArrowDown") newDir = COLS;
+			else if (e.key === "ArrowUp") newDir = -COLS;
+
+			if (newDir !== null && newDir !== -dir) {
+				dir = newDir;
+				wandering = false;
+				e.preventDefault();
+			}
+		});
+	})();
+</script>

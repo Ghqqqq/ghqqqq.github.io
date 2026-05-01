@@ -27,3 +27,6 @@ worktrees/
 
 # jetbrains setting folder
 .idea/
+
+# brainstorming session artifacts
+.superpowers/

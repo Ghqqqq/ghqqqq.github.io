@@ -6,6 +6,7 @@ import { name, twitterHandle } from "homepage:globals";
 import Background from "../components/Background.astro";
 import LayoutGrid from "../components/LayoutGrid.astro";
 import Navbar from "../components/Navbar.astro";
+import SnakeGame from "../components/SnakeGame.astro";
 
 interface Props {
 	title: string;
@@ -112,8 +113,11 @@ const currentYear = new Date().getFullYear();
 					&copy; {currentYear} Hengquan Guo. Powered by
 					<a href="https://openai.com/codex/" target="_blank" rel="noopener noreferrer">Codex</a>
 					&amp;
-					<a href="https://www.anthropic.com/claude-code" target="_blank" rel="noopener noreferrer">Claude Code</a>.
+					<a href="https://www.anthropic.com/claude-code" target="_blank" rel="noopener noreferrer">Claude Code</a>.<SnakeGame />
 				</p>
+				<div class="snake-board-wrap" id="snake-board-wrap">
+					<div class="snake-board" id="snake-board"></div>
+				</div>
 			</footer>
 		</main>
 		<Background />
