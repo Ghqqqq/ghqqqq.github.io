@@ -81,7 +81,7 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /2025\.06 - 2026\.02/);
 	assert.match(
 		html,
-		/Experience[\s\S]*Research Intern[\s\S]*Reinforcement learning for recommendation and online bidding; produced three research works, with one accepted at ICLR 2026 and two under submission\./i,
+		/Experience[\s\S]*Research Intern[\s\S]*Reinforcement learning for recommendation and online bidding; produced three research works, with papers accepted at ICLR 2026 and KDDS 2026 Ads Track, and one under submission\./i,
 	);
 	assert.match(html, /Tencent CDG · Tencent Rhino-Bird Elite Talent Program/);
 	assert.match(html, /Hengquan Guo[\s\S]*ShanghaiTech University[\s\S]*Google Scholar/);
@@ -107,6 +107,7 @@ test("publications route and homepage navigation expose full publications", asyn
 	const homepageHtml = await readBuilt("index.html");
 	const projectsHtml = await readBuilt("projects/index.html");
 	const blockProjectHtml = await readBuilt("projects/block/index.html");
+	const codexOverleafProjectHtml = await readBuilt("projects/codex-overleaf-link/index.html");
 
 	assert.ok(publicationsHtml, "expected built publications index");
 	assert.ok(publicationsPage, "expected publications page source");
@@ -132,6 +133,7 @@ test("publications route and homepage navigation expose full publications", asyn
 		publicationsHtml,
 		/POBO: Safe and Optimal Resource Management for Cloud Microservices/,
 	);
+	assert.match(publicationsHtml, /KDDS 2026 Ads Track/);
 	assert.match(
 		publicationsHtml,
 		/SABO: Safe and Aggressive Bayesian Optimization for Automatic Legged Locomotion Controller Tuning/,
@@ -175,8 +177,10 @@ test("publications route and homepage navigation expose full publications", asyn
 	assert.match(homepageHtml, />\s*Full Publications\s*</);
 	assert.ok(projectsHtml, "expected built projects index");
 	assert.match(projectsHtml, /BLOCK/);
+	assert.match(projectsHtml, /Codex Overleaf Link/);
 	assert.doesNotMatch(projectsHtml, /Project Placeholder/);
 	assert.ok(blockProjectHtml, "expected built BLOCK project page");
+	assert.ok(codexOverleafProjectHtml, "expected built Codex Overleaf Link project page");
 	assert.match(
 		blockProjectHtml,
 		/I[’']m iterating and working on generating Minecraft skins end-to-end\. If you are also interested, feel free to contact me\./,
@@ -205,6 +209,20 @@ test("publications route and homepage navigation expose full publications", asyn
 	);
 	assert.doesNotMatch(blockProjectHtml, /Figure 2: Overview of BLOCK/);
 	assert.doesNotMatch(blockProjectHtml, /block-example-1|block-example-2|block-example-3/);
+	assert.match(
+		codexOverleafProjectHtml,
+		/Codex Overleaf Link brings Codex directly into the Overleaf editor through a Chrome side panel\./,
+	);
+	assert.match(
+		codexOverleafProjectHtml,
+		/It keeps the writing flow inside Overleaf while adding diff review and safe writeback for AI-assisted editing\./,
+	);
+	assert.match(codexOverleafProjectHtml, /codex-preview/);
+	assert.match(codexOverleafProjectHtml, /GitHub/);
+	assert.match(codexOverleafProjectHtml, /Release/);
+	assert.match(codexOverleafProjectHtml, /npm CLI/);
+	assert.doesNotMatch(publicationsHtml, /Submitted to KDD/);
+	assert.doesNotMatch(publicationsHtml, /Submitted KDD paper/);
 });
 
 test("homepage groups selected publications by research area with real venue badges", async () => {
