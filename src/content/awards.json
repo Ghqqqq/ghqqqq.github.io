@@ -1,5 +1,11 @@
 [
 	{
+		"id": 8,
+		"title": "ICML Silver Reviewer",
+		"meta": "Top 25%",
+		"year": 2026
+	},
+	{
 		"id": 1,
 		"title": "NeurIPS Top Reviewer",
 		"meta": "Top 5%",

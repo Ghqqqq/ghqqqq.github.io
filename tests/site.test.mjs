@@ -74,14 +74,17 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 		html,
 		/href="https:\/\/scholar\.google\.com\/citations\?user=8bGinucAAAAJ/,
 	);
+	assert.match(html, /ICML Silver Reviewer/);
+	assert.match(html, /Top 25%/);
 	assert.match(html, /National Scholarship for Doctoral Students/);
 	assert.match(html, /Tencent Rhino-Bird Elite Talent Program/);
+	assert.match(html, /Awards[\s\S]*ICML Silver Reviewer[\s\S]*NeurIPS Top Reviewer/);
 	assert.match(html, /RLChina 2022/);
 	assert.match(html, /Research Intern/);
 	assert.match(html, /2025\.06 - 2026\.02/);
 	assert.match(
 		html,
-		/Experience[\s\S]*Research Intern[\s\S]*Reinforcement learning for recommendation and online bidding; produced three research works, with papers accepted at ICLR 2026 and KDDS 2026 Ads Track, and one under submission\./i,
+		/Experience[\s\S]*Research Intern[\s\S]*Reinforcement learning for recommendation and online bidding; produced three research works, with papers accepted at ICLR 2026 and the KDD 2026 ADS Track, and one under submission\./i,
 	);
 	assert.match(html, /Tencent CDG · Tencent Rhino-Bird Elite Talent Program/);
 	assert.match(html, /Hengquan Guo[\s\S]*ShanghaiTech University[\s\S]*Google Scholar/);
@@ -133,7 +136,10 @@ test("publications route and homepage navigation expose full publications", asyn
 		publicationsHtml,
 		/POBO: Safe and Optimal Resource Management for Cloud Microservices/,
 	);
-	assert.match(publicationsHtml, /KDDS 2026 Ads Track/);
+	assert.match(
+		publicationsHtml,
+		/ACM SIGKDD Conference on Knowledge Discovery and Data Mining \(KDD 2026, Applied Data Science Track\)/,
+	);
 	assert.match(
 		publicationsHtml,
 		/SABO: Safe and Aggressive Bayesian Optimization for Automatic Legged Locomotion Controller Tuning/,
@@ -221,6 +227,7 @@ test("publications route and homepage navigation expose full publications", asyn
 	assert.match(codexOverleafProjectHtml, /GitHub/);
 	assert.match(codexOverleafProjectHtml, /Release/);
 	assert.match(codexOverleafProjectHtml, /npm CLI/);
+	assert.doesNotMatch(publicationsHtml, /KDDS 2026 Ads Track/);
 	assert.doesNotMatch(publicationsHtml, /Submitted to KDD/);
 	assert.doesNotMatch(publicationsHtml, /Submitted KDD paper/);
 });
