@@ -10,6 +10,11 @@ const projects = await getCollection("projects");
 const sortedProjects = [...projects].sort(
 	(a, b) => b.data.date.getTime() - a.data.date.getTime(),
 );
+
+const formatProjectDate = (date: Date) =>
+	new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" })
+		.format(date)
+		.toUpperCase();
 ---
 
 <Layout
@@ -47,7 +52,7 @@ const sortedProjects = [...projects].sort(
 							<div class="project-header">
 								<h2 class="project-title">{post.data.title}</h2>
 								<span class="project-date">
-									{post.data.date.toLocaleDateString()}
+									{formatProjectDate(post.data.date)}
 								</span>
 							</div>
 							<p class="project-description">{post.data.description}</p>
@@ -134,12 +139,17 @@ const sortedProjects = [...projects].sort(
 
 	.project-image {
 		overflow: hidden;
+		padding: clamp(0.75rem, 2.2vw, 1.25rem);
+		border: 1px solid var(--hairline);
+		border-radius: 6px;
+		background: var(--surface-bg-strong);
 	}
 
 	.project-image :global(img) {
 		width: 100%;
 		height: auto;
 		display: block;
+		border-radius: 2px;
 	}
 
 	.project-copy {
