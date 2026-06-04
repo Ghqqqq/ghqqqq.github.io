@@ -86,7 +86,9 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 		html,
 		/Experience[\s\S]*Research Intern[\s\S]*Reinforcement learning for recommendation and online bidding; produced three research works, with papers accepted at ICLR 2026 and the KDD 2026 ADS Track, and one under submission\./i,
 	);
-	assert.match(html, /Tencent CDG · Tencent Rhino-Bird Elite Talent Program/);
+	// Official Tencent wordmark stands in for the leading "Tencent" in the org line.
+	assert.match(html, /CDG · Tencent Rhino-Bird Elite Talent Program/);
+	assert.match(html, /tencent-wordmark/);
 	assert.match(html, /Hengquan Guo[\s\S]*ShanghaiTech University[\s\S]*Google Scholar/);
 	assert.doesNotMatch(html, /GitHub \(Coming soon\)/);
 	assert.doesNotMatch(html, /CV \(Coming soon\)/);

@@ -503,6 +503,38 @@ a.hero-link:focus-visible {
 	font-size: 0.92rem;
 }
 
+/* Official Tencent wordmark standing in for the org name; sized to the meta line. */
+.org-wordmark {
+	height: 0.84em;
+	width: auto;
+	margin-right: 0.5rem;
+	vertical-align: -0.04em;
+	color: var(--text-primary);
+}
+
+/* Symbol logomark (e.g. Analemma) tinted to the ink palette via a CSS mask,
+   so it themes light/dark with no baked-in background. */
+.org-mark {
+	display: inline-block;
+	width: 1.3em;
+	height: 1.3em;
+	margin-right: 0.4rem;
+	vertical-align: -0.32em;
+	background-color: currentColor;
+	color: var(--text-primary);
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	-webkit-mask-size: contain;
+	mask-size: contain;
+}
+
+.org-mark-analemma {
+	-webkit-mask-image: url("/analemma-mark.png");
+	mask-image: url("/analemma-mark.png");
+}
+
 .entry-description {
 	margin: 0.25rem 0 0;
 	color: var(--text-primary);

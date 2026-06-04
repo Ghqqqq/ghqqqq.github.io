@@ -2,8 +2,17 @@
 	{
 		"id": 1,
 		"title": "Research Intern",
-		"organization": "Tencent CDG · Tencent Rhino-Bird Elite Talent Program",
+		"organization": "Analemma",
+		"period": "2026.04 - Present",
+		"logo": "analemma",
+		"description": "Designing an automated research workflow; specifically, developing the agentic workflow and training the model for an ideation agent."
+	},
+	{
+		"id": 2,
+		"title": "Research Intern",
+		"organization": "CDG · Tencent Rhino-Bird Elite Talent Program",
 		"period": "2025.06 - 2026.02",
+		"logo": "tencent",
 		"description": "Reinforcement learning for recommendation and online bidding; produced three research works, with papers accepted at ICLR 2026 and the KDD 2026 ADS Track, and one under submission."
 	}
 ]

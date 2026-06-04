@@ -53,6 +53,7 @@ const experience = defineCollection({
 		title: z.string(),
 		organization: z.string(),
 		period: z.string(),
+		logo: z.enum(["tencent", "analemma"]).optional(),
 		description: z.string().optional(),
 		outcomes: z.array(z.string()).optional(),
 	}),

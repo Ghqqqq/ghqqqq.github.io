@@ -6,6 +6,7 @@ import { getCollection, getEntry, render } from "astro:content";
 import { name, openGraph } from "homepage:globals";
 import ProfilePicture from "../assets/profile-bird-original.png";
 import PublicationTeaser from "../components/PublicationTeaser.astro";
+import TencentWordmark from "../components/TencentWordmark.astro";
 import Layout from "../layouts/Layout.astro";
 
 const [publications, about, socials, awards, experience, serviceTeaching] =
@@ -240,7 +241,18 @@ const sections: Section[] = [
 									<h3 class="entry-title">{item.data.title}</h3>
 									<span class="entry-date">{item.data.period}</span>
 								</div>
-								<p class="entry-meta">{item.data.organization}</p>
+								<p class="entry-meta">
+									{item.data.logo === "tencent" && (
+										<TencentWordmark class="org-wordmark" />
+									)}
+									{item.data.logo === "analemma" && (
+										<span
+											class="org-mark org-mark-analemma"
+											aria-hidden="true"
+										/>
+									)}
+									{item.data.organization}
+								</p>
 								{item.data.description && (
 									<p class="entry-description">{item.data.description}</p>
 								)}
