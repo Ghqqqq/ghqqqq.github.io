@@ -320,6 +320,7 @@ test("homepage implements the editorial art and motion proposal hooks", async ()
 	const indexPage = await readRepo("src/pages/index.astro");
 	const indexCss = await readRepo("src/styles/index.css");
 	const resetCss = await readRepo("src/styles/reset.css");
+	const globalsCss = await readRepo("src/styles/globals.css");
 	const navbar = await readRepo("src/components/Navbar.astro");
 	const themeToggle = await readRepo("src/components/ThemeToggle.astro");
 	const contentConfig = await readRepo("src/content.config.ts");
@@ -341,9 +342,10 @@ test("homepage implements the editorial art and motion proposal hooks", async ()
 	assert.match(indexPage, /prefers-reduced-motion:\s*reduce/);
 	assert.match(indexPage, /is-active-section/);
 
-	assert.match(indexCss, /body::before/);
-	assert.match(indexCss, /paper-grain/);
-	assert.match(indexCss, /mix-blend-mode:\s*multiply/);
+	// Paper grain lives in globals.css so the texture applies site-wide (not home-only).
+	assert.match(globalsCss, /body::before/);
+	assert.match(globalsCss, /paper-grain/);
+	assert.match(globalsCss, /mix-blend-mode:\s*multiply/);
 	assert.match(indexCss, /\.home\[data-motion-ready\]\s+\[data-reveal\]/);
 	assert.match(indexCss, /\.hero-avatar\s*{[^}]*border:\s*1px solid/);
 	assert.match(indexCss, /\.hero-avatar img\s*{[^}]*grayscale\(0\.08\)/);
@@ -360,7 +362,11 @@ test("homepage implements the editorial art and motion proposal hooks", async ()
 	assert.match(indexCss, /\.section-head\.is-active-section\s+\.section-num/);
 	assert.match(indexCss, /\.section-head:hover::after/);
 	assert.match(indexCss, /\.section-head:hover\s+\.section-num/);
-	assert.doesNotMatch(indexCss, /\.section-head:hover\s+\.section-title/);
+	// 2.2 — section titles swell their Fraunces SOFT axis on hover/focus.
+	assert.match(
+		indexCss,
+		/\.section-head:hover\s+\.section-title[\s\S]*?"SOFT"\s*100/,
+	);
 	assert.match(indexCss, /\.award-list\s*{[^}]*display:\s*grid/);
 	assert.doesNotMatch(indexCss, /column-count:\s*2/);
 	assert.match(indexCss, /\.publication-group-title/);
