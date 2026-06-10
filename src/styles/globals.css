@@ -63,6 +63,10 @@ main {
 	flex-direction: column;
 	gap: 2.5rem;
 	padding: 2rem 0;
+	/* Content paints above the ambient manuscript field (which shows through
+	   everywhere; the layer's own mask keeps the reading column subdued). */
+	position: relative;
+	z-index: 1;
 }
 
 main.main-single {

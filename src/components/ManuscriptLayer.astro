@@ -1,0 +1,282 @@
+---
+/**
+ * Manuscript layer: the page is printed over a sheet of working math.
+ * TeX sources are compiled to SVG at build time via MathJax (mathjax-full) —
+ * zero runtime JS, zero webfont downloads, fill follows currentColor so the
+ * layer themes with the palette. The content column (opaque main) occludes
+ * the middle, so the gutters carry the derivations: two sheets of paper.
+ *
+ * Content is textbook RL / bandits canon (Sutton–Barto, Lattimore–
+ * Szepesvári), deliberately not lifted from the site owner's own papers.
+ */
+import { liteAdaptor } from "mathjax-full/js/adaptors/liteAdaptor.js";
+import { RegisterHTMLHandler } from "mathjax-full/js/handlers/html.js";
+import { AllPackages } from "mathjax-full/js/input/tex/AllPackages.js";
+import { TeX } from "mathjax-full/js/input/tex.js";
+import { mathjax } from "mathjax-full/js/mathjax.js";
+import { SVG } from "mathjax-full/js/output/svg.js";
+
+const adaptor = liteAdaptor();
+RegisterHTMLHandler(adaptor);
+const svgOutput = new SVG({ fontCache: "global" });
+const mjDocument = mathjax.document("", {
+	InputJax: new TeX({ packages: AllPackages }),
+	OutputJax: svgOutput,
+});
+
+const typeset = (tex: string) =>
+	adaptor.innerHTML(mjDocument.convert(tex, { display: true }));
+
+const formulas = [
+	// Returns, values, Bellman
+	String.raw`G_t = \sum_{k=0}^{\infty} \gamma^{k}\, r_{t+k+1}`,
+	String.raw`V^{\pi}(s) = \mathbb{E}_{\pi}\big[\, G_t \mid s_t = s \,\big]`,
+	String.raw`V^{\pi}(s) = \sum_{a}\pi(a|s)\sum_{s'} P(s'|s,a)\big[r + \gamma V^{\pi}(s')\big]`,
+	String.raw`V^{*}(s) = \max_{a}\Big[ r(s,a) + \gamma \sum_{s'} P(s'|s,a)\, V^{*}(s') \Big]`,
+	String.raw`Q^{*}(s,a) = r(s,a) + \gamma\,\mathbb{E}_{s'}\big[\max_{a'} Q^{*}(s',a')\big]`,
+	String.raw`A^{\pi}(s,a) = Q^{\pi}(s,a) - V^{\pi}(s)`,
+	String.raw`\|\mathcal{T}V - \mathcal{T}V'\|_{\infty} \le \gamma\, \|V - V'\|_{\infty}`,
+	String.raw`\|V_{k} - V^{*}\|_{\infty} \le \gamma^{k}\, \|V_{0} - V^{*}\|_{\infty}`,
+	String.raw`d^{\pi}(s) = (1-\gamma)\sum_{t=0}^{\infty}\gamma^{t}\,\mathbb{P}(s_t = s)`,
+	// TD / tabular control
+	String.raw`\delta_t = r_{t+1} + \gamma V(s_{t+1}) - V(s_t)`,
+	String.raw`Q(s,a) \leftarrow Q(s,a) + \alpha\big[ r + \gamma \max_{a'} Q(s',a') - Q(s,a) \big]`,
+	String.raw`Q(s,a) \leftarrow Q(s,a) + \alpha\big[ r + \gamma\, Q(s',a') - Q(s,a) \big]`,
+	String.raw`e_t(s) = \gamma\lambda\, e_{t-1}(s) + \mathbf{1}\{s_t = s\}`,
+	String.raw`y_t = r_t + \gamma \max_{a'} Q(s_{t+1}, a';\, \theta^{-})`,
+	String.raw`\sum_{t} \alpha_t = \infty, \qquad \sum_{t} \alpha_t^{2} < \infty`,
+	// Policy gradient family
+	String.raw`\nabla_{\theta} J(\theta) = \mathbb{E}_{\pi_\theta}\big[\nabla_{\theta}\log \pi_{\theta}(a|s)\; Q^{\pi}(s,a)\big]`,
+	String.raw`\nabla_{\theta} J = \mathbb{E}\Big[\sum_{t}\nabla_{\theta}\log\pi_{\theta}(a_t|s_t)\,\big(G_t - b(s_t)\big)\Big]`,
+	String.raw`\hat{A}_t = \sum_{l=0}^{\infty} (\gamma\lambda)^{l}\, \delta_{t+l}`,
+	String.raw`\rho_t = \frac{\pi_{\theta}(a_t|s_t)}{\pi_{\mathrm{old}}(a_t|s_t)}`,
+	String.raw`L(\theta) = \mathbb{E}\big[\min\big(\rho_t \hat{A}_t,\; \mathrm{clip}(\rho_t, 1-\epsilon, 1+\epsilon)\, \hat{A}_t\big)\big]`,
+	String.raw`\theta \leftarrow \theta + \alpha\, \delta_t\, \nabla_{\theta} \log \pi_{\theta}(a_t|s_t)`,
+	String.raw`J(\pi') - J(\pi) = \tfrac{1}{1-\gamma}\, \mathbb{E}_{s\sim d^{\pi'}}\big[ A^{\pi}(s,a) \big]`,
+	String.raw`\pi^{*}(a|s) \propto \exp\big( Q(s,a) / \alpha \big)`,
+	String.raw`V(s) = \alpha \log \sum_{a} \exp\big( Q(s,a)/\alpha \big)`,
+	String.raw`\mathcal{H}(\pi(\cdot|s)) = -\sum_{a} \pi(a|s)\log \pi(a|s)`,
+	// Bandits
+	String.raw`a_t = \arg\max_{i}\Big[\,\hat{\mu}_i(t) + \sqrt{\tfrac{2\log t}{N_i(t)}}\,\Big]`,
+	String.raw`R(T) = T\mu^{*} - \mathbb{E}\Big[\sum_{t=1}^{T} r_t\Big]`,
+	String.raw`\Delta_i = \mu^{*} - \mu_i`,
+	String.raw`\mathbb{E}[R(T)] \le \sum_{i:\Delta_i>0}\frac{8\log T}{\Delta_i} + \Big(1+\tfrac{\pi^{2}}{3}\Big)\sum_{i}\Delta_i`,
+	String.raw`R(T) \le \mathcal{O}\big(\sqrt{KT\log T}\big), \qquad R(T) \ge c\,\sqrt{KT}`,
+	String.raw`\hat{\mu}_i(t) = \frac{1}{N_i(t)}\sum_{s=1}^{t} r_s\,\mathbf{1}\{a_s = i\}`,
+	String.raw`\liminf_{T\to\infty}\frac{\mathbb{E}[N_i(T)]}{\log T} \ge \frac{1}{\mathrm{KL}(\mu_i,\mu^{*})}`,
+	String.raw`\tilde{\theta}_t \sim p(\theta \mid \mathcal{H}_{t-1}), \qquad a_t = \arg\max_{a} \mathbb{E}\big[r \mid \tilde{\theta}_t, a\big]`,
+	String.raw`w_{t+1}(i) \propto w_t(i)\,\exp\big(\eta\,\hat{r}_t(i)\big)`,
+	String.raw`\pi(a|s) = \begin{cases} 1-\epsilon+\frac{\epsilon}{|\mathcal{A}|}, & a = a^{*} \\ \frac{\epsilon}{|\mathcal{A}|}, & \text{otherwise} \end{cases}`,
+	// Concentration & online learning
+	String.raw`\mathbb{P}\big(|\hat{\mu}-\mu|\ge \varepsilon\big) \le 2e^{-2n\varepsilon^{2}}`,
+	String.raw`\mathbb{P}\Big(\Big|\sum_{t} X_t\Big| \ge \varepsilon\Big) \le 2\exp\Big(-\frac{\varepsilon^{2}}{2\sum_t c_t^{2}}\Big)`,
+	String.raw`x_{t+1} = \Pi_{\mathcal{X}}\big(x_t - \eta\,\nabla f_t(x_t)\big)`,
+	String.raw`\mathrm{Reg}(T) \le \frac{D^{2}}{2\eta} + \frac{\eta G^{2} T}{2} = \mathcal{O}\big(DG\sqrt{T}\big)`,
+	String.raw`\sum_{t=1}^{T}\frac{1}{\sqrt{t}} \le 2\sqrt{T}`,
+	String.raw`\mathrm{KL}(p\,\|\,q) = \sum_{x} p(x)\log\frac{p(x)}{q(x)}`,
+	String.raw`\mathbb{E}_{p}[f(x)] = \mathbb{E}_{q}\Big[\tfrac{p(x)}{q(x)}\, f(x)\Big]`,
+];
+
+const notes = [
+	"Algorithm 1: Q-learning",
+	"by Hoeffding's inequality,",
+	"w.p. at least 1 − δ,",
+	"by the contraction mapping theorem,",
+	"Lemma 1 (performance difference).",
+	"telescoping over t = 1, …, T:",
+	"taking expectation over s′ ∼ P(·|s,a),",
+	"exploration vs. exploitation:",
+	"Q.E.D.  □",
+];
+
+// Compile each unique formula once; slots below reuse the cached SVG.
+const compiled = formulas.map((tex) => typeset(tex));
+const sharedGlyphDefs = (() => {
+	try {
+		// With fontCache: "global", glyph paths live in one shared defs block.
+		const cache = (svgOutput as unknown as { fontCache: { getCache(): unknown } })
+			.fontCache.getCache();
+		return adaptor.outerHTML(cache as Parameters<typeof adaptor.outerHTML>[0]);
+	} catch {
+		return "";
+	}
+})();
+
+// Ambient field layout: lines spread over the whole viewport (the layer is
+// fixed), each drifting in and out on its own staggered cycle so roughly a
+// third of them are visible at any moment. Deterministic LCG keeps builds
+// reproducible.
+const lcg = (() => {
+	let seed = 987654321;
+	return () => {
+		seed = (seed * 48271) % 2147483647;
+		return seed / 2147483647;
+	};
+})();
+
+type Line = {
+	kind: "math" | "note";
+	html: string;
+	top: number;
+	left: number;
+	size: number;
+	duration: number;
+	delay: number;
+};
+
+const SLOTS = 66;
+const lines: Line[] = [];
+let mathIndex = 0;
+let noteIndex = 0;
+
+for (let i = 0; i < SLOTS; i++) {
+	const isNote = i % 8 === 7;
+	const duration = 7 + Math.round(lcg() * 6);
+	const line: Line = {
+		kind: isNote ? "note" : "math",
+		html: "",
+		top: Math.round((3 + lcg() * 90) * 10) / 10,
+		left: Math.round((2 + lcg() * 86) * 10) / 10,
+		size: Math.round((0.7 + lcg() * 0.5) * 100) / 100,
+		duration,
+		delay: -Math.round(lcg() * duration * 10) / 10,
+	};
+
+	if (isNote) {
+		line.html = notes[noteIndex % notes.length];
+		noteIndex++;
+	} else {
+		line.html = compiled[mathIndex % compiled.length];
+		mathIndex++;
+	}
+
+	lines.push(line);
+}
+---
+
+<div class="manuscript-layer" aria-hidden="true">
+	<svg class="ms-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" set:html={sharedGlyphDefs} />
+	{
+		lines.map((line) =>
+			line.kind === "math" ? (
+				<div
+					class="ms-line"
+					style={`top:${line.top}%; left:${line.left}%; font-size:${line.size}em; --dur:${line.duration}s; --delay:${line.delay}s;`}
+					set:html={line.html}
+				/>
+			) : (
+				<span
+					class="ms-line ms-note"
+					style={`top:${line.top}%; left:${line.left}%; --dur:${line.duration}s; --delay:${line.delay}s;`}
+				>
+					{line.html}
+				</span>
+			),
+		)
+	}
+</div>
+
+<style>
+	.manuscript-layer {
+		position: fixed;
+		inset: 0;
+		overflow: hidden;
+		z-index: 0;
+		font-size: 0.92rem;
+		color: var(--text-primary);
+		opacity: 0.2;
+		pointer-events: none;
+		user-select: none;
+		/* Whole-page field, but the reading column stays subdued. */
+		-webkit-mask-image: linear-gradient(
+			90deg,
+			rgba(0, 0, 0, 1) 0%,
+			rgba(0, 0, 0, 1) 13%,
+			rgba(0, 0, 0, 0.38) 26%,
+			rgba(0, 0, 0, 0.38) 74%,
+			rgba(0, 0, 0, 1) 87%,
+			rgba(0, 0, 0, 1) 100%
+		);
+		mask-image: linear-gradient(
+			90deg,
+			rgba(0, 0, 0, 1) 0%,
+			rgba(0, 0, 0, 1) 13%,
+			rgba(0, 0, 0, 0.38) 26%,
+			rgba(0, 0, 0, 0.38) 74%,
+			rgba(0, 0, 0, 1) 87%,
+			rgba(0, 0, 0, 1) 100%
+		);
+	}
+
+	html[data-theme="dark"] .manuscript-layer {
+		opacity: 0.18;
+	}
+
+	.ms-defs {
+		position: absolute;
+		width: 0;
+		height: 0;
+		overflow: hidden;
+	}
+
+	.ms-line {
+		position: absolute;
+		white-space: nowrap;
+		line-height: 1;
+		opacity: 0;
+		animation: ms-cycle var(--dur, 18s) linear infinite;
+		animation-delay: var(--delay, 0s);
+	}
+
+	/* Float up, linger, dissolve — visible for roughly a third of each cycle. */
+	@keyframes ms-cycle {
+		0% {
+			opacity: 0;
+			transform: translateY(18px);
+		}
+		9% {
+			opacity: 1;
+		}
+		25% {
+			opacity: 1;
+		}
+		34% {
+			opacity: 0;
+			transform: translateY(-24px);
+		}
+		100% {
+			opacity: 0;
+			transform: translateY(-24px);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.ms-line {
+			animation: none;
+			opacity: 0.5;
+		}
+	}
+
+	.ms-line :global(svg) {
+		display: block;
+	}
+
+	.ms-note {
+		font-family: var(--font-mono);
+		font-size: 0.78em;
+		letter-spacing: 0.08em;
+		color: var(--text-secondary);
+	}
+
+	@media screen and (max-width: 1023px) {
+		.manuscript-layer {
+			display: none;
+		}
+	}
+
+	@media print {
+		.manuscript-layer {
+			display: none;
+		}
+	}
+</style>

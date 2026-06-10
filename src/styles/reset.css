@@ -112,6 +112,8 @@ body {
 	font-family: var(--font-sans);
 	color: var(--text-primary);
 	background: var(--page-bg);
+	/* Containing block for the absolutely-positioned manuscript layer. */
+	position: relative;
 	transition:
 		background-color 0.2s ease,
 		color 0.2s ease;

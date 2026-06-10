@@ -517,6 +517,45 @@ test("homepage ships the editorial fine-print upgrade", async () => {
 	assert.match(navbar, /@keyframes reading-fill/);
 });
 
+test("manuscript layer typesets compiled math into the page background", async () => {
+	const html = await readBuilt("index.html");
+	const layer = await readRepo("src/components/ManuscriptLayer.astro");
+	const globalsCss = await readRepo("src/styles/globals.css");
+
+	assert.ok(html, "expected built homepage HTML");
+	assert.ok(layer, "expected ManuscriptLayer source");
+	assert.ok(globalsCss, "expected globals CSS source");
+
+	// Build-time MathJax compilation: TeX strings in source, typeset SVG out.
+	assert.match(layer, /mathjax-full/);
+	assert.match(layer, /aria-hidden="true"/);
+	assert.match(html, /class="manuscript-layer"/);
+	const lineCount = (html.match(/class="ms-line/g) ?? []).length;
+	assert.ok(lineCount >= 50, `expected >= 50 typeset lines, got ${lineCount}`);
+	assert.match(html, /manuscript-layer[\s\S]*?<svg/);
+
+	// Textbook RL/bandits canon only — nothing lifted from the owner's papers.
+	assert.match(layer, /Q-learning/);
+	assert.doesNotMatch(layer, /drift-plus-penalty/);
+	assert.doesNotMatch(layer, /mathrm\{ref\}/);
+	assert.doesNotMatch(layer, /J_c\(\\pi\)|J_c\(\pi\)/);
+
+	// Ambient field: a fixed full-viewport layer whose lines drift in and out
+	// on staggered CSS cycles; a mask keeps the reading column subdued. The
+	// content no longer occludes the layer (whole-page coverage).
+	assert.match(layer, /position:\s*fixed/);
+	assert.match(layer, /@keyframes ms-cycle/);
+	assert.match(layer, /animation-delay/);
+	assert.match(layer, /mask-image/);
+	assert.match(layer, /prefers-reduced-motion/);
+	assert.doesNotMatch(globalsCss, /main\s*{[^}]*background(?:-color)?:\s*var\(--page-bg\)/);
+
+	// Decorative only: inert, gone on narrow screens and in print.
+	assert.match(layer, /pointer-events:\s*none/);
+	assert.match(layer, /max-width:\s*1023px[\s\S]*?display:\s*none/);
+	assert.match(layer, /@media print[\s\S]*?display:\s*none/);
+});
+
 test("social sharing metadata produces valid link previews", async () => {
 	const homeHtml = await readBuilt("index.html");
 	const publicationsHtml = await readBuilt("publications/index.html");

@@ -5,6 +5,7 @@ import "../styles/globals.css";
 import { name, twitterHandle } from "homepage:globals";
 import Background from "../components/Background.astro";
 import LayoutGrid from "../components/LayoutGrid.astro";
+import ManuscriptLayer from "../components/ManuscriptLayer.astro";
 import Navbar from "../components/Navbar.astro";
 import SnakeGame from "../components/SnakeGame.astro";
 
@@ -96,6 +97,7 @@ const socialImage = new URL(image?.src ?? "/img/og.png", Astro.site).href;
 		<meta name="twitter:image" content={socialImage} />
 	</head>
 	<body>
+		<ManuscriptLayer />
 		<main class:list={[layout === "single" && "main-single"]}>
 			<Navbar />
 			{layout === "single" ? (
