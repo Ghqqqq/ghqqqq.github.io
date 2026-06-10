@@ -44,6 +44,7 @@ const links = [
 		</button>
 	</div>
 </nav>
+<span class="reading-progress" aria-hidden="true"></span>
 
 <script is:inline>
 	const nav = document.querySelector(".site-nav");
@@ -75,6 +76,47 @@ const links = [
 		-webkit-backdrop-filter: blur(18px);
 	}
 
+	/* Reading progress: a terracotta rule filling along the bottom viewport
+	   edge as you read. Scroll-driven CSS animation — the compositor owns the
+	   state directly (no JS, no invalidation path). Browsers without
+	   animation-timeline support simply never show the flourish. */
+	.reading-progress {
+		display: none;
+		position: fixed;
+		left: 0;
+		bottom: 0;
+		width: 100%;
+		height: 2px;
+		background: var(--primary);
+		transform: scaleX(0);
+		transform-origin: left center;
+		pointer-events: none;
+		z-index: 60;
+	}
+
+	@supports (animation-timeline: scroll()) {
+		.reading-progress {
+			display: block;
+			animation: reading-fill linear both;
+			animation-timeline: scroll(root);
+		}
+	}
+
+	@keyframes reading-fill {
+		from {
+			transform: scaleX(0);
+		}
+		to {
+			transform: scaleX(1);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.reading-progress {
+			display: none;
+		}
+	}
+
 	.site-nav::after {
 		content: "";
 		position: absolute;
@@ -85,6 +127,7 @@ const links = [
 		background: linear-gradient(90deg, var(--hairline), transparent 82%);
 		pointer-events: none;
 	}
+
 
 	.site-title {
 		width: fit-content;

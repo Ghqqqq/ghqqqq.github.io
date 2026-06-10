@@ -455,6 +455,68 @@ test("public-facing repository text omits template traces and keeps footer attri
 	assert.doesNotMatch(packageJson, /"name":\s*"spectre"/i);
 });
 
+test("homepage ships the editorial fine-print upgrade", async () => {
+	const html = await readBuilt("index.html");
+	const indexCss = await readRepo("src/styles/index.css");
+	const indexPage = await readRepo("src/pages/index.astro");
+	const navbar = await readRepo("src/components/Navbar.astro");
+	const publicationTeaser = await readRepo("src/components/PublicationTeaser.astro");
+
+	assert.ok(html, "expected built homepage HTML");
+	assert.ok(indexCss, "expected homepage CSS source");
+	assert.ok(navbar, "expected navbar source");
+	assert.ok(publicationTeaser, "expected publication teaser source");
+
+	// A1 — Fraunces drop cap opens the About prose.
+	assert.match(
+		indexCss,
+		/\.prose > p:first-of-type::first-letter\s*{[^}]*float:\s*left/,
+	);
+	assert.match(
+		indexCss,
+		/\.prose > p:first-of-type::first-letter\s*{[^}]*color:\s*var\(--primary\)/,
+	);
+
+	// A2 — the SOFT-axis swell covers every serif heading, not just section titles.
+	assert.match(indexCss, /\.hero-name:hover[\s\S]*?"SOFT"\s*100/);
+	assert.match(indexCss, /\.publication-group:hover\s+\.publication-group-name[\s\S]*?"SOFT"\s*100/);
+	assert.match(publicationTeaser, /"SOFT"\s*0/);
+	assert.match(publicationTeaser, /"SOFT"\s*100/);
+
+	// A3 — home section dividers carry the newspaper double rule (terracotta tick).
+	assert.match(
+		indexCss,
+		/\.home > \.hairline::before\s*{[^}]*background(?:-color)?:\s*var\(--primary\)/,
+	);
+
+	// B1 — ghost section numerals on desktop, title overlapping.
+	assert.match(
+		indexCss,
+		/@media screen and \(min-width:\s*861px\)[\s\S]*\.section-num\s*{[^}]*font-size:\s*clamp\(3/,
+	);
+
+	// B2 — section heads stick like print margin labels while a section scrolls.
+	assert.match(
+		indexCss,
+		/@media screen and \(min-width:\s*861px\)[\s\S]*\.section-head\s*{[^}]*position:\s*sticky/,
+	);
+	// Reveal settles to transform:none so sticky children are never inside a transform.
+	assert.match(
+		indexCss,
+		/\[data-reveal\]\.is-in\s*{[^}]*transform:\s*none/,
+	);
+
+	// C — terracotta reading-progress rule along the bottom viewport edge,
+	// driven by a scroll-linked CSS animation (compositor-owned, zero JS).
+	// Hidden entirely in browsers without animation-timeline support.
+	assert.match(html, /class="reading-progress"/);
+	assert.match(navbar, /\.reading-progress\s*{[^}]*position:\s*fixed/);
+	assert.match(navbar, /\.reading-progress\s*{[^}]*bottom:\s*0/);
+	assert.match(navbar, /@supports\s*\(animation-timeline:\s*scroll\(\)\)/);
+	assert.match(navbar, /animation-timeline:\s*scroll\(root\)/);
+	assert.match(navbar, /@keyframes reading-fill/);
+});
+
 test("social sharing metadata produces valid link previews", async () => {
 	const homeHtml = await readBuilt("index.html");
 	const publicationsHtml = await readBuilt("publications/index.html");

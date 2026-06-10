@@ -144,6 +144,7 @@ const lineageSourceHref = lineage
 	.publication-teaser:has(.publication-cover-link:hover) h3,
 	.publication-teaser:has(.publication-cover-link:focus-visible) h3 {
 		color: var(--primary);
+		font-variation-settings: "SOFT" 100;
 	}
 
 	.publication-main-link:hover .post-date,
@@ -213,7 +214,10 @@ const lineageSourceHref = lineage
 		line-height: 1.3;
 		letter-spacing: -0.005em;
 		color: var(--text-primary);
-		transition: color 0.15s ease;
+		font-variation-settings: "SOFT" 0;
+		transition:
+			color 0.15s ease,
+			font-variation-settings 0.3s ease;
 	}
 
 	.publication-authors,

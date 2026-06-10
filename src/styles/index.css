@@ -13,9 +13,11 @@
 	transition-delay: var(--reveal-delay, 0ms);
 }
 
+/* Settle to transform:none (not translateY(0)) so sticky section heads never
+   live inside a transformed ancestor once the reveal finishes. */
 .home[data-motion-ready] [data-reveal].is-in {
 	opacity: 1;
-	transform: translateY(0);
+	transform: none;
 }
 
 .home[data-motion-ready] [data-draw-line] {
@@ -55,6 +57,13 @@
 	font-variation-settings:
 		"opsz" 144,
 		"SOFT" 30;
+	transition: font-variation-settings 0.3s ease;
+}
+
+.hero-name:hover {
+	font-variation-settings:
+		"opsz" 144,
+		"SOFT" 100;
 }
 
 .hero-tagline {
@@ -145,6 +154,24 @@ a.hero-link:focus-visible {
 	margin-top: 2.5rem;
 }
 
+/* Newspaper double rule: each home divider carries a short, heavier terracotta
+   tick over the long hairline (the same mark as the OG card). Lives inside the
+   hr so the draw-in scaleX animation carries it too. */
+.home > .hairline {
+	position: relative;
+	overflow: visible;
+}
+
+.home > .hairline::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: -1px;
+	width: 2.75rem;
+	height: 3px;
+	background: var(--primary);
+}
+
 /* ---------- Sections (label | content) ---------- */
 
 .home-section {
@@ -223,6 +250,46 @@ a.hero-link:focus-visible {
 		"SOFT" 100;
 }
 
+/* Ghost numerals + print margin labels (desktop only — on mobile the head
+   collapses to a compact inline row). The oversized number sits at ~9% ink
+   behind the title; the head sticks below the nav while its section scrolls,
+   echoing the sticky year labels on the Full Publications page. */
+@media screen and (min-width: 861px) {
+	.section-head {
+		position: sticky;
+		top: 4.4rem;
+	}
+
+	.section-num {
+		font-size: clamp(3.4rem, 4.6vw, 4.3rem);
+		letter-spacing: 0.02em;
+		line-height: 0.82;
+		color: var(--text-primary);
+		opacity: 0.11;
+		transition:
+			color 0.18s ease,
+			opacity 0.18s ease;
+	}
+
+	.section-title {
+		position: relative;
+		margin-top: -2.05rem;
+		padding-left: 1.05rem;
+	}
+
+	.section-head::after {
+		margin-left: 1.05rem;
+		margin-top: 0.5rem;
+	}
+
+	.section-head.is-active-section .section-num,
+	.section-head:hover .section-num,
+	.section-head:focus-within .section-num {
+		color: var(--primary);
+		opacity: 0.4;
+	}
+}
+
 .section-body {
 	min-width: 0;
 }
@@ -242,6 +309,20 @@ a.hero-link:focus-visible {
 
 .prose p:last-child {
 	margin-bottom: 0;
+}
+
+/* Fraunces drop cap opens the About prose — three-line float, terracotta ink. */
+.prose > p:first-of-type::first-letter {
+	float: left;
+	font-family: var(--font-display);
+	font-weight: 460;
+	font-size: 4.05rem;
+	line-height: 0.84;
+	padding: 0.06em 0.55rem 0 0;
+	color: var(--primary);
+	font-variation-settings:
+		"opsz" 144,
+		"SOFT" 40;
 }
 
 .prose a,
@@ -794,6 +875,14 @@ a.hero-link:focus-visible {
 	font-variation-settings:
 		"opsz" 72,
 		"SOFT" 35;
+	transition: font-variation-settings 0.3s ease;
+}
+
+.publication-group:hover .publication-group-name,
+.publication-group:focus-within .publication-group-name {
+	font-variation-settings:
+		"opsz" 72,
+		"SOFT" 100;
 }
 
 .publication-group:hover .publication-group-index,
@@ -897,6 +986,12 @@ a.hero-link:focus-visible {
 
 	.hero-name {
 		font-size: clamp(2.2rem, 10vw, 3rem);
+	}
+
+	/* Slimmer drop cap on narrow screens so it doesn't crowd the line boxes. */
+	.prose > p:first-of-type::first-letter {
+		font-size: 3.2rem;
+		padding-right: 0.45rem;
 	}
 
 	.entry-compact-year {
