@@ -21,6 +21,14 @@ async function readRepo(relativePath) {
 	}
 }
 
+async function readRepoBytes(relativePath) {
+	try {
+		return await readFile(resolve(relativePath));
+	} catch {
+		return null;
+	}
+}
+
 test("homepage renders the academic CV structure and omits excluded personal data", async () => {
 	const html = await readBuilt("index.html");
 
@@ -445,6 +453,49 @@ test("public-facing repository text omits template traces and keeps footer attri
 	);
 	assert.match(layout, /Powered by[\s\S]*Codex[\s\S]*Claude Code/);
 	assert.doesNotMatch(packageJson, /"name":\s*"spectre"/i);
+});
+
+test("social sharing metadata produces valid link previews", async () => {
+	const homeHtml = await readBuilt("index.html");
+	const publicationsHtml = await readBuilt("publications/index.html");
+	const ogImage = await readRepoBytes("public/img/og.png");
+
+	assert.ok(homeHtml, "expected built homepage HTML");
+	assert.ok(publicationsHtml, "expected built publications index");
+	assert.ok(ogImage, "expected OG card image");
+
+	// Open Graph tags use property= (the spec attribute), never name=.
+	assert.doesNotMatch(homeHtml, /<meta name="og:/);
+	assert.doesNotMatch(publicationsHtml, /<meta name="og:/);
+	assert.match(homeHtml, /<meta property="og:title" content="Hengquan Guo"/);
+
+	// og:image / twitter:image must be absolute URLs for scrapers to resolve them.
+	assert.match(
+		homeHtml,
+		/<meta property="og:image" content="https:\/\/ghqqqq\.github\.io\/img\/og\.png"/,
+	);
+	assert.match(
+		homeHtml,
+		/<meta name="twitter:image" content="https:\/\/ghqqqq\.github\.io\/img\/og\.png"/,
+	);
+	assert.match(homeHtml, /<meta name="twitter:card"/);
+
+	// og:url points at the page being shared, not the site root everywhere.
+	assert.match(
+		homeHtml,
+		/<meta property="og:url" content="https:\/\/ghqqqq\.github\.io\/"/,
+	);
+	assert.match(
+		publicationsHtml,
+		/<meta property="og:url" content="https:\/\/ghqqqq\.github\.io\/publications\/"/,
+	);
+
+	// The card itself: 1200×630 PNG under 200KB (not the upstream template banner).
+	assert.ok(ogImage.length < 200_000, `og.png is ${ogImage.length} bytes, expected < 200000`);
+	const pngWidth = ogImage.readUInt32BE(16);
+	const pngHeight = ogImage.readUInt32BE(20);
+	assert.equal(pngWidth, 1200, "og.png width");
+	assert.equal(pngHeight, 630, "og.png height");
 });
 
 test("repository is configured for GitHub Pages deployment", async () => {

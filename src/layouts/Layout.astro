@@ -23,6 +23,8 @@ const { title, description, image, article, layout = "split" } = Astro.props;
 const lightThemeColor = "#f4efe4";
 const darkThemeColor = "#15130f";
 const currentYear = new Date().getFullYear();
+// Scrapers (WeChat, Twitter, Slack) require absolute URLs in og:/twitter: image tags.
+const socialImage = new URL(image?.src ?? "/img/og.png", Astro.site).href;
 ---
 
 <!DOCTYPE html>
@@ -67,15 +69,15 @@ const currentYear = new Date().getFullYear();
 
 		<link rel="canonical" href={Astro.url} />
 
-		<meta name="og:title" content={title} />
-		{description && <meta name="og:description" content={description} />}
-		<meta name="og:image" content={image?.src || '/img/og.png'} />
-		<meta name="og:url" content={Astro.site} />
-		{!article && <meta name="og:type" content="website" />}
-		<meta name="og:locale" content="en" />
+		<meta property="og:title" content={title} />
+		{description && <meta property="og:description" content={description} />}
+		<meta property="og:image" content={socialImage} />
+		<meta property="og:url" content={Astro.url} />
+		{!article && <meta property="og:type" content="website" />}
+		<meta property="og:locale" content="en" />
 
 		{article && (
-			<meta name="og:type" content="article" />
+			<meta property="og:type" content="article" />
 			<meta property="article:published_time" content={article.createdAt.toISOString()} />
 			<meta name="author" content={name} />
 		)}
@@ -91,7 +93,7 @@ const currentYear = new Date().getFullYear();
 		)}
 		<meta name="twitter:title" content={title} />
 		{description && <meta name="twitter:description" content={description} />}
-		<meta name="twitter:image" content={image?.src || '/img/og.png'} />
+		<meta name="twitter:image" content={socialImage} />
 	</head>
 	<body>
 		<main class:list={[layout === "single" && "main-single"]}>
