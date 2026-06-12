@@ -75,6 +75,36 @@ const formulas = [
 	String.raw`\sum_{t=1}^{T}\frac{1}{\sqrt{t}} \le 2\sqrt{T}`,
 	String.raw`\mathrm{KL}(p\,\|\,q) = \sum_{x} p(x)\log\frac{p(x)}{q(x)}`,
 	String.raw`\mathbb{E}_{p}[f(x)] = \mathbb{E}_{q}\Big[\tfrac{p(x)}{q(x)}\, f(x)\Big]`,
+	// Bellman structure & policy improvement
+	String.raw`Q^{\pi}(s,a) = r(s,a) + \gamma\,\mathbb{E}_{s'}\big[V^{\pi}(s')\big]`,
+	String.raw`\pi'(s) = \arg\max_{a} Q^{\pi}(s,a) \;\Rightarrow\; V^{\pi'} \ge V^{\pi}`,
+	String.raw`(\mathcal{T}V)(s) = \max_{a}\big\{ r(s,a) + \gamma\, \mathbb{E}\,V(s') \big\}`,
+	String.raw`V^{*} = \max_{\pi} V^{\pi}, \qquad \pi^{*} = \arg\max_{\pi} J(\pi)`,
+	String.raw`\sum_{t=0}^{\infty} \gamma^{t} = \frac{1}{1-\gamma}`,
+	String.raw`G_t^{\lambda} = (1-\lambda)\sum_{n=1}^{\infty} \lambda^{n-1} G_{t:t+n}`,
+	String.raw`G_{t:t+n} = \sum_{k=0}^{n-1}\gamma^{k} r_{t+k+1} + \gamma^{n} V(s_{t+n})`,
+	String.raw`\min_{\theta}\; \mathbb{E}\big[\big( y - Q_{\theta}(s,a) \big)^{2}\big]`,
+	String.raw`\pi(a|s) = \frac{e^{h(s,a)}}{\sum_{b} e^{h(s,b)}}`,
+	String.raw`\theta \leftarrow \theta + \alpha\, F^{-1} \nabla_{\theta} J(\theta)`,
+	String.raw`F = \mathbb{E}\big[\nabla\log\pi_{\theta}\, \nabla\log\pi_{\theta}^{\top}\big]`,
+	String.raw`\mathbb{P}(s_{t+1} \mid s_t, a_t, \ldots, s_0) = \mathbb{P}(s_{t+1} \mid s_t, a_t)`,
+	String.raw`\rho^{\top} P = \rho^{\top}, \qquad \sum_{s}\rho(s) = 1`,
+	// Bandits & concentration, extended
+	String.raw`R(T) = \sum_{i} \Delta_i\, \mathbb{E}\big[N_i(T)\big]`,
+	String.raw`|\hat{\mu}-\mu| \le \sqrt{\tfrac{2\sigma^{2}\log(1/\delta)}{n}} + \tfrac{c\log(1/\delta)}{3n}`,
+	String.raw`p_i(t) = (1-\gamma)\frac{w_i(t)}{\sum_j w_j(t)} + \frac{\gamma}{K}`,
+	String.raw`\hat{r}_i(t) = \frac{r_t\,\mathbf{1}\{a_t = i\}}{p_i(t)}`,
+	String.raw`\mathrm{Beta}(\alpha + r,\; \beta + 1 - r)`,
+	String.raw`p(\theta \mid \mathcal{D}) \propto p(\mathcal{D} \mid \theta)\, p(\theta)`,
+	String.raw`\mathbb{E}\big[e^{\lambda X}\big] \le e^{\lambda^{2}\sigma^{2}/2}`,
+	String.raw`\mathbb{E}\big[X_{t+1} \mid \mathcal{F}_t\big] = X_t`,
+	String.raw`\mathbb{P}\Big(\bigcup_i A_i\Big) \le \sum_i \mathbb{P}(A_i)`,
+	String.raw`\mathbb{P}(X \ge a) \le \frac{\mathbb{E}[X]}{a}`,
+	String.raw`f\big(\mathbb{E}[X]\big) \le \mathbb{E}\big[f(X)\big]`,
+	// Online learning, extended
+	String.raw`x_{t+1} = \arg\min_{x}\; \eta\,\langle g_t, x\rangle + D_{\psi}(x, x_t)`,
+	String.raw`x_{t+1} = \arg\min_{x}\; \sum_{s=1}^{t}\langle g_s, x\rangle + \tfrac{1}{\eta}\psi(x)`,
+	String.raw`f(y) \ge f(x) + \langle \nabla f(x), y-x\rangle + \tfrac{\mu}{2}\|y-x\|^{2}`,
 ];
 
 const notes = [
@@ -87,6 +117,86 @@ const notes = [
 	"taking expectation over s′ ∼ P(·|s,a),",
 	"exploration vs. exploitation:",
 	"Q.E.D.  □",
+];
+
+// Named theorems and terminology, set in the display serif — half the field.
+const terms = [
+	"Azuma–Hoeffding inequality",
+	"Bellman optimality equation",
+	"Markov decision process",
+	"exploration–exploitation trade-off",
+	"optimism in the face of uncertainty",
+	"upper confidence bound",
+	"Thompson sampling",
+	"regret minimization",
+	"Lai–Robbins lower bound",
+	"minimax regret",
+	"contraction mapping theorem",
+	"temporal-difference learning",
+	"policy gradient theorem",
+	"actor–critic methods",
+	"trust-region policy optimization",
+	"maximum-entropy reinforcement learning",
+	"Boltzmann exploration",
+	"eligibility traces",
+	"stochastic approximation",
+	"martingale difference sequence",
+	"sub-Gaussian concentration",
+	"union bound",
+	"Chernoff bound",
+	"importance sampling",
+	"off-policy evaluation",
+	"occupancy measure",
+	"contextual bandits",
+	"adversarial bandits",
+	"online convex optimization",
+	"mirror descent",
+	"follow-the-regularized-leader",
+	"Lyapunov stability",
+	"sample complexity",
+	"value iteration · policy iteration",
+	"dynamic programming principle",
+	"Bellman operator",
+	"Robbins–Monro conditions",
+	"Bellman backup · bootstrapping",
+	"generalized advantage estimation",
+	"natural policy gradient",
+	"Fisher information matrix",
+	"Kullback–Leibler divergence",
+	"successive elimination",
+	"doubling trick",
+	"best-arm identification",
+	"pure exploration",
+	"confidence radius",
+	"Bernstein inequality",
+	"McDiarmid's inequality",
+	"optional stopping theorem",
+	"Markov property",
+	"stationary distribution",
+	"ergodicity · mixing time",
+	"credit assignment problem",
+	"reward shaping",
+	"function approximation",
+	"the deadly triad",
+	"experience replay",
+	"target network",
+	"distributional reinforcement learning",
+	"model-based · model-free",
+	"offline reinforcement learning",
+	"behavior cloning",
+	"inverse reinforcement learning",
+	"partial observability",
+	"belief state",
+	"bandit feedback",
+	"minimax lower bound",
+	"gap-dependent regret",
+	"anytime algorithm",
+	"Jensen's inequality",
+	"Fenchel duality",
+	"Frank–Wolfe method",
+	"proximal operator",
+	"no-regret learning",
+	"self-normalized concentration",
 ];
 
 // Compile each unique formula once; slots below reuse the cached SVG.
@@ -115,7 +225,7 @@ const lcg = (() => {
 })();
 
 type Line = {
-	kind: "math" | "note";
+	kind: "math" | "term" | "note";
 	html: string;
 	top: number;
 	left: number;
@@ -127,30 +237,50 @@ type Line = {
 const SLOTS = 66;
 const lines: Line[] = [];
 let mathIndex = 0;
+let termIndex = 0;
 let noteIndex = 0;
+let textSlot = 0;
 
 for (let i = 0; i < SLOTS; i++) {
-	const isNote = i % 8 === 7;
+	// Even slots carry compiled math; odd slots carry prose (mostly named
+	// theorems/terminology, every 4th a mono proof annotation) — about 50/50.
+	const isText = i % 2 === 1;
 	const duration = 7 + Math.round(lcg() * 6);
-	const line: Line = {
-		kind: isNote ? "note" : "math",
-		html: "",
-		top: Math.round((3 + lcg() * 90) * 10) / 10,
-		left: Math.round((2 + lcg() * 86) * 10) / 10,
-		size: Math.round((0.7 + lcg() * 0.5) * 100) / 100,
-		duration,
-		delay: -Math.round(lcg() * duration * 10) / 10,
-	};
+	const top = Math.round((3 + lcg() * 90) * 10) / 10;
+	const left = Math.round((2 + lcg() * 86) * 10) / 10;
+	const size = Math.round((0.7 + lcg() * 0.5) * 100) / 100;
+	const baseDelay = -Math.round(lcg() * duration * 10) / 10;
 
-	if (isNote) {
-		line.html = notes[noteIndex % notes.length];
-		noteIndex++;
-	} else {
-		line.html = compiled[mathIndex % compiled.length];
-		mathIndex++;
+	// Two phase-shifted entries share each position, so every spot alternates
+	// between different content — the full libraries enter the rotation.
+	for (let variant = 0; variant < 2; variant++) {
+		const isNote = isText && textSlot % 4 === 3;
+		const line: Line = {
+			kind: isText ? (isNote ? "note" : "term") : "math",
+			html: "",
+			top,
+			left,
+			size,
+			duration,
+			delay: Math.round((baseDelay - (variant * duration) / 2) * 10) / 10,
+		};
+
+		if (isText) {
+			if (isNote) {
+				line.html = notes[noteIndex % notes.length];
+				noteIndex++;
+			} else {
+				line.html = terms[termIndex % terms.length];
+				termIndex++;
+			}
+			textSlot++;
+		} else {
+			line.html = compiled[mathIndex % compiled.length];
+			mathIndex++;
+		}
+
+		lines.push(line);
 	}
-
-	lines.push(line);
 }
 ---
 
@@ -166,8 +296,8 @@ for (let i = 0; i < SLOTS; i++) {
 				/>
 			) : (
 				<span
-					class="ms-line ms-note"
-					style={`top:${line.top}%; left:${line.left}%; --dur:${line.duration}s; --delay:${line.delay}s;`}
+					class:list={["ms-line", line.kind === "term" ? "ms-term" : "ms-note"]}
+					style={`top:${line.top}%; left:${line.left}%; font-size:${line.size}em; --dur:${line.duration}s; --delay:${line.delay}s;`}
 				>
 					{line.html}
 				</span>
@@ -266,6 +396,17 @@ for (let i = 0; i < SLOTS; i++) {
 		font-size: 0.78em;
 		letter-spacing: 0.08em;
 		color: var(--text-secondary);
+	}
+
+	/* Named theorems / terminology: display serif italic, like index entries. */
+	.ms-term {
+		font-family: var(--font-display);
+		font-style: italic;
+		font-weight: 430;
+		letter-spacing: 0.015em;
+		font-variation-settings:
+			"opsz" 40,
+			"SOFT" 50;
 	}
 
 	@media screen and (max-width: 1023px) {
