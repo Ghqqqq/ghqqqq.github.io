@@ -89,6 +89,12 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /Awards[\s\S]*ICML Silver Reviewer[\s\S]*NeurIPS Top Reviewer/);
 	assert.match(html, /RLChina 2022/);
 	assert.match(html, /Research Intern/);
+	assert.match(html, /2026\.04 - Present/);
+	assert.match(
+		html,
+		/Experience[\s\S]*Analemma[\s\S]*Developing auto-research workflows, spanning agentic workflow design, model training, and research-oriented evaluation\./i,
+	);
+	assert.doesNotMatch(html, /ideation agent/i);
 	assert.match(html, /2025\.06 - 2026\.02/);
 	assert.match(
 		html,
