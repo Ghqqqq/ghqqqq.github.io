@@ -5,7 +5,7 @@
 		"organization": "Analemma",
 		"period": "2026.04 - Present",
 		"logo": "analemma",
-		"description": "Developing auto-research workflows, spanning agentic workflow design, model training, and research-oriented evaluation."
+		"description": "Building the first multi-turn auto-research dataset and developing auto-research workflows across agentic harness design, model training, and research-oriented evaluation."
 	},
 	{
 		"id": 2,
