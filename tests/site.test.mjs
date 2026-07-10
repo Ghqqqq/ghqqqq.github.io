@@ -779,6 +779,17 @@ test("homepage publications use the atlas index variant without changing the arc
 		teaser,
 		/:global\(html\[data-theme="light"\]\)[\s\S]*\.publication-teaser\.atlas \.publication-main-link:hover h3,[\s\S]*color:\s*var\(--atlas-cobalt\)/,
 	);
+	const atlasVenueRule = Array.from(
+		teaser.matchAll(/(?:^|\n)\s*\.publication-atlas-venue\s*\{([^}]*)\}/g),
+	).at(-1)?.[1];
+	assert.ok(atlasVenueRule, "expected dedicated atlas venue CSS rule");
+	assertCssDeclarations(`.publication-atlas-venue {${atlasVenueRule}}`, ".publication-atlas-venue", {
+		"min-width": "0",
+		"max-width": "min(100%, 12rem)",
+		overflow: "hidden",
+		"text-overflow": "ellipsis",
+		"white-space": "nowrap",
+	});
 	const teaserLetterSpacings = Array.from(
 		teaser.matchAll(/letter-spacing:\s*([^;]+);/g),
 		([, value]) => value.trim(),

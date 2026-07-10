@@ -460,11 +460,15 @@ const lineageSourceHref = lineage
 
 	.publication-atlas-venue {
 		align-self: start;
+		min-width: 0;
+		max-width: min(100%, 12rem);
 		padding: 0.3rem 0.4rem;
 		border: 1px solid
 			color-mix(in srgb, var(--home-surface-text) 24%, transparent);
 		color: var(--home-surface-text);
 		line-height: 1;
+		overflow: hidden;
+		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
