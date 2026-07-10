@@ -271,10 +271,13 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 		html,
 		/current research interest is in reinforcement learning for agentic LLMs and multimodal large models/i,
 	);
-	assert.match(html, /class="about-pull-quote"/);
 	assert.match(
 		html,
-		/Learning under constraints, feedback, and changing environments\./,
+		/<p class="about-manifesto">\s*Learning under\s*<em>constraints, feedback,<\/em>\s*and changing environments\.\s*<\/p>/,
+	);
+	assert.match(
+		html,
+		/Learning under\s*<em>constraints, feedback,<\/em>\s*and changing environments\./,
 	);
 	assert.match(
 		html,
@@ -627,6 +630,90 @@ test("homepage renders the cobalt atlas hero without legacy visual layers", asyn
 	assert.doesNotMatch(indexCss, /ghost numerals/i);
 	assert.doesNotMatch(indexCss, /\.home > \.hairline::before/);
 	assert.doesNotMatch(indexPage, /const researchMap/);
+});
+
+test("homepage uses spacing-led reading sections and a cobalt awards chapter", async () => {
+	const html = await readBuilt("index.html");
+	const indexPage = await readRepo("src/pages/index.astro");
+	const indexCss = await readRepo("src/styles/index.css");
+
+	assert.ok(html, "expected built homepage HTML");
+	assert.ok(indexPage, "expected homepage source");
+	assert.ok(indexCss, "expected homepage CSS source");
+	assert.match(
+		html,
+		/<p class="about-manifesto">\s*Learning under\s*<em>constraints, feedback,<\/em>\s*and changing environments\.\s*<\/p>/,
+	);
+	assert.match(
+		html,
+		/class="home-section home-section--blue"[^>]*id="awards"/,
+	);
+	assert.match(indexCss, /--atlas-cobalt:\s*#1735d6/i);
+	assert.match(
+		indexCss,
+		/\.home-section--blue\s*{[^}]*background:\s*var\(--atlas-cobalt\)/,
+	);
+	assert.match(
+		indexCss,
+		/\.award-list\s*{[^}]*grid-template-columns:\s*repeat\(4/,
+	);
+	assertCssDeclarations(indexCss, ".award-item", {
+		border: "0",
+		"border-radius": "0",
+		"box-shadow": "none",
+	});
+	assertCssDeclarationGroup(
+		indexCss,
+		[
+			".home-section--blue .section-num",
+			".home-section--blue .award-meta",
+			".home-section--blue .award-year",
+		],
+		{ color: "var(--atlas-signal)" },
+	);
+
+	const homeArticle = html.match(
+		/<article class="home-atlas"[^>]*>[\s\S]*?<\/article>/,
+	);
+	assert.ok(homeArticle, "expected built homepage article");
+	assert.doesNotMatch(homeArticle[0], /<hr class="hairline"/);
+	assert.doesNotMatch(indexPage, /<hr class="hairline"/);
+	assert.doesNotMatch(indexPage, /about-pull-quote/);
+	assert.doesNotMatch(indexCss, /\.about-pull-quote/);
+	assert.doesNotMatch(indexCss, /\.prose > p:first-of-type::first-letter/);
+	assert.doesNotMatch(indexCss, /\.section-head:hover|\.section-head:focus-within/);
+
+	assert.match(
+		indexCss,
+		/\.home-section\s*{[^}]*scroll-margin-top:\s*calc\(\s*var\(--home-nav-offset\)\s*\+\s*var\(--home-relay-height\)\s*\+\s*0\.75rem\s*\)/,
+	);
+	const desktopSectionCss = extractCssBlock(
+		indexCss,
+		"@media screen and (min-width: 861px)",
+	);
+	assert.match(
+		desktopSectionCss,
+		/\.section-head\s*{[^}]*position:\s*sticky[^}]*top:\s*calc\(\s*var\(--home-nav-offset\)\s*\+\s*var\(--home-relay-height\)\s*\+\s*0\.75rem\s*\)/,
+	);
+
+	const readingSystemCss = indexCss.match(
+		/\/\* ---------- Sections \(spacing-led reading system\) ---------- \*\/([\s\S]*?)\/\* ---------- Publications/,
+	);
+	assert.ok(readingSystemCss, "expected a bounded reading-system CSS section");
+	assert.doesNotMatch(readingSystemCss[1], /font-size:\s*[^;]*vw/i);
+	const readingLetterSpacing = Array.from(
+		readingSystemCss[1].matchAll(/letter-spacing:\s*([^;]+);/gi),
+		([, value]) => value.trim(),
+	);
+	assert.ok(readingLetterSpacing.length > 0, "expected reading-system letter spacing declarations");
+	assert.ok(
+		readingLetterSpacing.every((value) => value === "0"),
+		`expected zero reading-system letter spacing, received ${readingLetterSpacing.join(", ")}`,
+	);
+	assert.match(
+		readingSystemCss[1],
+		/\.about-manifesto em\s*{[^}]*font-style:\s*normal/,
+	);
 });
 
 test("atlas relay tracks hero, section, and publication-group state", async () => {

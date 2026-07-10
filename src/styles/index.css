@@ -318,13 +318,15 @@ html[data-theme="light"]
 	opacity: 1;
 }
 
-/* ---------- Sections (label | content) ---------- */
+/* ---------- Sections (spacing-led reading system) ---------- */
 
 .home-section {
 	display: grid;
-	grid-template-columns: minmax(9rem, 11rem) minmax(0, 1fr);
-	column-gap: 2.25rem;
-	padding: clamp(2rem, 3vw, 2.4rem) 0;
+	grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
+	gap: clamp(2rem, 5vw, 4.5rem);
+	min-height: 34rem;
+	padding: clamp(4.5rem, 8vw, 7rem) clamp(1.5rem, 5vw, 4rem);
+	background: var(--home-surface);
 	scroll-margin-top: calc(
 		var(--home-nav-offset) +
 		var(--home-relay-height) +
@@ -333,69 +335,26 @@ html[data-theme="light"]
 }
 
 .section-head {
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
 	align-self: start;
-	padding-top: 0.1rem;
-}
-
-.section-head::after {
-	content: "";
-	width: 2rem;
-	height: 1px;
-	background-color: var(--hairline);
-	opacity: 0.5;
-	transform: scaleX(0.72);
-	transform-origin: left center;
-	transition:
-		opacity 0.18s ease,
-		background-color 0.18s ease,
-		transform 0.18s ease;
-}
-
-.section-head:hover::after,
-.section-head:focus-within::after {
-	opacity: 1;
-	background-color: rgba(var(--primary-rgb), 0.72);
-	transform: scaleX(1);
 }
 
 .section-num {
+	display: block;
+	color: var(--atlas-cobalt-bright);
 	font-family: var(--font-mono);
-	font-size: clamp(1.05rem, 1.6vw, 1.4rem);
-	line-height: 1;
-	letter-spacing: 0.06em;
-	color: var(--text-tertiary);
-	transition: color 0.18s ease;
-}
-
-.section-head:hover .section-num,
-.section-head:focus-within .section-num {
-	color: var(--primary);
+	font-size: 0.74rem;
+	letter-spacing: 0;
 }
 
 .section-title {
-	margin: 0;
-	font-family: var(--font-display);
-	font-weight: 450;
-	font-size: clamp(1.35rem, 1.9vw, 1.65rem);
-	line-height: 1.15;
-	letter-spacing: -0.01em;
+	margin: 0.65rem 0 0;
 	color: var(--text-primary);
-	font-variation-settings:
-		"opsz" 48,
-		"SOFT" 30;
-	transition: font-variation-settings 0.3s ease;
-}
-
-/* 2.2 — letterforms swell under the cursor (Fraunces SOFT axis). Zero layout
-   shift; reduced-motion is handled by the global guard in reset.css. */
-.section-head:hover .section-title,
-.section-head:focus-within .section-title {
-	font-variation-settings:
-		"opsz" 48,
-		"SOFT" 100;
+	font-family: var(--font-display);
+	font-size: 2.65rem;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 1;
+	letter-spacing: 0;
 }
 
 @media screen and (min-width: 861px) {
@@ -409,12 +368,26 @@ html[data-theme="light"]
 	min-width: 0;
 }
 
-/* ---------- Prose (About) ---------- */
+.about-manifesto {
+	max-width: 48rem;
+	margin: 0 0 2rem;
+	font-family: var(--font-display);
+	font-size: 4.4rem;
+	line-height: 1.02;
+	letter-spacing: 0;
+}
+
+.about-manifesto em {
+	color: var(--atlas-cobalt-bright);
+	font-style: normal;
+	font-weight: 400;
+}
 
 .prose {
+	max-width: 45rem;
 	font-family: var(--font-sans);
 	font-size: 1rem;
-	line-height: 1.7;
+	line-height: 1.75;
 	color: var(--text-primary);
 }
 
@@ -424,20 +397,6 @@ html[data-theme="light"]
 
 .prose p:last-child {
 	margin-bottom: 0;
-}
-
-/* Fraunces drop cap opens the About prose — three-line float, terracotta ink. */
-.prose > p:first-of-type::first-letter {
-	float: left;
-	font-family: var(--font-display);
-	font-weight: 460;
-	font-size: 4.05rem;
-	line-height: 0.84;
-	padding: 0.06em 0.55rem 0 0;
-	color: var(--primary);
-	font-variation-settings:
-		"opsz" 144,
-		"SOFT" 40;
 }
 
 .prose a,
@@ -459,30 +418,11 @@ html[data-theme="light"]
 	background-size: 100% 2px;
 }
 
-.about-pull-quote {
-	margin: 1.05rem 0 0;
-	padding: 0.05rem 0 0.05rem 1rem;
-	border-left: 1px solid rgba(var(--primary-rgb), 0.48);
-	color: var(--text-secondary);
-	font-family: var(--font-display);
-	font-size: clamp(1.08rem, 1.6vw, 1.24rem);
-	font-style: normal;
-	line-height: 1.45;
-	font-variation-settings:
-		"opsz" 72,
-		"SOFT" 55;
-}
-
-.about-pull-quote p {
-	margin: 0;
-}
-
-/* ---------- Experience entries ---------- */
-
-.entry-list {
+.entry-list,
+.service-list {
 	display: flex;
 	flex-direction: column;
-	gap: 1.25rem;
+	gap: 1.75rem;
 }
 
 .entry {
@@ -504,7 +444,7 @@ html[data-theme="light"]
 	font-family: var(--font-display);
 	font-weight: 500;
 	font-size: 1.15rem;
-	letter-spacing: -0.005em;
+	letter-spacing: 0;
 	color: var(--text-primary);
 }
 
@@ -512,7 +452,7 @@ html[data-theme="light"]
 	font-family: var(--font-mono);
 	font-size: 0.8rem;
 	color: var(--text-secondary);
-	letter-spacing: 0.04em;
+	letter-spacing: 0;
 	white-space: nowrap;
 }
 
@@ -570,7 +510,7 @@ html[data-theme="light"]
 .entry-outcomes-label {
 	font-family: var(--font-mono);
 	font-size: 0.72rem;
-	letter-spacing: 0.14em;
+	letter-spacing: 0;
 	text-transform: uppercase;
 	color: var(--text-tertiary);
 }
@@ -594,15 +534,10 @@ html[data-theme="light"]
 	color: var(--text-tertiary);
 }
 
-/* ---------- Compact entry list (awards + service) ---------- */
-
 .entry-list-compact {
 	list-style: none;
 	margin: 0;
 	padding: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.75rem;
 }
 
 .entry-compact {
@@ -626,12 +561,14 @@ html[data-theme="light"]
 	font-family: var(--font-display);
 	font-weight: 500;
 	font-size: 1rem;
+	letter-spacing: 0;
 	color: var(--text-primary);
 }
 
 .entry-compact-meta {
 	color: var(--text-secondary);
 	font-size: 0.86rem;
+	letter-spacing: 0;
 }
 
 .entry-compact-year {
@@ -639,8 +576,25 @@ html[data-theme="light"]
 	color: var(--text-tertiary);
 	font-family: var(--font-mono);
 	font-size: 0.78rem;
-	letter-spacing: 0.04em;
+	letter-spacing: 0;
 	white-space: nowrap;
+}
+
+.home-section--blue {
+	min-height: 40rem;
+	color: #ffffff;
+	background: var(--atlas-cobalt);
+}
+
+.home-section--blue .section-num,
+.home-section--blue .award-meta,
+.home-section--blue .award-year {
+	color: var(--atlas-signal);
+}
+
+.home-section--blue .section-title,
+.home-section--blue .award-title {
+	color: #ffffff;
 }
 
 .award-list {
@@ -648,28 +602,29 @@ html[data-theme="light"]
 	margin: 0;
 	padding: 0;
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	column-gap: 2.5rem;
-	row-gap: 0.95rem;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 1px;
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	background: rgba(255, 255, 255, 0.3);
 }
 
 .award-item {
 	margin: 0;
-	padding-bottom: 0.95rem;
-	border-bottom: 1px solid var(--hairline);
+	min-height: 10rem;
+	padding: 1.25rem;
+	border: 0;
+	border-radius: 0;
+	background: color-mix(in srgb, var(--atlas-cobalt) 88%, #0b1e93);
+	box-shadow: none;
 	line-height: 1.4;
-}
-
-.award-item:last-child {
-	padding-bottom: 0;
-	border-bottom: none;
 }
 
 .award-title {
 	font-family: var(--font-display);
 	font-weight: 500;
-	font-size: 1rem;
-	color: var(--text-primary);
+	font-size: 1.12rem;
+	line-height: 1.15;
+	letter-spacing: 0;
 }
 
 .award-sub {
@@ -679,28 +634,22 @@ html[data-theme="light"]
 	align-items: baseline;
 	gap: 0.15rem 0.45rem;
 	font-size: 0.86rem;
-	color: var(--text-secondary);
+	letter-spacing: 0;
 }
 
 .award-meta {
 	font-style: normal;
+	letter-spacing: 0;
 }
 
 .award-sep {
-	color: var(--text-tertiary);
+	color: rgba(255, 255, 255, 0.75);
 }
 
 .award-year {
 	font-family: var(--font-mono);
 	font-size: 0.78rem;
-	letter-spacing: 0.04em;
-	color: var(--text-tertiary);
-}
-
-/* ---------- Service & Teaching specific ---------- */
-
-.service-list {
-	gap: 1.05rem;
+	letter-spacing: 0;
 }
 
 .service-item {
@@ -708,13 +657,7 @@ html[data-theme="light"]
 	flex-direction: column;
 	align-items: stretch;
 	gap: 0.22rem;
-	padding-bottom: 0.95rem;
-	border-bottom: 1px solid var(--hairline);
-}
-
-.service-item:last-child {
-	padding-bottom: 0;
-	border-bottom: none;
+	padding: 0;
 }
 
 .service-heading {
@@ -728,7 +671,7 @@ html[data-theme="light"]
 	margin-left: auto;
 	font-family: var(--font-mono);
 	font-size: 0.72rem;
-	letter-spacing: 0.14em;
+	letter-spacing: 0;
 	text-transform: uppercase;
 	color: var(--text-tertiary);
 	white-space: nowrap;
@@ -737,6 +680,7 @@ html[data-theme="light"]
 .service-meta {
 	color: var(--text-secondary);
 	font-size: 0.86rem;
+	letter-spacing: 0;
 }
 
 .service-note {
@@ -744,6 +688,82 @@ html[data-theme="light"]
 	color: var(--text-secondary);
 	font-size: 0.88rem;
 	line-height: 1.55;
+	letter-spacing: 0;
+}
+
+@media screen and (max-width: 1100px) {
+	.section-title {
+		font-size: 2.25rem;
+	}
+
+	.about-manifesto {
+		font-size: 3.75rem;
+	}
+}
+
+@media screen and (max-width: 860px) {
+	.home-section {
+		grid-template-columns: minmax(0, 1fr);
+		row-gap: 2rem;
+		padding: 4.5rem 2rem;
+	}
+
+	.section-head {
+		display: flex;
+		align-items: baseline;
+		gap: 0.75rem;
+	}
+
+	.section-num {
+		font-size: 0.74rem;
+		letter-spacing: 0;
+	}
+
+	.section-title {
+		margin: 0;
+		font-size: 2.1rem;
+	}
+
+	.about-manifesto {
+		font-size: 3.2rem;
+	}
+
+	.award-list {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media screen and (max-width: 640px) {
+	.home-section {
+		padding: 4rem 1rem;
+	}
+
+	.section-title {
+		font-size: 1.75rem;
+	}
+
+	.about-manifesto {
+		font-size: 2.25rem;
+		line-height: 1.08;
+	}
+
+	.award-list {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.award-item {
+		min-height: 8rem;
+	}
+
+	.entry-compact-year,
+	.service-kind {
+		margin-left: 0;
+	}
+
+	.service-heading {
+		grid-template-columns: minmax(0, 1fr);
+		row-gap: 0.1rem;
+	}
 }
 
 /* ---------- Publications ---------- */
@@ -906,31 +926,6 @@ html[data-theme="light"]
 		width: 100%;
 		margin-top: 1rem;
 	}
-
-	.home-section {
-		grid-template-columns: minmax(0, 1fr);
-		row-gap: 0.6rem;
-		padding: 1.6rem 0;
-	}
-
-	.section-head {
-		flex-direction: row;
-		align-items: baseline;
-		gap: 0.75rem;
-	}
-
-	.section-num {
-		font-size: 0.82rem;
-		letter-spacing: 0.14em;
-	}
-
-	.award-list {
-		grid-template-columns: minmax(0, 1fr);
-	}
-
-	.award-item {
-		padding-bottom: 0.75rem;
-	}
 }
 
 @media screen and (max-width: 640px) {
@@ -977,24 +972,6 @@ html[data-theme="light"]
 
 	.atlas-hero-map {
 		margin-top: 1.5rem;
-	}
-
-	.prose > p:first-of-type::first-letter {
-		font-size: 3.2rem;
-		padding-right: 0.45rem;
-	}
-
-	.entry-compact-year {
-		margin-left: 0;
-	}
-
-	.service-kind {
-		margin-left: 0;
-	}
-
-	.service-heading {
-		grid-template-columns: minmax(0, 1fr);
-		row-gap: 0.1rem;
 	}
 }
 
