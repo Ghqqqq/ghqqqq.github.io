@@ -33,7 +33,11 @@
 				label.textContent = theme === "dark" ? "Dark" : "Light";
 			}
 			if (themeMeta) {
-				themeMeta.setAttribute("content", theme === "dark" ? "#15130f" : "#f4efe4");
+				const isAtlasHome = document.body.classList.contains("page-home");
+				themeMeta.setAttribute(
+					"content",
+					isAtlasHome ? "#1735d6" : theme === "dark" ? "#15130f" : "#f4efe4",
+				);
 			}
 			window.dispatchEvent(
 				new CustomEvent("homepage-theme-change", {

@@ -86,6 +86,31 @@ html[data-theme="dark"] {
 	--article-header-text: #15130f;
 }
 
+body.page-home {
+	--home-cobalt: #1735d6;
+	--home-cobalt-bright: #3151ff;
+	--home-signal: #f5ff65;
+	--home-ink: #111116;
+	--home-paper: #f1ece2;
+	--home-text-dark: #f4f0e8;
+	--home-text-light: #15151b;
+	--home-surface: var(--home-ink);
+	--home-surface-text: var(--home-text-dark);
+	--home-surface-muted: rgba(244, 240, 232, 0.62);
+	--page-bg: var(--home-surface);
+	--text-primary: var(--home-surface-text);
+	--text-secondary: var(--home-surface-muted);
+	--primary: var(--home-cobalt-bright);
+	--primary-rgb: 49, 81, 255;
+	background: var(--home-surface);
+}
+
+html[data-theme="light"] body.page-home {
+	--home-surface: var(--home-paper);
+	--home-surface-text: var(--home-text-light);
+	--home-surface-muted: rgba(21, 21, 27, 0.62);
+}
+
 *,
 *::before,
 *::after {

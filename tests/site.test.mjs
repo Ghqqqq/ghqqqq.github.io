@@ -424,7 +424,7 @@ test("homepage implements the editorial art and motion proposal hooks", async ()
 	assert.doesNotMatch(publicationTeaser, /translateX\(2px\)/);
 	assert.match(publicationTeaser, /background-color 0\.18s ease/);
 
-	assert.match(navbar, /class="site-nav"/);
+	assert.match(navbar, /class:list=\{\["site-nav"/);
 	assert.match(navbar, /position:\s*sticky/);
 	assert.match(navbar, /backdrop-filter:\s*blur/);
 	assert.match(navbar, /\.site-nav::after/);
@@ -483,66 +483,24 @@ test("public-facing repository text omits template traces and keeps footer attri
 	assert.doesNotMatch(packageJson, /"name":\s*"spectre"/i);
 });
 
-test("homepage ships the editorial fine-print upgrade", async () => {
+test("homepage shell exposes the cobalt dual-surface navigation contract", async () => {
 	const html = await readBuilt("index.html");
-	const indexCss = await readRepo("src/styles/index.css");
-	const indexPage = await readRepo("src/pages/index.astro");
+	const resetCss = await readRepo("src/styles/reset.css");
 	const navbar = await readRepo("src/components/Navbar.astro");
-	const publicationTeaser = await readRepo("src/components/PublicationTeaser.astro");
+	const themeToggle = await readRepo("src/components/ThemeToggle.astro");
 
 	assert.ok(html, "expected built homepage HTML");
-	assert.ok(indexCss, "expected homepage CSS source");
-	assert.ok(navbar, "expected navbar source");
-	assert.ok(publicationTeaser, "expected publication teaser source");
-
-	// A1 — Fraunces drop cap opens the About prose.
-	assert.match(
-		indexCss,
-		/\.prose > p:first-of-type::first-letter\s*{[^}]*float:\s*left/,
-	);
-	assert.match(
-		indexCss,
-		/\.prose > p:first-of-type::first-letter\s*{[^}]*color:\s*var\(--primary\)/,
-	);
-
-	// A2 — the SOFT-axis swell covers every serif heading, not just section titles.
-	assert.match(indexCss, /\.hero-name:hover[\s\S]*?"SOFT"\s*100/);
-	assert.match(indexCss, /\.publication-group:hover\s+\.publication-group-name[\s\S]*?"SOFT"\s*100/);
-	assert.match(publicationTeaser, /"SOFT"\s*0/);
-	assert.match(publicationTeaser, /"SOFT"\s*100/);
-
-	// A3 — home section dividers carry the newspaper double rule (terracotta tick).
-	assert.match(
-		indexCss,
-		/\.home > \.hairline::before\s*{[^}]*background(?:-color)?:\s*var\(--primary\)/,
-	);
-
-	// B1 — ghost section numerals on desktop, title overlapping.
-	assert.match(
-		indexCss,
-		/@media screen and \(min-width:\s*861px\)[\s\S]*\.section-num\s*{[^}]*font-size:\s*clamp\(3/,
-	);
-
-	// B2 — section heads stick like print margin labels while a section scrolls.
-	assert.match(
-		indexCss,
-		/@media screen and \(min-width:\s*861px\)[\s\S]*\.section-head\s*{[^}]*position:\s*sticky/,
-	);
-	// Reveal settles to transform:none so sticky children are never inside a transform.
-	assert.match(
-		indexCss,
-		/\[data-reveal\]\.is-in\s*{[^}]*transform:\s*none/,
-	);
-
-	// C — terracotta reading-progress rule along the bottom viewport edge,
-	// driven by a scroll-linked CSS animation (compositor-owned, zero JS).
-	// Hidden entirely in browsers without animation-timeline support.
-	assert.match(html, /class="reading-progress"/);
-	assert.match(navbar, /\.reading-progress\s*{[^}]*position:\s*fixed/);
-	assert.match(navbar, /\.reading-progress\s*{[^}]*bottom:\s*0/);
-	assert.match(navbar, /@supports\s*\(animation-timeline:\s*scroll\(\)\)/);
-	assert.match(navbar, /animation-timeline:\s*scroll\(root\)/);
-	assert.match(navbar, /@keyframes reading-fill/);
+	assert.ok(resetCss, "expected reset CSS");
+	assert.ok(navbar, "expected Navbar source");
+	assert.ok(themeToggle, "expected ThemeToggle source");
+	assert.match(resetCss, /--home-cobalt:\s*#1735d6/i);
+	assert.match(resetCss, /--home-signal:\s*#f5ff65/i);
+	assert.match(resetCss, /html\[data-theme="light"\] body\.page-home/);
+	assert.match(navbar, /variant\?: "default" \| "atlas"/);
+	assert.match(navbar, /data-nav-variant/);
+	assert.match(navbar, /data-home-hero="visible"/);
+	assert.doesNotMatch(html, /class="reading-progress"/);
+	assert.match(themeToggle, /#1735d6/);
 });
 
 test("the homepage opts out of the manuscript layer without changing secondary pages", async () => {

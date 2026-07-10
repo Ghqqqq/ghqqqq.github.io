@@ -3,6 +3,11 @@ import { name } from "homepage:globals";
 import Icon from "./Icon.astro";
 import ThemeToggle from "./ThemeToggle.astro";
 
+interface Props {
+	variant?: "default" | "atlas";
+}
+
+const { variant = "default" } = Astro.props;
 const path = Astro.url.pathname;
 const links = [
 	{
@@ -18,7 +23,11 @@ const links = [
 ];
 ---
 
-<nav class="site-nav" aria-label="Primary">
+<nav
+	class:list={["site-nav", variant === "atlas" && "site-nav-atlas"]}
+	aria-label="Primary"
+	data-nav-variant={variant}
+>
 	<a class="site-title" href="/">{name}</a>
 	<ul class="nav-links">
 		{
@@ -44,7 +53,6 @@ const links = [
 		</button>
 	</div>
 </nav>
-<span class="reading-progress" aria-hidden="true"></span>
 
 <script is:inline>
 	const nav = document.querySelector(".site-nav");
@@ -74,47 +82,6 @@ const links = [
 		background: color-mix(in srgb, var(--page-bg) 86%, transparent);
 		backdrop-filter: blur(18px);
 		-webkit-backdrop-filter: blur(18px);
-	}
-
-	/* Reading progress: a terracotta rule filling along the bottom viewport
-	   edge as you read. Scroll-driven CSS animation — the compositor owns the
-	   state directly (no JS, no invalidation path). Browsers without
-	   animation-timeline support simply never show the flourish. */
-	.reading-progress {
-		display: none;
-		position: fixed;
-		left: 0;
-		bottom: 0;
-		width: 100%;
-		height: 2px;
-		background: var(--primary);
-		transform: scaleX(0);
-		transform-origin: left center;
-		pointer-events: none;
-		z-index: 60;
-	}
-
-	@supports (animation-timeline: scroll()) {
-		.reading-progress {
-			display: block;
-			animation: reading-fill linear both;
-			animation-timeline: scroll(root);
-		}
-	}
-
-	@keyframes reading-fill {
-		from {
-			transform: scaleX(0);
-		}
-		to {
-			transform: scaleX(1);
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.reading-progress {
-			display: none;
-		}
 	}
 
 	.site-nav::after {
@@ -309,5 +276,27 @@ const links = [
 			right: auto;
 			width: 2rem;
 		}
+	}
+
+	.site-nav-atlas {
+		margin-bottom: -3.5rem;
+		padding-inline: 1.25rem;
+		color: var(--text-primary);
+		background: color-mix(in srgb, var(--home-surface) 92%, transparent);
+	}
+
+	:global(html[data-home-hero="visible"]) .site-nav-atlas {
+		color: #ffffff;
+		background: transparent;
+		backdrop-filter: none;
+	}
+
+	:global(html[data-home-hero="visible"]) .site-nav-atlas .site-title,
+	:global(html[data-home-hero="visible"]) .site-nav-atlas .nav-link {
+		color: #ffffff;
+	}
+
+	:global(html[data-home-hero="visible"]) .site-nav-atlas::after {
+		background: rgba(255, 255, 255, 0.24);
 	}
 </style>

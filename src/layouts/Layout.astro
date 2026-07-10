@@ -31,13 +31,19 @@ const {
 } = Astro.props;
 const lightThemeColor = "#f4efe4";
 const darkThemeColor = "#15130f";
+const isHomeLayout = layout === "home";
+const initialThemeColor = isHomeLayout ? "#1735d6" : darkThemeColor;
 const currentYear = new Date().getFullYear();
 // Scrapers (WeChat, Twitter, Slack) require absolute URLs in og:/twitter: image tags.
 const socialImage = new URL(image?.src ?? "/img/og.png", Astro.site).href;
 ---
 
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html
+	lang="en"
+	data-theme="dark"
+	data-home-hero={layout === "home" ? "passed" : undefined}
+>
 	<head>
 		<link rel="preload" href="/fonts/Geist.woff2" as="font" type="font/woff2" crossorigin="">
 		<link rel="preload" href="/fonts/GeistMono.woff2" as="font" type="font/woff2" crossorigin="">
@@ -58,8 +64,8 @@ const socialImage = new URL(image?.src ?? "/img/og.png", Astro.site).href;
 
 		<title>{title}</title>
 		{description && <meta name="description" content={description} />}
-		<meta name="theme-color" content={darkThemeColor}>
-		<script is:inline define:vars={{ lightThemeColor, darkThemeColor }}>
+		<meta name="theme-color" content={initialThemeColor}>
+		<script is:inline define:vars={{ lightThemeColor, darkThemeColor, isHomeLayout }}>
 			(() => {
 				const storageKey = "homepage-theme";
 				const storedTheme = localStorage.getItem(storageKey);
@@ -70,7 +76,7 @@ const socialImage = new URL(image?.src ?? "/img/og.png", Astro.site).href;
 				if (themeMeta) {
 					themeMeta.setAttribute(
 						"content",
-						theme === "dark" ? darkThemeColor : lightThemeColor,
+						isHomeLayout ? "#1735d6" : theme === "dark" ? darkThemeColor : lightThemeColor,
 					);
 				}
 			})();
@@ -113,7 +119,7 @@ const socialImage = new URL(image?.src ?? "/img/og.png", Astro.site).href;
 			]}
 			data-layout={layout}
 		>
-			<Navbar />
+			<Navbar variant={layout === "home" ? "atlas" : "default"} />
 			{
 				layout === "split" ? (
 				<LayoutGrid>
