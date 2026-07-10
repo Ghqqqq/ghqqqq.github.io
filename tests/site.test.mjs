@@ -774,15 +774,42 @@ test("atlas relay tracks hero, section, and publication-group state", async () =
 	assert.equal(observed.document.documentElement.dataset.homeHero, "passed");
 	assert.equal(observed.root.dataset.heroState, "passed");
 
-	sectionObserver.callback([
-		{ isIntersecting: true, target: observed.sections[4] },
-	]);
 	groupObserver.callback([
 		{ isIntersecting: true, target: observed.publicationGroups[1] },
+	]);
+	assert.equal(observed.root.dataset.activeSection, "about");
+	assert.equal("activeResearchGroup" in observed.root.dataset, false);
+	assert.equal(observed.context.textContent, "Research core");
+
+	sectionObserver.callback([
+		{ isIntersecting: true, target: observed.sections[4] },
 	]);
 	assert.equal(observed.root.dataset.activeSection, "publications");
 	assert.equal(observed.root.dataset.activeResearchGroup, "recommendation-bidding");
 	assert.equal(observed.context.textContent, "Recommendation & Bidding");
+
+	groupObserver.callback([
+		{ isIntersecting: false, target: observed.publicationGroups[1] },
+	]);
+	assert.equal("activeResearchGroup" in observed.root.dataset, false);
+	assert.equal(observed.context.textContent, "Research branches");
+
+	sectionObserver.callback([
+		{ isIntersecting: true, target: observed.sections[4] },
+	]);
+	groupObserver.callback([
+		{ isIntersecting: true, target: observed.publicationGroups[2] },
+	]);
+	assert.equal(
+		observed.root.dataset.activeResearchGroup,
+		"reinforcement-learning-bandits",
+	);
+	assert.equal(observed.context.textContent, "Reinforcement Learning & Bandits");
+	groupObserver.callback([
+		{ isIntersecting: true, target: observed.publicationGroups[0] },
+	]);
+	assert.equal(observed.root.dataset.activeResearchGroup, "agent-llm-alignment");
+	assert.equal(observed.context.textContent, "Agent / LLM Alignment");
 
 	sectionObserver.callback([
 		{ isIntersecting: true, target: observed.sections[1] },
@@ -796,7 +823,7 @@ test("atlas relay tracks hero, section, and publication-group state", async () =
 	);
 
 	groupObserver.callback([
-		{ isIntersecting: true, target: observed.publicationGroups[2] },
+		{ isIntersecting: true, target: observed.publicationGroups[1] },
 	]);
 	assert.equal("activeResearchGroup" in observed.root.dataset, false);
 	assert.equal(observed.context.textContent, "Field work");

@@ -366,6 +366,29 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 		);
 		const relayLinks = Array.from(root.querySelectorAll("[data-relay-link]"));
 		const context = root.querySelector("[data-relay-context]");
+		const intersectingPublicationGroups = new Set();
+		const publicationSection = sections.find(
+			(section) => section.getAttribute("data-home-section") === "publications",
+		);
+
+		const syncResearchGroup = () => {
+			if (root.dataset.activeSection !== "publications") return;
+
+			const group = publicationGroups.find((candidate) =>
+				intersectingPublicationGroups.has(candidate),
+			);
+			if (group) {
+				const id = group.getAttribute("data-publication-group");
+				const label = group.getAttribute("data-publication-context");
+				if (id) root.dataset.activeResearchGroup = id;
+				if (context && label) context.textContent = label;
+				return;
+			}
+
+			delete root.dataset.activeResearchGroup;
+			const label = publicationSection?.getAttribute("data-section-context");
+			if (context && label) context.textContent = label;
+		};
 
 		const setSection = (section) => {
 			const id = section.getAttribute("data-home-section");
@@ -382,15 +405,7 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 				}
 			}
 			if (context && label) context.textContent = label;
-		};
-
-		const setResearchGroup = (group) => {
-			if (root.dataset.activeSection !== "publications") return;
-			const id = group.getAttribute("data-publication-group");
-			const label = group.getAttribute("data-publication-context");
-			if (!id) return;
-			root.dataset.activeResearchGroup = id;
-			if (context && label) context.textContent = label;
+			if (id === "publications") syncResearchGroup();
 		};
 
 		if (sections[0]) setSection(sections[0]);
@@ -429,8 +444,13 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 		const groupObserver = new IntersectionObserver(
 			(entries) => {
 				for (const entry of entries) {
-					if (entry.isIntersecting) setResearchGroup(entry.target);
+					if (entry.isIntersecting) {
+						intersectingPublicationGroups.add(entry.target);
+					} else {
+						intersectingPublicationGroups.delete(entry.target);
+					}
 				}
+				syncResearchGroup();
 			},
 			{ rootMargin: "-30% 0px -55% 0px", threshold: 0 },
 		);
