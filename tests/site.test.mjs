@@ -1757,6 +1757,25 @@ test("research atlas homepage has explicit responsive and reduced-motion contrac
 	assert.equal(relay.match(/data-relay-link=/g)?.length ?? 0, 1);
 	assert.match(relay, /research-relay-link-label/);
 
+	const navbarMobileCss = extractCssBlock(
+		navbar,
+		"@media screen and (max-width: 640px)",
+	);
+	assertCssDeclarations(navbarMobileCss, ".site-nav", {
+		height: "3.5rem",
+		"box-sizing": "border-box",
+		padding: "0 1rem",
+	});
+	assertCssDeclarations(navbarMobileCss, ".nav-links a", {
+		display: "block",
+		padding: "0.82rem 0",
+	});
+	assert.doesNotMatch(
+		navbarMobileCss,
+		/(?:^|\n)\s*nav a\s*\{/,
+		"expected mobile row padding to exclude the brand link",
+	);
+
 	const atlasMobileCss = extractCssBlock(atlas, "@media screen and (max-width: 640px)");
 	assert.match(
 		atlasMobileCss,

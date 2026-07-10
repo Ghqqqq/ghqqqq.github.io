@@ -204,8 +204,10 @@ const links = [
 
 	@media screen and (max-width: 640px) {
 		.site-nav {
+			box-sizing: border-box;
+			height: 3.5rem;
 			grid-template-columns: minmax(0, 1fr) auto;
-			padding: 0.85rem 1rem;
+			padding: 0 1rem;
 			background: var(--nav-overlay-bg);
 		}
 
@@ -281,7 +283,7 @@ const links = [
 			border-bottom: 1px solid rgba(255, 255, 255, 0.24);
 		}
 
-		nav a {
+		.nav-links a {
 			display: block;
 			padding: 0.82rem 0;
 		}
