@@ -1824,7 +1824,10 @@ test("research atlas homepage has explicit responsive and reduced-motion contrac
 		/\.research-relay,\s*\.research-relay-track a,\s*\.publication-teaser\.atlas::before\s*{[^}]*transition:\s*none/,
 	);
 	const navbarReducedCss = extractCssBlock(navbar, "@media (prefers-reduced-motion: reduce)");
-	assert.match(navbarReducedCss, /transition:\s*none/);
+	assert.match(
+		navbarReducedCss,
+		/nav a,\s*nav a::after,[^}]*transition:\s*none/,
+	);
 
 	for (const [label, source] of [
 		["homepage CSS", indexCss],
