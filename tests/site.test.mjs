@@ -29,6 +29,23 @@ async function readRepoBytes(relativePath) {
 	}
 }
 
+function escapeRegExp(value) {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function assertCssDeclarations(source, selector, declarations) {
+	const rule = source.match(new RegExp(`${escapeRegExp(selector)}\\s*\\{([^}]*)\\}`));
+	assert.ok(rule, `expected CSS rule for ${selector}`);
+
+	for (const [property, value] of Object.entries(declarations)) {
+		assert.match(
+			rule[1],
+			new RegExp(`(?:^|\\n)\\s*${escapeRegExp(property)}:\\s*${escapeRegExp(value)}\\s*;`),
+			`expected ${selector} to declare ${property}: ${value}`,
+		);
+	}
+}
+
 test("homepage renders the academic CV structure and omits excluded personal data", async () => {
 	const html = await readBuilt("index.html");
 
@@ -484,23 +501,95 @@ test("public-facing repository text omits template traces and keeps footer attri
 });
 
 test("homepage shell exposes the cobalt dual-surface navigation contract", async () => {
-	const html = await readBuilt("index.html");
+	const homeHtml = await readBuilt("index.html");
+	const publicationsHtml = await readBuilt("publications/index.html");
 	const resetCss = await readRepo("src/styles/reset.css");
 	const navbar = await readRepo("src/components/Navbar.astro");
+	const layout = await readRepo("src/layouts/Layout.astro");
 	const themeToggle = await readRepo("src/components/ThemeToggle.astro");
 
-	assert.ok(html, "expected built homepage HTML");
+	assert.ok(homeHtml, "expected built homepage HTML");
+	assert.ok(publicationsHtml, "expected built publications HTML");
 	assert.ok(resetCss, "expected reset CSS");
 	assert.ok(navbar, "expected Navbar source");
+	assert.ok(layout, "expected Layout source");
 	assert.ok(themeToggle, "expected ThemeToggle source");
-	assert.match(resetCss, /--home-cobalt:\s*#1735d6/i);
-	assert.match(resetCss, /--home-signal:\s*#f5ff65/i);
-	assert.match(resetCss, /html\[data-theme="light"\] body\.page-home/);
+
+	assertCssDeclarations(resetCss, "body.page-home", {
+		"--home-cobalt": "#1735d6",
+		"--home-cobalt-bright": "#3151ff",
+		"--home-signal": "#f5ff65",
+		"--home-ink": "#111116",
+		"--home-paper": "#f1ece2",
+		"--home-text-dark": "#f4f0e8",
+		"--home-text-light": "#15151b",
+		"--home-surface": "var(--home-ink)",
+		"--home-surface-text": "var(--home-text-dark)",
+		"--home-surface-muted": "rgba(244, 240, 232, 0.62)",
+		"--page-bg": "var(--home-surface)",
+		"--text-primary": "var(--home-surface-text)",
+		"--text-secondary": "var(--home-surface-muted)",
+		"--primary": "var(--home-cobalt-bright)",
+		"--primary-rgb": "49, 81, 255",
+		background: "var(--home-surface)",
+	});
+	assertCssDeclarations(resetCss, 'html[data-theme="light"] body.page-home', {
+		"--home-surface": "var(--home-paper)",
+		"--home-surface-text": "var(--home-text-light)",
+		"--home-surface-muted": "rgba(21, 21, 27, 0.62)",
+	});
+
+	assert.match(homeHtml, /<html[^>]*data-home-hero="passed"/);
+	assert.match(homeHtml, /<nav[^>]*class="[^"]*site-nav-atlas[^"]*"[^>]*data-nav-variant="atlas"/);
+	assert.match(homeHtml, /<meta name="theme-color" content="#1735d6"/);
+	assert.match(publicationsHtml, /<html[^>]*data-theme="dark"[^>]*>/);
+	assert.doesNotMatch(publicationsHtml, /<html[^>]*data-home-hero=/);
+	assert.match(publicationsHtml, /<nav[^>]*class="site-nav"[^>]*data-nav-variant="default"/);
+	assert.doesNotMatch(publicationsHtml, /class="[^"]*site-nav-atlas/);
+	assert.match(publicationsHtml, /<meta name="theme-color" content="#15130f"/);
+
 	assert.match(navbar, /variant\?: "default" \| "atlas"/);
-	assert.match(navbar, /data-nav-variant/);
-	assert.match(navbar, /data-home-hero="visible"/);
-	assert.doesNotMatch(html, /class="reading-progress"/);
-	assert.match(themeToggle, /#1735d6/);
+	assert.match(navbar, /data-nav-variant=\{variant\}/);
+	assert.match(layout, /data-home-hero=\{layout === "home" \? "passed" : undefined\}/);
+	assert.match(layout, /<Navbar variant=\{layout === "home" \? "atlas" : "default"\} \/>/);
+	assert.match(layout, /const lightThemeColor = "#f4efe4"/);
+	assert.match(layout, /const darkThemeColor = "#15130f"/);
+	assert.match(layout, /const initialThemeColor = isHomeLayout \? "#1735d6" : darkThemeColor/);
+	assert.match(
+		layout,
+		/isHomeLayout \? "#1735d6" : theme === "dark" \? darkThemeColor : lightThemeColor/,
+	);
+	assert.match(themeToggle, /document\.body\.classList\.contains\("page-home"\)/);
+	assert.match(
+		themeToggle,
+		/isAtlasHome \? "#1735d6" : theme === "dark" \? "#15130f" : "#f4efe4"/,
+	);
+
+	assertCssDeclarations(navbar, ':global(html[data-home-hero="visible"]) .site-nav-atlas', {
+		color: "#ffffff",
+		background: "transparent",
+		"backdrop-filter": "none",
+		"-webkit-backdrop-filter": "none",
+	});
+	assert.match(
+		navbar,
+		/:global\(html\[data-home-hero="visible"\]\) \.site-nav-atlas \.site-title,\s*:global\(html\[data-home-hero="visible"\]\) \.site-nav-atlas \.nav-link\s*\{/,
+	);
+	assertCssDeclarations(
+		navbar,
+		':global(html[data-home-hero="visible"]) .site-nav-atlas .nav-link',
+		{ color: "#ffffff" },
+	);
+	assertCssDeclarations(navbar, ':global(html[data-home-hero="visible"]) .site-nav-atlas::after', {
+		background: "rgba(255, 255, 255, 0.24)",
+	});
+
+	for (const html of [homeHtml, publicationsHtml]) {
+		assert.doesNotMatch(html, /reading-progress|reading-fill/);
+	}
+	assert.doesNotMatch(navbar, /reading-progress/);
+	assert.doesNotMatch(navbar, /@supports\s*\(\s*animation-timeline:\s*scroll\(\)\s*\)/);
+	assert.doesNotMatch(navbar, /@keyframes\s+reading-fill/);
 });
 
 test("the homepage opts out of the manuscript layer without changing secondary pages", async () => {
