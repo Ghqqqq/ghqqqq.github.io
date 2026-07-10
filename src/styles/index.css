@@ -771,7 +771,7 @@ html[data-theme="light"]
 .publication-groups {
 	display: flex;
 	flex-direction: column;
-	gap: clamp(1.9rem, 3vw, 2.35rem);
+	gap: clamp(3rem, 6vw, 5rem);
 }
 
 .publication-group {
@@ -782,50 +782,28 @@ html[data-theme="light"]
 	padding-top: 0.95rem;
 }
 
-.publication-group::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	height: 1px;
-	background: linear-gradient(
-		90deg,
-		rgba(var(--primary-rgb), 0.58),
-		var(--hairline) 38%,
-		transparent 100%
-	);
-}
-
 .publication-group-title {
-	margin: 0;
-	display: grid;
-	grid-template-columns: auto minmax(2rem, 3rem) minmax(0, 1fr);
-	column-gap: 0.65rem;
-	align-items: center;
+	display: flex;
+	align-items: baseline;
+	gap: 0.8rem;
+	margin: 0 0 0.7rem;
 	color: var(--text-primary);
 }
 
 .publication-group-index {
 	font-family: var(--font-mono);
-	font-size: 0.78rem;
-	letter-spacing: 0.08em;
-	color: var(--text-tertiary);
-	transition: color 0.18s ease;
+	font-size: 0.72rem;
+	letter-spacing: 0;
+	color: var(--atlas-signal);
 }
 
 .publication-group-rule {
-	height: 1px;
-	background-color: rgba(var(--primary-rgb), 0.52);
-	transform-origin: left center;
-	transition:
-		background-color 0.18s ease,
-		transform 0.18s ease;
+	display: none;
 }
 
 .publication-group-name {
 	font-family: var(--font-display);
-	font-size: clamp(1.32rem, 2.2vw, 1.62rem);
+	font-size: 2.25rem;
 	font-style: italic;
 	font-weight: 460;
 	line-height: 1.18;
@@ -833,25 +811,10 @@ html[data-theme="light"]
 	font-variation-settings:
 		"opsz" 72,
 		"SOFT" 35;
-	transition: font-variation-settings 0.3s ease;
 }
 
-.publication-group:hover .publication-group-name,
-.publication-group:focus-within .publication-group-name {
-	font-variation-settings:
-		"opsz" 72,
-		"SOFT" 100;
-}
-
-.publication-group:hover .publication-group-index,
-.publication-group:focus-within .publication-group-index {
-	color: var(--primary);
-}
-
-.publication-group:hover .publication-group-rule,
-.publication-group:focus-within .publication-group-rule {
-	background-color: var(--primary);
-	transform: scaleX(1.12);
+html[data-theme="light"] .publication-group-index {
+	color: var(--atlas-cobalt);
 }
 
 .publication-list {
@@ -862,6 +825,18 @@ html[data-theme="light"]
 .publication-list .publication-teaser.list:first-child {
 	border-top: none;
 	padding-top: 0;
+}
+
+@media screen and (max-width: 1100px) {
+	.publication-group-name {
+		font-size: 2rem;
+	}
+}
+
+@media screen and (max-width: 640px) {
+	.publication-group-name {
+		font-size: 1.65rem;
+	}
 }
 
 /* ---------- Responsive ---------- */

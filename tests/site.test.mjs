@@ -661,7 +661,7 @@ test("homepage groups selected publications by research area with real venue bad
 	);
 	assert.match(
 		html,
-		/Agent \/ LLM Alignment[\s\S]*publication-teaser list[\s\S]*Recommendation(?:\s*&amp;\s*|\s*&\s*)Bidding[\s\S]*publication-teaser list[\s\S]*Reinforcement Learning(?:\s*&amp;\s*|\s*&\s*)Bandits[\s\S]*publication-teaser list/,
+		/Agent \/ LLM Alignment[\s\S]*publication-teaser atlas[\s\S]*Recommendation(?:\s*&amp;\s*|\s*&\s*)Bidding[\s\S]*publication-teaser atlas[\s\S]*Reinforcement Learning(?:\s*&amp;\s*|\s*&\s*)Bandits[\s\S]*publication-teaser atlas/,
 	);
 	assert.match(
 		html,
@@ -680,6 +680,149 @@ test("homepage groups selected publications by research area with real venue bad
 	}
 	assert.doesNotMatch(html, /publication-teaser compact/);
 	assert.doesNotMatch(html, /publication-cover/);
+});
+
+test("homepage publications use the atlas index variant without changing the archive", async () => {
+	const homeHtml = await readBuilt("index.html");
+	const publicationsHtml = await readBuilt("publications/index.html");
+	const teaser = await readRepo("src/components/PublicationTeaser.astro");
+	const homepage = await readRepo("src/pages/index.astro");
+	const homeStyles = await readRepo("src/styles/index.css");
+
+	assert.ok(homeHtml, "expected built homepage HTML");
+	assert.ok(publicationsHtml, "expected built publications HTML");
+	assert.ok(teaser, "expected PublicationTeaser source");
+	assert.ok(homepage, "expected homepage source");
+	assert.ok(homeStyles, "expected homepage stylesheet source");
+	assert.match(teaser, /"compact" \| "full" \| "list" \| "atlas"/);
+
+	const homeTeaserVariants = Array.from(
+		homeHtml.matchAll(/<article class="publication-teaser ([^"]+)"[^>]*>/g),
+		([, variant]) => variant,
+	);
+	const archiveTeaserVariants = Array.from(
+		publicationsHtml.matchAll(/<article class="publication-teaser ([^"]+)"[^>]*>/g),
+		([, variant]) => variant,
+	);
+	const atlasArticles = Array.from(
+		homeHtml.matchAll(
+			/<article class="publication-teaser atlas"[^>]*>([\s\S]*?)<\/article>/g,
+		),
+		([, article]) => article,
+	);
+	const archiveArticles = Array.from(
+		publicationsHtml.matchAll(
+			/<article class="publication-teaser list"[^>]*>([\s\S]*?)<\/article>/g,
+		),
+		([, article]) => article,
+	);
+
+	assert.ok(homeTeaserVariants.length > 0, "expected homepage publication teasers");
+	assert.ok(archiveTeaserVariants.length > 0, "expected archive publication teasers");
+	assert.ok(homeTeaserVariants.every((variant) => variant === "atlas"));
+	assert.ok(archiveTeaserVariants.every((variant) => variant === "list"));
+	assert.equal(atlasArticles.length, homeTeaserVariants.length);
+	assert.equal(archiveArticles.length, archiveTeaserVariants.length);
+	assert.equal(
+		(homeHtml.match(/class="publication-atlas-year"/g) ?? []).length,
+		atlasArticles.length,
+	);
+	assert.equal(
+		(homeHtml.match(/class="publication-atlas-venue"/g) ?? []).length,
+		atlasArticles.length,
+	);
+	for (const article of atlasArticles) {
+		assert.equal((article.match(/class="publication-atlas-year"/g) ?? []).length, 1);
+		assert.equal((article.match(/class="publication-atlas-venue"/g) ?? []).length, 1);
+		assert.doesNotMatch(article, /publication-cover(?:-link)?|post-date/);
+	}
+	for (const article of archiveArticles) {
+		assert.equal((article.match(/class="post-date"/g) ?? []).length, 1);
+		assert.doesNotMatch(article, /publication-atlas-(?:year|venue)/);
+	}
+	assert.doesNotMatch(publicationsHtml, /class="publication-teaser atlas"/);
+	assert.doesNotMatch(publicationsHtml, /class="publication-atlas-(?:year|venue)"/);
+
+	assert.equal((homeHtml.match(/class="publication-lineage"/g) ?? []).length, 1);
+	assert.doesNotMatch(publicationsHtml, /class="publication-lineage"/);
+	assert.match(teaser, /showLineage\?: boolean/);
+	assert.match(teaser, /showLineage = false/);
+	assert.match(
+		teaser,
+		/const lineage = showLineage \? publication\.data\.lineage : undefined/,
+	);
+	assert.match(homepage, /variant="atlas"[\s\S]*showLineage=\{true\}/);
+
+	assert.doesNotMatch(teaser, /translateX\(/);
+	assert.match(
+		teaser,
+		/\.publication-teaser\.atlas:has\(\.publication-main-link:hover\)[\s\S]*background:\s*transparent/,
+	);
+	assert.match(
+		teaser,
+		/\.publication-teaser\.atlas:has\(\.publication-main-link:focus-visible\)::before/,
+	);
+	assert.match(teaser, /\.publication-teaser\.atlas::before\s*{[^}]*width:\s*2px/);
+	assert.match(
+		teaser,
+		/:global\(html\[data-theme="dark"\]\) \.publication-atlas-year\s*{[^}]*color:\s*var\(--atlas-signal\)/,
+	);
+	assert.match(
+		teaser,
+		/:global\(html\[data-theme="light"\]\) \.publication-atlas-year\s*{[^}]*color:\s*var\(--atlas-cobalt\)/,
+	);
+	assert.match(
+		teaser,
+		/:global\(html\[data-theme="dark"\]\)[\s\S]*\.publication-teaser\.atlas \.publication-main-link:hover h3,[\s\S]*color:\s*var\(--atlas-signal\)/,
+	);
+	assert.match(
+		teaser,
+		/:global\(html\[data-theme="light"\]\)[\s\S]*\.publication-teaser\.atlas \.publication-main-link:hover h3,[\s\S]*color:\s*var\(--atlas-cobalt\)/,
+	);
+	const teaserLetterSpacings = Array.from(
+		teaser.matchAll(/letter-spacing:\s*([^;]+);/g),
+		([, value]) => value.trim(),
+	);
+	assert.ok(teaserLetterSpacings.length > 0);
+	assert.ok(teaserLetterSpacings.every((value) => value === "0"));
+	assert.match(
+		teaser,
+		/@media screen and \(max-width:\s*640px\)[\s\S]*\.publication-teaser\.atlas\s*{[^}]*grid-template-columns:\s*3\.5rem minmax\(0,\s*1fr\)/,
+	);
+	assert.match(
+		teaser,
+		/@media screen and \(max-width:\s*640px\)[\s\S]*\.publication-teaser\.atlas \.publication-atlas-venue\s*{[^}]*grid-column:\s*2/,
+	);
+
+	assert.doesNotMatch(homeStyles, /\.publication-group::before/);
+	assert.doesNotMatch(homeStyles, /\.publication-group:(?:hover|focus-within)/);
+	assert.match(homeStyles, /\.publication-group-rule\s*{[^}]*display:\s*none/);
+	assert.match(
+		homeStyles,
+		/\.publication-group-index\s*{[^}]*letter-spacing:\s*0[^}]*color:\s*var\(--atlas-signal\)/,
+	);
+	assert.match(
+		homeStyles,
+		/html\[data-theme="light"\] \.publication-group-index\s*{[^}]*color:\s*var\(--atlas-cobalt\)/,
+	);
+	const groupNameRule = homeStyles.match(/\.publication-group-name\s*{([^}]*)}/)?.[1];
+	assert.ok(groupNameRule, "expected publication group name rule");
+	assert.match(groupNameRule, /font-size:\s*2\.25rem/);
+	assert.match(groupNameRule, /font-style:\s*italic/);
+	assert.match(groupNameRule, /letter-spacing:\s*0/);
+	assert.doesNotMatch(groupNameRule, /clamp\(|vw/);
+	assert.match(
+		homeStyles,
+		/@media screen and \(max-width:\s*1100px\)[\s\S]*\.publication-group-name\s*{[^}]*font-size:\s*2rem/,
+	);
+	assert.match(
+		homeStyles,
+		/@media screen and \(max-width:\s*640px\)[\s\S]*\.publication-group-name\s*{[^}]*font-size:\s*1\.65rem/,
+	);
+
+	assert.match(homeHtml, /ArXiv preprint/);
+	assert.match(homeHtml, /Advances in Neural Information Processing Systems \(NeurIPS 2025\)/);
+	assert.match(homeHtml, /International Conference on Learning Representations \(ICLR 2025\)/);
 });
 
 test("homepage shell exposes the refreshed avatar and theme toggle", async () => {
