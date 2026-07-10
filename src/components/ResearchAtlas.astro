@@ -32,10 +32,10 @@ const nodes = researchAtlas.groups.flatMap((group) => group.nodes);
 					<ul>
 						{group.nodes.map((node) => (
 							<li>
-							<a
-								href={node.href}
-								aria-label={node.label}
-								data-atlas-node={node.id}
+								<a
+									href={node.href}
+									aria-label={node.label}
+									data-atlas-node={node.id}
 									data-research-group={node.publicationGroup}
 								>
 									<span class="research-atlas-node-label">{node.label}</span>

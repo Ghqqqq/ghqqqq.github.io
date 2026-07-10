@@ -412,15 +412,36 @@ test("homepage renders the cobalt atlas hero without legacy visual layers", asyn
 	const html = await readBuilt("index.html");
 	const indexPage = await readRepo("src/pages/index.astro");
 	const indexCss = await readRepo("src/styles/index.css");
+	const atlasComponent = await readRepo("src/components/ResearchAtlas.astro");
 
 	assert.ok(html, "expected built homepage HTML");
 	assert.ok(indexPage, "expected homepage source");
 	assert.ok(indexCss, "expected homepage CSS source");
+	assert.ok(atlasComponent, "expected Research Atlas source");
 	assert.match(html, /class="atlas-hero"/);
 	assert.match(html, /class="atlas-hero-portrait"/);
 	assert.match(html, /class="atlas-hero-orbit"/);
 	assert.match(html, /class="atlas-hero-grid" aria-hidden="true"/);
 	assert.match(html, /class="atlas-hero-grid-line/);
+	assert.equal(html.match(/<h1(?:\s[^>]*)?>/gi)?.length ?? 0, 1, "expected exactly one h1");
+
+	for (const [label, source] of [
+		["built homepage", html],
+		["homepage source", indexPage],
+	]) {
+		const heroOrder = [
+			source.indexOf('class="atlas-hero-name"'),
+			source.indexOf('class="atlas-hero-statement"'),
+			source.indexOf('class="atlas-hero-role"'),
+		];
+		assert.ok(heroOrder.every((position) => position >= 0), `expected ordered Hero markup in ${label}`);
+		assert.deepEqual(
+			heroOrder,
+			[...heroOrder].sort((left, right) => left - right),
+			`expected h1, statement, then role in ${label}`,
+		);
+	}
+
 	assert.match(indexCss, /--atlas-cobalt:\s*#1735d6/i);
 	assert.match(indexCss, /\.atlas-hero\s*{[^}]*background:\s*var\(--atlas-cobalt\)/);
 	assert.match(indexCss, /\.atlas-hero-name/);
@@ -435,7 +456,11 @@ test("homepage renders the cobalt atlas hero without legacy visual layers", asyn
 	assert.ok(atlasHeroCss, "expected a bounded Atlas Hero CSS section");
 	assert.doesNotMatch(atlasHeroCss[1], /\b[a-z-]*gradient\s*\(/i);
 	assert.doesNotMatch(atlasHeroCss[1], /font-size:\s*[^;]*vw/i);
-	assert.doesNotMatch(html, /data-draw-line|hero-hairline/);
+	const legacyHeroHooks =
+		/data-home-motion|data-reveal|data-draw-line|IntersectionObserver|is-active-section/;
+	assert.doesNotMatch(html, legacyHeroHooks);
+	assert.doesNotMatch([indexPage, indexCss, atlasComponent].join("\n"), legacyHeroHooks);
+	assert.doesNotMatch(html, /hero-hairline/);
 	assert.doesNotMatch(indexCss, /ghost numerals/i);
 	assert.doesNotMatch(indexCss, /\.home > \.hairline::before/);
 	assert.doesNotMatch(indexPage, /const researchMap/);

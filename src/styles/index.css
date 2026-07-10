@@ -225,7 +225,6 @@
 		transform 0.18s ease;
 }
 
-.section-head.is-active-section::after,
 .section-head:hover::after,
 .section-head:focus-within::after {
 	opacity: 1;
@@ -242,7 +241,6 @@
 	transition: color 0.18s ease;
 }
 
-.section-head.is-active-section .section-num,
 .section-head:hover .section-num,
 .section-head:focus-within .section-num {
 	color: var(--primary);
