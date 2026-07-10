@@ -51,6 +51,80 @@ function escapeRegExp(value) {
 	return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function decodeHtmlEntities(value) {
+	const namedEntities = {
+		amp: "&",
+		apos: "'",
+		gt: ">",
+		lt: "<",
+		nbsp: " ",
+		quot: '"',
+	};
+
+	return value.replace(
+		/&(?:#(\d+)|#x([\da-f]+)|([a-z]+));/gi,
+		(entity, decimal, hexadecimal, named) => {
+			const codePoint = decimal
+				? Number.parseInt(decimal, 10)
+				: hexadecimal
+					? Number.parseInt(hexadecimal, 16)
+					: null;
+			if (codePoint !== null) {
+				try {
+					return String.fromCodePoint(codePoint);
+				} catch {
+					return entity;
+				}
+			}
+
+			return namedEntities[named.toLowerCase()] ?? entity;
+		},
+	);
+}
+
+function normalizeVisibleHtml(value) {
+	return decodeHtmlEntities(
+		value
+			.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
+			.replace(/<!--[\s\S]*?-->/g, " ")
+			.replace(/<[^>]*>/g, " "),
+	)
+		.replace(/\s+/g, " ")
+		.trim();
+}
+
+function classAttributePattern(className) {
+	const token = escapeRegExp(className);
+	return `\\sclass\\s*=\\s*(?:"(?:[^"]*\\s)?${token}(?:\\s[^"]*)?"|'(?:[^']*\\s)?${token}(?:\\s[^']*)?')`;
+}
+
+function elementByClassRegExp(className, tagName = null, flags = "gi") {
+	const tagPattern = tagName ? escapeRegExp(tagName) : "[a-z][\\w:-]*";
+	return new RegExp(
+		`<(${tagPattern})\\b(?=[^>]*${classAttributePattern(className)})[^>]*>([\\s\\S]*?)<\\/\\1>`,
+		flags,
+	);
+}
+
+function extractElementsByClass(html, className, tagName = null) {
+	return Array.from(
+		html.matchAll(elementByClassRegExp(className, tagName)),
+		([, tag, contents]) => ({ contents, tag }),
+	);
+}
+
+function splitAwardMeta(meta, year) {
+	const compactMeta = meta?.trim();
+	const yearLabel = year
+		? String(year)
+		: compactMeta && /^\d{4}\s*-\s*\d{4}$/.test(compactMeta)
+			? compactMeta
+			: undefined;
+	const inlineMeta = yearLabel === compactMeta ? undefined : compactMeta;
+
+	return { inlineMeta, yearLabel };
+}
+
 function assertCssDeclarations(source, selector, declarations) {
 	const rule = source.match(new RegExp(`${escapeRegExp(selector)}\\s*\\{([^}]*)\\}`));
 	assert.ok(rule, `expected CSS rule for ${selector}`);
@@ -94,6 +168,31 @@ function extractCssBlock(source, header) {
 	assert.fail(`expected ${header} to close its CSS block`);
 }
 
+function extractBaseCss(source) {
+	let baseCss = "";
+	let cursor = 0;
+
+	while (cursor < source.length) {
+		const mediaIndex = source.indexOf("@media", cursor);
+		if (mediaIndex === -1) return baseCss + source.slice(cursor);
+		baseCss += source.slice(cursor, mediaIndex);
+
+		const openingBraceIndex = source.indexOf("{", mediaIndex);
+		assert.notEqual(openingBraceIndex, -1, "expected @media to open a CSS block");
+		let depth = 1;
+		let closingBraceIndex = openingBraceIndex + 1;
+		for (; closingBraceIndex < source.length; closingBraceIndex += 1) {
+			if (source[closingBraceIndex] === "{") depth += 1;
+			if (source[closingBraceIndex] === "}") depth -= 1;
+			if (depth === 0) break;
+		}
+		assert.equal(depth, 0, "expected @media to close its CSS block");
+		cursor = closingBraceIndex + 1;
+	}
+
+	return baseCss;
+}
+
 function extractSectionById(html, id) {
 	const section = html.match(
 		new RegExp(
@@ -104,31 +203,35 @@ function extractSectionById(html, id) {
 	return section[0];
 }
 
-function assertAwardsContract(awardsHtml, expectedTitles) {
-	const awardItems = Array.from(
-		awardsHtml.matchAll(
-			/<li\b[^>]*class="award-item"[^>]*>([\s\S]*?)<\/li>/g,
-		),
-		([, item]) => item,
-	);
+function assertAwardsContract(awardsHtml, expectedTuples) {
+	const awardItems = extractElementsByClass(awardsHtml, "award-item", "li");
 	assert.equal(
 		awardItems.length,
-		expectedTitles.length,
+		expectedTuples.length,
 		"expected rendered award item count to match awards data",
 	);
 
-	const renderedTitles = awardItems.map((item, index) => {
-		assert.match(item, /class="award-title"/, `expected award ${index + 1} title`);
-		assert.match(item, /class="award-sub"/, `expected award ${index + 1} metadata`);
-		const title = item.match(/<div class="award-title">([^<]+)<\/div>/);
-		assert.ok(title, `expected award ${index + 1} title copy`);
-		return title[1].trim();
+	const renderedTuples = awardItems.map(({ contents: item }, index) => {
+		const title = extractElementsByClass(item, "award-title");
+		const sub = extractElementsByClass(item, "award-sub");
+		assert.equal(title.length, 1, `expected award ${index + 1} title`);
+		assert.equal(sub.length, 1, `expected award ${index + 1} metadata wrapper`);
+		const meta = extractElementsByClass(sub[0].contents, "award-meta");
+		const year = extractElementsByClass(sub[0].contents, "award-year");
+		assert.ok(meta.length <= 1, `expected at most one award ${index + 1} inline metadata`);
+		assert.equal(year.length, 1, `expected award ${index + 1} year`);
+
+		return [
+			normalizeVisibleHtml(title[0].contents),
+			meta.length === 0 ? null : normalizeVisibleHtml(meta[0].contents),
+			normalizeVisibleHtml(year[0].contents),
+		];
 	});
 
 	assert.deepEqual(
-		renderedTitles,
-		expectedTitles,
-		"expected each award title exactly once in stable year-descending order",
+		renderedTuples,
+		expectedTuples,
+		"expected rendered award display tuples in stable year-descending order",
 	);
 }
 
@@ -683,6 +786,18 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 	assert.ok(layout, "expected layout source");
 	assert.ok(awardsSource, "expected awards data source");
 
+	const homeArticle = html.match(
+		/<article class="home-atlas"[^>]*>[\s\S]*?<\/article>/,
+	);
+	assert.ok(homeArticle, "expected built homepage article");
+	const manifestoSentence =
+		"Learning under constraints, feedback, and changing environments.";
+	const homeArticleText = normalizeVisibleHtml(homeArticle[0]);
+	assert.equal(
+		homeArticleText.match(new RegExp(escapeRegExp(manifestoSentence), "g"))?.length ?? 0,
+		1,
+		"expected manifesto sentence exactly once in visible homepage article text",
+	);
 	const manifestoMarkup =
 		/<p class="about-manifesto">\s*Learning under\s*<em>constraints, feedback,<\/em>\s*and changing environments\.\s*<\/p>/g;
 	assert.equal(html.match(/class="about-manifesto"/g)?.length ?? 0, 1);
@@ -704,19 +819,39 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 	const awardsData = JSON.parse(awardsSource);
 	assert.ok(Array.isArray(awardsData), "expected awards data array");
 	assert.equal(awardsData.length, 8, "expected exactly eight awards in source data");
-	const expectedAwardTitles = [...awardsData]
+	const expectedAwardTuples = [...awardsData]
 		.sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
-		.map((award) => award.title);
+		.map((award) => {
+			const { inlineMeta, yearLabel } = splitAwardMeta(award.meta, award.year);
+			return [award.title, inlineMeta ?? null, yearLabel ?? null];
+		});
 	const awardsSection = extractSectionById(html, "awards");
 	assert.doesNotMatch(awardsSection, /id="service"|class="[^"]*service/);
-	assertAwardsContract(awardsSection, expectedAwardTitles);
+	assertAwardsContract(awardsSection, expectedAwardTuples);
+	const awardsWithFlexibleMarkup = awardsSection
+		.replace('class="award-item"', 'class="featured award-item pinned"')
+		.replace(
+			/<div class="award-title">([\s\S]*?)<\/div>/,
+			'<h3 class="featured award-title compact">$1</h3>',
+		)
+		.replace('class="award-sub"', 'class="award-sub compact"')
+		.replace('class="award-meta"', 'class="signal award-meta"')
+		.replace('class="award-year"', 'class="award-year muted"');
+	assert.doesNotThrow(() =>
+		assertAwardsContract(awardsWithFlexibleMarkup, expectedAwardTuples),
+	);
 	const awardsWithOneItemRemoved = awardsSection.replace(
-		/<li\b[^>]*class="award-item"[^>]*>[\s\S]*?<\/li>/,
+		elementByClassRegExp("award-item", "li", "i"),
 		"",
 	);
 	assert.throws(
-		() => assertAwardsContract(awardsWithOneItemRemoved, expectedAwardTitles),
+		() => assertAwardsContract(awardsWithOneItemRemoved, expectedAwardTuples),
 		/expected rendered award item count to match awards data/,
+	);
+	const awardsWithCorruptedMetadata = awardsSection.replace("Top 25%", "Top 20%");
+	assert.throws(
+		() => assertAwardsContract(awardsWithCorruptedMetadata, expectedAwardTuples),
+		/expected rendered award display tuples in stable year-descending order/,
 	);
 
 	const awardsLoopStart = indexPage.indexOf("sortedAwards.map((award) => {");
@@ -727,6 +862,7 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 	for (const className of [
 		"award-item",
 		"award-title",
+		"award-sub",
 		"award-meta",
 		"award-year",
 	]) {
@@ -741,10 +877,6 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 	assert.match(
 		indexCss,
 		/\.home-section--blue\s*{[^}]*background:\s*var\(--atlas-cobalt\)/,
-	);
-	assert.match(
-		indexCss,
-		/\.award-list\s*{[^}]*grid-template-columns:\s*repeat\(4/,
 	);
 	assertCssDeclarations(indexCss, ".award-item", {
 		border: "0",
@@ -761,10 +893,6 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 		{ color: "var(--atlas-signal)" },
 	);
 
-	const homeArticle = html.match(
-		/<article class="home-atlas"[^>]*>[\s\S]*?<\/article>/,
-	);
-	assert.ok(homeArticle, "expected built homepage article");
 	assert.doesNotMatch(homeArticle[0], /<hr class="hairline"/);
 	assert.doesNotMatch(indexPage, /<hr class="hairline"/);
 	const builtFooter = html.match(
@@ -793,6 +921,12 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 		/\/\* ---------- Sections \(spacing-led reading system\) ---------- \*\/([\s\S]*?)\/\* ---------- Publications/,
 	);
 	assert.ok(readingSystemCss, "expected a bounded reading-system CSS section");
+	const baseReadingCss = extractBaseCss(readingSystemCss[1]);
+	assert.doesNotMatch(baseReadingCss, /@media/);
+	assert.match(
+		baseReadingCss,
+		/\.award-list\s*{[^}]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/,
+	);
 	const mobileReadingCss = extractCssBlock(
 		readingSystemCss[1],
 		"@media screen and (max-width: 640px)",
