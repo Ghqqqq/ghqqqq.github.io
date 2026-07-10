@@ -7,6 +7,7 @@ import { name, openGraph } from "homepage:globals";
 import ProfilePicture from "../assets/profile-bird-original.png";
 import PublicationTeaser from "../components/PublicationTeaser.astro";
 import ResearchAtlas from "../components/ResearchAtlas.astro";
+import ResearchRelay from "../components/ResearchRelay.astro";
 import TencentWordmark from "../components/TencentWordmark.astro";
 import { homeSections } from "../data/research-atlas";
 import Layout from "../layouts/Layout.astro";
@@ -141,7 +142,14 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 			<div class="atlas-hero-map"><ResearchAtlas /></div>
 		</header>
 
-		<section class="home-section" id="about">
+		<ResearchRelay sections={homeSections} />
+
+		<section
+			class="home-section"
+			id="about"
+			data-home-section="about"
+			data-section-context={homeSections[0].context}
+		>
 			<header class="section-head">
 				<span class="section-num">{homeSections[0].number}</span>
 				<h2 class="section-title">{homeSections[0].label}</h2>
@@ -158,7 +166,12 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 
 		<hr class="hairline" />
 
-		<section class="home-section" id="experience">
+		<section
+			class="home-section"
+			id="experience"
+			data-home-section="experience"
+			data-section-context={homeSections[1].context}
+		>
 			<header class="section-head">
 				<span class="section-num">{homeSections[1].number}</span>
 				<h2 class="section-title">{homeSections[1].label}</h2>
@@ -206,7 +219,12 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 
 		<hr class="hairline" />
 
-		<section class="home-section" id="awards">
+		<section
+			class="home-section home-section--blue"
+			id="awards"
+			data-home-section="awards"
+			data-section-context={homeSections[2].context}
+		>
 			<header class="section-head">
 				<span class="section-num">{homeSections[2].number}</span>
 				<h2 class="section-title">{homeSections[2].label}</h2>
@@ -246,7 +264,12 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 
 		<hr class="hairline" />
 
-		<section class="home-section" id="service">
+		<section
+			class="home-section"
+			id="service"
+			data-home-section="service"
+			data-section-context={homeSections[3].context}
+		>
 			<header class="section-head">
 				<span class="section-num">{homeSections[3].number}</span>
 				<h2 class="section-title">{homeSections[3].label}</h2>
@@ -285,7 +308,12 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 
 		<hr class="hairline" />
 
-		<section class="home-section" id="publications">
+		<section
+			class="home-section"
+			id="publications"
+			data-home-section="publications"
+			data-section-context={homeSections[4].context}
+		>
 			<header class="section-head">
 				<span class="section-num">{homeSections[4].number}</span>
 				<h2 class="section-title">{homeSections[4].label}</h2>
@@ -297,6 +325,8 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 							<section
 								class="publication-group"
 								id={`publications-${section.id}`}
+								data-publication-group={section.id}
+								data-publication-context={section.title}
 							>
 								<h3 class="publication-group-title">
 									<span class="publication-group-index">
@@ -323,3 +353,86 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 		</section>
 	</article>
 </Layout>
+
+<script is:inline>
+	(() => {
+		const root = document.querySelector("[data-home-atlas]");
+		if (!(root instanceof HTMLElement)) return;
+
+		const hero = root.querySelector("[data-atlas-hero]");
+		const sections = Array.from(root.querySelectorAll("[data-home-section]"));
+		const publicationGroups = Array.from(
+			root.querySelectorAll("[data-publication-group]"),
+		);
+		const relayLinks = Array.from(root.querySelectorAll("[data-relay-link]"));
+		const context = root.querySelector("[data-relay-context]");
+
+		const setSection = (section) => {
+			const id = section.getAttribute("data-home-section");
+			const label = section.getAttribute("data-section-context");
+			if (!id) return;
+
+			root.dataset.activeSection = id;
+			if (id !== "publications") delete root.dataset.activeResearchGroup;
+			for (const link of relayLinks) {
+				if (link.getAttribute("data-relay-link") === id) {
+					link.setAttribute("aria-current", "location");
+				} else {
+					link.removeAttribute("aria-current");
+				}
+			}
+			if (context && label) context.textContent = label;
+		};
+
+		const setResearchGroup = (group) => {
+			const id = group.getAttribute("data-publication-group");
+			const label = group.getAttribute("data-publication-context");
+			if (!id) return;
+			root.dataset.activeResearchGroup = id;
+			if (context && label) context.textContent = label;
+		};
+
+		if (sections[0]) setSection(sections[0]);
+
+		if (!("IntersectionObserver" in window)) {
+			document.documentElement.dataset.homeHero = "passed";
+			root.dataset.heroState = "passed";
+			return;
+		}
+
+		document.documentElement.dataset.homeHero = "visible";
+		root.dataset.heroState = "visible";
+
+		if (hero) {
+			new IntersectionObserver(
+				([entry]) => {
+					const state = entry?.isIntersecting ? "visible" : "passed";
+					document.documentElement.dataset.homeHero = state;
+					root.dataset.heroState = state;
+				},
+				{ threshold: 0.15 },
+			).observe(hero);
+		}
+
+		const sectionObserver = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) setSection(entry.target);
+				}
+			},
+			{ rootMargin: "-32% 0px -52% 0px", threshold: 0 },
+		);
+
+		const groupObserver = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) setResearchGroup(entry.target);
+				}
+			},
+			{ rootMargin: "-30% 0px -55% 0px", threshold: 0 },
+		);
+
+		for (const section of sections) sectionObserver.observe(section);
+		for (const group of publicationGroups) groupObserver.observe(group);
+	})();
+</script>

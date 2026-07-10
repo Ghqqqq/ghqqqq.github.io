@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
 
 async function readBuilt(relativePath) {
 	for (const basePath of [resolve("dist", relativePath), resolve("dist", "client", relativePath)]) {
@@ -74,6 +75,108 @@ function extractCssBlock(source, header) {
 	}
 
 	assert.fail(`expected ${header} to close its CSS block`);
+}
+
+function createAtlasControllerFixture({ hasIntersectionObserver }) {
+	class FixtureElement {
+		constructor(attributes = {}) {
+			this.attributes = new Map(Object.entries(attributes));
+			this.dataset = {};
+			this.textContent = "";
+		}
+
+		getAttribute(name) {
+			return this.attributes.get(name) ?? null;
+		}
+
+		setAttribute(name, value) {
+			this.attributes.set(name, value);
+		}
+
+		removeAttribute(name) {
+			this.attributes.delete(name);
+		}
+	}
+
+	const hero = new FixtureElement({ "data-atlas-hero": "" });
+	const sections = [
+		["about", "Research core"],
+		["experience", "Field work"],
+		["awards", "Recognition"],
+		["service", "Community"],
+		["publications", "Research branches"],
+	].map(
+		([id, context]) =>
+			new FixtureElement({
+				"data-home-section": id,
+				"data-section-context": context,
+			}),
+	);
+	const publicationGroups = [
+		["agent-llm-alignment", "Agent / LLM Alignment"],
+		["recommendation-bidding", "Recommendation & Bidding"],
+		["reinforcement-learning-bandits", "Reinforcement Learning & Bandits"],
+	].map(
+		([id, context]) =>
+			new FixtureElement({
+				"data-publication-group": id,
+				"data-publication-context": context,
+			}),
+	);
+	const relayLinks = sections.map(
+		(section) =>
+			new FixtureElement({ "data-relay-link": section.getAttribute("data-home-section") }),
+	);
+	const context = new FixtureElement({ "data-relay-context": "" });
+	const root = new FixtureElement({ "data-home-atlas": "" });
+	root.querySelector = (selector) => {
+		if (selector === "[data-atlas-hero]") return hero;
+		if (selector === "[data-relay-context]") return context;
+		return null;
+	};
+	root.querySelectorAll = (selector) => {
+		if (selector === "[data-home-section]") return sections;
+		if (selector === "[data-publication-group]") return publicationGroups;
+		if (selector === "[data-relay-link]") return relayLinks;
+		return [];
+	};
+
+	const documentElement = new FixtureElement();
+	const document = {
+		documentElement,
+		querySelector: (selector) => (selector === "[data-home-atlas]" ? root : null),
+	};
+	const observers = [];
+	class FixtureIntersectionObserver {
+		constructor(callback, options) {
+			this.callback = callback;
+			this.options = options;
+			this.targets = [];
+			observers.push(this);
+		}
+
+		observe(target) {
+			this.targets.push(target);
+		}
+	}
+
+	const window = hasIntersectionObserver
+		? { IntersectionObserver: FixtureIntersectionObserver }
+		: {};
+
+	return {
+		context,
+		document,
+		hero,
+		HTMLElement: FixtureElement,
+		IntersectionObserver: FixtureIntersectionObserver,
+		observers,
+		publicationGroups,
+		relayLinks,
+		root,
+		sections,
+		window,
+	};
 }
 
 test("homepage renders the academic CV structure and omits excluded personal data", async () => {
@@ -463,13 +566,126 @@ test("homepage renders the cobalt atlas hero without legacy visual layers", asyn
 	assert.doesNotMatch(atlasHeroCss[1], /\b[a-z-]*gradient\s*\(/i);
 	assert.doesNotMatch(atlasHeroCss[1], /font-size:\s*[^;]*vw/i);
 	const legacyHeroHooks =
-		/data-home-motion|data-reveal|data-draw-line|IntersectionObserver|is-active-section/;
+		/data-home-motion|data-reveal|data-draw-line|is-active-section|\b(?:revealObserver|lineObserver|sectionHeads)\b/;
 	assert.doesNotMatch(html, legacyHeroHooks);
 	assert.doesNotMatch([indexPage, indexCss, atlasComponent].join("\n"), legacyHeroHooks);
 	assert.doesNotMatch(html, /hero-hairline/);
 	assert.doesNotMatch(indexCss, /ghost numerals/i);
 	assert.doesNotMatch(indexCss, /\.home > \.hairline::before/);
 	assert.doesNotMatch(indexPage, /const researchMap/);
+});
+
+test("atlas relay tracks hero, section, and publication-group state", async () => {
+	const html = await readBuilt("index.html");
+	const indexPage = await readRepo("src/pages/index.astro");
+	const indexCss = await readRepo("src/styles/index.css");
+
+	assert.ok(html, "expected built homepage HTML");
+	assert.ok(indexPage, "expected homepage source");
+	assert.ok(indexCss, "expected homepage CSS source");
+	assert.match(html, /data-research-relay/);
+
+	const expectedSections = [
+		["about", "Research core"],
+		["experience", "Field work"],
+		["awards", "Recognition"],
+		["service", "Community"],
+		["publications", "Research branches"],
+	];
+	assert.equal(html.match(/data-home-section=/g)?.length ?? 0, expectedSections.length);
+	for (const [id, context] of expectedSections) {
+		assert.match(
+			html,
+			new RegExp(
+				`<section[^>]*id="${escapeRegExp(id)}"[^>]*data-home-section="${escapeRegExp(id)}"[^>]*data-section-context="${escapeRegExp(context)}"[^>]*>`,
+			),
+		);
+		assert.match(html, new RegExp(`href="#${escapeRegExp(id)}"`));
+	}
+
+	const expectedPublicationGroups = [
+		["agent-llm-alignment", "Agent / LLM Alignment"],
+		["recommendation-bidding", "Recommendation &#38; Bidding"],
+		["reinforcement-learning-bandits", "Reinforcement Learning &#38; Bandits"],
+	];
+	assert.equal(
+		html.match(/data-publication-group=/g)?.length ?? 0,
+		expectedPublicationGroups.length,
+	);
+	for (const [id, context] of expectedPublicationGroups) {
+		assert.match(
+			html,
+			new RegExp(
+				`<section[^>]*id="publications-${escapeRegExp(id)}"[^>]*data-publication-group="${escapeRegExp(id)}"[^>]*data-publication-context="${escapeRegExp(context)}"[^>]*>`,
+			),
+		);
+	}
+
+	assert.match(indexPage, /new IntersectionObserver/);
+	assert.equal(indexPage.match(/new IntersectionObserver/g)?.length ?? 0, 3);
+	assert.match(indexCss, /\.research-relay\s*{[^}]*position:\s*sticky/);
+	assert.match(
+		indexCss,
+		/\.research-relay\s*{[^}]*-webkit-backdrop-filter:\s*blur\(18px\)[^}]*backdrop-filter:\s*blur\(18px\)/,
+	);
+	assert.match(indexCss, /\.research-relay-context\s*{[^}]*letter-spacing:\s*0/);
+	assertCssDeclarations(indexCss, ".research-relay-title", {
+		color: "var(--home-surface-text)",
+	});
+	assertCssDeclarations(indexCss, ".research-relay-track a", {
+		color: "var(--home-surface-muted)",
+	});
+	assertCssDeclarations(indexCss, '.research-relay-track a[aria-current="location"]', {
+		color: "var(--home-surface-text)",
+	});
+	assertCssDeclarations(indexCss, ".research-relay-context", {
+		color: "var(--home-surface-text)",
+	});
+
+	const controllerMatch = indexPage.match(/<script is:inline>\s*([\s\S]*?)\s*<\/script>/);
+	assert.ok(controllerMatch, "expected inline Atlas controller");
+
+	const fallback = createAtlasControllerFixture({ hasIntersectionObserver: false });
+	runInNewContext(controllerMatch[1], fallback);
+	assert.equal(fallback.document.documentElement.dataset.homeHero, "passed");
+	assert.equal(fallback.root.dataset.heroState, "passed");
+	assert.equal(fallback.root.dataset.activeSection, "about");
+	assert.equal(
+		fallback.relayLinks.filter((link) => link.getAttribute("aria-current") === "location")
+			.length,
+		1,
+	);
+
+	const observed = createAtlasControllerFixture({ hasIntersectionObserver: true });
+	runInNewContext(controllerMatch[1], observed);
+	assert.equal(observed.observers.length, 3);
+	assert.equal(observed.document.documentElement.dataset.homeHero, "visible");
+	assert.equal(observed.root.dataset.heroState, "visible");
+
+	observed.observers[0].callback([{ isIntersecting: false, target: observed.hero }]);
+	assert.equal(observed.document.documentElement.dataset.homeHero, "passed");
+	assert.equal(observed.root.dataset.heroState, "passed");
+
+	observed.observers[1].callback([
+		{ isIntersecting: true, target: observed.sections[4] },
+	]);
+	observed.observers[2].callback([
+		{ isIntersecting: true, target: observed.publicationGroups[1] },
+	]);
+	assert.equal(observed.root.dataset.activeSection, "publications");
+	assert.equal(observed.root.dataset.activeResearchGroup, "recommendation-bidding");
+	assert.equal(observed.context.textContent, "Recommendation & Bidding");
+
+	observed.observers[1].callback([
+		{ isIntersecting: true, target: observed.sections[1] },
+	]);
+	assert.equal(observed.root.dataset.activeSection, "experience");
+	assert.equal("activeResearchGroup" in observed.root.dataset, false);
+	assert.equal(observed.context.textContent, "Field work");
+	assert.deepEqual(
+		observed.relayLinks.map((link) => link.getAttribute("aria-current")),
+		[null, "location", null, null, null],
+	);
 });
 
 test("single-column layout accounts for mobile side margins", async () => {

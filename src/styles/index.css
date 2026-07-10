@@ -193,6 +193,124 @@
 	width: min(55%, 42rem);
 }
 
+/* ---------- Research Relay ---------- */
+
+.research-relay {
+	position: sticky;
+	top: 3.5rem;
+	z-index: 28;
+	display: grid;
+	grid-template-columns: 8rem minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 1.25rem;
+	min-height: 3.75rem;
+	padding: 0 1.5rem;
+	border-block: 1px solid
+		color-mix(in srgb, var(--home-surface-text) 16%, transparent);
+	background: color-mix(in srgb, var(--home-surface) 94%, transparent);
+	-webkit-backdrop-filter: blur(18px);
+	backdrop-filter: blur(18px);
+	opacity: 0;
+	transform: translateY(-0.4rem);
+	transition:
+		opacity 0.42s ease,
+		transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html[data-home-hero="passed"] .research-relay {
+	opacity: 1;
+	transform: none;
+}
+
+.research-relay-title {
+	color: var(--home-surface-text);
+}
+
+.research-relay-track {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.research-relay-track li {
+	position: relative;
+}
+
+.research-relay-track li::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 0;
+	right: 0;
+	height: 1px;
+	background: var(--atlas-cobalt-bright);
+}
+
+.research-relay-track a {
+	position: relative;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	color: var(--home-surface-muted);
+	font-family: var(--font-mono);
+	font-size: 0.68rem;
+	text-decoration: none;
+}
+
+.research-relay-track a::before {
+	content: "";
+	width: 0.45rem;
+	height: 0.45rem;
+	border-radius: 50%;
+	background: var(--atlas-cobalt-bright);
+}
+
+.research-relay-track a[aria-current="location"] {
+	color: var(--home-surface-text);
+}
+
+.research-relay-track a:focus-visible {
+	outline: 2px solid var(--atlas-cobalt-bright);
+	outline-offset: 4px;
+}
+
+.research-relay-track a[aria-current="location"]::before {
+	background: var(--atlas-signal);
+	box-shadow: 0 0 0 0.3rem
+		color-mix(in srgb, var(--atlas-signal) 14%, transparent);
+}
+
+html[data-theme="light"]
+	.research-relay-track
+	a[aria-current="location"]::before {
+	background: var(--atlas-cobalt-bright);
+}
+
+.research-relay-context {
+	color: var(--home-surface-text);
+	font-family: var(--font-mono);
+	font-size: 0.68rem;
+	letter-spacing: 0;
+	text-transform: uppercase;
+}
+
+.home-atlas[data-active-research-group] [data-atlas-node] {
+	opacity: 0.55;
+}
+
+.home-atlas[data-active-research-group="agent-llm-alignment"]
+	[data-research-group="agent-llm-alignment"],
+.home-atlas[data-active-research-group="recommendation-bidding"]
+	[data-research-group="recommendation-bidding"],
+.home-atlas[data-active-research-group="reinforcement-learning-bandits"]
+	[data-research-group="reinforcement-learning-bandits"] {
+	border-color: var(--atlas-signal);
+	opacity: 1;
+}
+
 /* ---------- Sections (label | content) ---------- */
 
 .home-section {
