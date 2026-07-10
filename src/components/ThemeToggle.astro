@@ -90,6 +90,19 @@
 		outline: none;
 	}
 
+	:global(html[data-home-hero="visible"]) #theme-toggle {
+		color: #ffffff;
+		border-color: rgba(255, 255, 255, 0.36);
+		background-color: rgba(255, 255, 255, 0.08);
+	}
+
+	:global(html[data-home-hero="visible"]) #theme-toggle:hover,
+	:global(html[data-home-hero="visible"]) #theme-toggle:focus-visible {
+		color: #ffffff;
+		border-color: rgba(255, 255, 255, 0.56);
+		background-color: rgba(255, 255, 255, 0.14);
+	}
+
 	.theme-toggle-glyph {
 		display: inline-flex;
 		align-items: center;

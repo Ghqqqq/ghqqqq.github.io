@@ -46,6 +46,36 @@ function assertCssDeclarations(source, selector, declarations) {
 	}
 }
 
+function assertCssDeclarationGroup(source, selectors, declarations) {
+	const selectorPattern = selectors.map(escapeRegExp).join("\\s*,\\s*");
+	const rule = source.match(new RegExp(`${selectorPattern}\\s*\\{([^}]*)\\}`));
+	assert.ok(rule, `expected CSS rule for ${selectors.join(", ")}`);
+
+	for (const [property, value] of Object.entries(declarations)) {
+		assert.match(
+			rule[1],
+			new RegExp(`(?:^|\\n)\\s*${escapeRegExp(property)}:\\s*${escapeRegExp(value)}\\s*;`),
+			`expected ${selectors.join(", ")} to declare ${property}: ${value}`,
+		);
+	}
+}
+
+function extractCssBlock(source, header) {
+	const headerIndex = source.indexOf(header);
+	assert.notEqual(headerIndex, -1, `expected CSS block for ${header}`);
+	const openingBraceIndex = source.indexOf("{", headerIndex + header.length);
+	assert.notEqual(openingBraceIndex, -1, `expected ${header} to open a CSS block`);
+
+	let depth = 1;
+	for (let index = openingBraceIndex + 1; index < source.length; index += 1) {
+		if (source[index] === "{") depth += 1;
+		if (source[index] === "}") depth -= 1;
+		if (depth === 0) return source.slice(openingBraceIndex + 1, index);
+	}
+
+	assert.fail(`expected ${header} to close its CSS block`);
+}
+
 test("homepage renders the academic CV structure and omits excluded personal data", async () => {
 	const html = await readBuilt("index.html");
 
@@ -500,7 +530,7 @@ test("public-facing repository text omits template traces and keeps footer attri
 	assert.doesNotMatch(packageJson, /"name":\s*"spectre"/i);
 });
 
-test("homepage shell exposes the cobalt dual-surface navigation contract", async () => {
+test("homepage shell exposes the cobalt dual-surface navigation contract", async (t) => {
 	const homeHtml = await readBuilt("index.html");
 	const publicationsHtml = await readBuilt("publications/index.html");
 	const resetCss = await readRepo("src/styles/reset.css");
@@ -582,6 +612,76 @@ test("homepage shell exposes the cobalt dual-surface navigation contract", async
 	);
 	assertCssDeclarations(navbar, ':global(html[data-home-hero="visible"]) .site-nav-atlas::after', {
 		background: "rgba(255, 255, 255, 0.24)",
+	});
+
+	const mobileNavbar = extractCssBlock(navbar, "@media screen and (max-width: 640px)");
+	await t.test("mobile visible-state dropdown stays on cobalt without blur", () => {
+		assertCssDeclarations(
+			mobileNavbar,
+			':global(html[data-home-hero="visible"]) .site-nav-atlas .nav-links',
+			{
+				"background-color": "var(--home-cobalt)",
+				"backdrop-filter": "none",
+				"-webkit-backdrop-filter": "none",
+				"border-bottom": "1px solid rgba(255, 255, 255, 0.24)",
+			},
+		);
+		assertCssDeclarations(
+			mobileNavbar,
+			':global(html[data-home-hero="visible"]) .site-nav-atlas .nav-links li',
+			{ "border-top": "1px solid rgba(255, 255, 255, 0.24)" },
+		);
+		assertCssDeclarations(
+			mobileNavbar,
+			':global(html[data-home-hero="visible"]) .site-nav-atlas .nav-links li:last-child',
+			{ "border-bottom": "1px solid rgba(255, 255, 255, 0.24)" },
+		);
+	});
+	await t.test("mobile visible-state menu control stays white", () => {
+		assertCssDeclarations(
+			navbar,
+			':global(html[data-home-hero="visible"]) .site-nav-atlas .mobile-nav-toggle',
+			{
+				color: "#ffffff",
+				"border-color": "rgba(255, 255, 255, 0.36)",
+				"background-color": "rgba(255, 255, 255, 0.08)",
+			},
+		);
+		assertCssDeclarationGroup(
+			navbar,
+			[
+				':global(html[data-home-hero="visible"]) .site-nav-atlas .mobile-nav-toggle:hover',
+				':global(html[data-home-hero="visible"]) .site-nav-atlas .mobile-nav-toggle:focus-visible',
+			],
+			{
+				color: "#ffffff",
+				"border-color": "rgba(255, 255, 255, 0.56)",
+				"background-color": "rgba(255, 255, 255, 0.14)",
+			},
+		);
+	});
+	await t.test("visible-state theme control stays white", () => {
+		assertCssDeclarations(
+			themeToggle,
+			':global(html[data-home-hero="visible"]) #theme-toggle',
+			{
+				color: "#ffffff",
+				"border-color": "rgba(255, 255, 255, 0.36)",
+				"background-color": "rgba(255, 255, 255, 0.08)",
+			},
+		);
+		assertCssDeclarationGroup(
+			themeToggle,
+			[
+				':global(html[data-home-hero="visible"]) #theme-toggle:hover',
+				':global(html[data-home-hero="visible"]) #theme-toggle:focus-visible',
+			],
+			{
+				color: "#ffffff",
+				"border-color": "rgba(255, 255, 255, 0.56)",
+				"background-color": "rgba(255, 255, 255, 0.14)",
+			},
+		);
 	});
 
 	for (const html of [homeHtml, publicationsHtml]) {
