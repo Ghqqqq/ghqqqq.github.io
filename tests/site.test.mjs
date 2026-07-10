@@ -94,6 +94,44 @@ function extractCssBlock(source, header) {
 	assert.fail(`expected ${header} to close its CSS block`);
 }
 
+function extractSectionById(html, id) {
+	const section = html.match(
+		new RegExp(
+			`<section\\b(?=[^>]*\\bid="${escapeRegExp(id)}")[^>]*>[\\s\\S]*?<\\/section>`,
+		),
+	);
+	assert.ok(section, `expected built section #${id}`);
+	return section[0];
+}
+
+function assertAwardsContract(awardsHtml, expectedTitles) {
+	const awardItems = Array.from(
+		awardsHtml.matchAll(
+			/<li\b[^>]*class="award-item"[^>]*>([\s\S]*?)<\/li>/g,
+		),
+		([, item]) => item,
+	);
+	assert.equal(
+		awardItems.length,
+		expectedTitles.length,
+		"expected rendered award item count to match awards data",
+	);
+
+	const renderedTitles = awardItems.map((item, index) => {
+		assert.match(item, /class="award-title"/, `expected award ${index + 1} title`);
+		assert.match(item, /class="award-sub"/, `expected award ${index + 1} metadata`);
+		const title = item.match(/<div class="award-title">([^<]+)<\/div>/);
+		assert.ok(title, `expected award ${index + 1} title copy`);
+		return title[1].trim();
+	});
+
+	assert.deepEqual(
+		renderedTitles,
+		expectedTitles,
+		"expected each award title exactly once in stable year-descending order",
+	);
+}
+
 function createAtlasControllerFixture({
 	hasIntersectionObserver,
 	hasHero = true,
@@ -636,18 +674,69 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 	const html = await readBuilt("index.html");
 	const indexPage = await readRepo("src/pages/index.astro");
 	const indexCss = await readRepo("src/styles/index.css");
+	const layout = await readRepo("src/layouts/Layout.astro");
+	const awardsSource = await readRepo("src/content/awards.json");
 
 	assert.ok(html, "expected built homepage HTML");
 	assert.ok(indexPage, "expected homepage source");
 	assert.ok(indexCss, "expected homepage CSS source");
-	assert.match(
-		html,
-		/<p class="about-manifesto">\s*Learning under\s*<em>constraints, feedback,<\/em>\s*and changing environments\.\s*<\/p>/,
+	assert.ok(layout, "expected layout source");
+	assert.ok(awardsSource, "expected awards data source");
+
+	const manifestoMarkup =
+		/<p class="about-manifesto">\s*Learning under\s*<em>constraints, feedback,<\/em>\s*and changing environments\.\s*<\/p>/g;
+	assert.equal(html.match(/class="about-manifesto"/g)?.length ?? 0, 1);
+	assert.equal(
+		html.match(manifestoMarkup)?.length ?? 0,
+		1,
+		"expected one exact built manifesto paragraph",
+	);
+	assert.doesNotMatch([html, indexPage, indexCss].join("\n"), /about-pull-quote/);
+	assert.doesNotMatch(
+		[html, indexPage].join("\n"),
+		/<blockquote\b[^>]*>[\s\S]*?Learning under[\s\S]*?changing environments\.[\s\S]*?<\/blockquote>/i,
 	);
 	assert.match(
 		html,
 		/class="home-section home-section--blue"[^>]*id="awards"/,
 	);
+
+	const awardsData = JSON.parse(awardsSource);
+	assert.ok(Array.isArray(awardsData), "expected awards data array");
+	assert.equal(awardsData.length, 8, "expected exactly eight awards in source data");
+	const expectedAwardTitles = [...awardsData]
+		.sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
+		.map((award) => award.title);
+	const awardsSection = extractSectionById(html, "awards");
+	assert.doesNotMatch(awardsSection, /id="service"|class="[^"]*service/);
+	assertAwardsContract(awardsSection, expectedAwardTitles);
+	const awardsWithOneItemRemoved = awardsSection.replace(
+		/<li\b[^>]*class="award-item"[^>]*>[\s\S]*?<\/li>/,
+		"",
+	);
+	assert.throws(
+		() => assertAwardsContract(awardsWithOneItemRemoved, expectedAwardTitles),
+		/expected rendered award item count to match awards data/,
+	);
+
+	const awardsLoopStart = indexPage.indexOf("sortedAwards.map((award) => {");
+	const awardsLoopEnd = indexPage.indexOf("</ul>", awardsLoopStart);
+	assert.notEqual(awardsLoopStart, -1, "expected unchanged sorted awards loop");
+	assert.notEqual(awardsLoopEnd, -1, "expected awards loop closing list");
+	const awardsLoopSource = indexPage.slice(awardsLoopStart, awardsLoopEnd);
+	for (const className of [
+		"award-item",
+		"award-title",
+		"award-meta",
+		"award-year",
+	]) {
+		assert.match(
+			awardsLoopSource,
+			new RegExp(`class="${className}"`),
+			`expected awards loop to retain .${className}`,
+		);
+	}
+
 	assert.match(indexCss, /--atlas-cobalt:\s*#1735d6/i);
 	assert.match(
 		indexCss,
@@ -678,8 +767,12 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 	assert.ok(homeArticle, "expected built homepage article");
 	assert.doesNotMatch(homeArticle[0], /<hr class="hairline"/);
 	assert.doesNotMatch(indexPage, /<hr class="hairline"/);
-	assert.doesNotMatch(indexPage, /about-pull-quote/);
-	assert.doesNotMatch(indexCss, /\.about-pull-quote/);
+	const builtFooter = html.match(
+		/<footer\b(?=[^>]*class="[^"]*site-footer)[^>]*>[\s\S]*?<\/footer>/,
+	);
+	assert.ok(builtFooter, "expected built homepage footer");
+	assert.match(builtFooter[0], /<hr class="hairline"\s*\/?>/);
+	assert.match(layout, /<footer\b[\s\S]*?<hr class="hairline"\s*\/?>[\s\S]*?<\/footer>/);
 	assert.doesNotMatch(indexCss, /\.prose > p:first-of-type::first-letter/);
 	assert.doesNotMatch(indexCss, /\.section-head:hover|\.section-head:focus-within/);
 
@@ -700,6 +793,14 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 		/\/\* ---------- Sections \(spacing-led reading system\) ---------- \*\/([\s\S]*?)\/\* ---------- Publications/,
 	);
 	assert.ok(readingSystemCss, "expected a bounded reading-system CSS section");
+	const mobileReadingCss = extractCssBlock(
+		readingSystemCss[1],
+		"@media screen and (max-width: 640px)",
+	);
+	assert.match(
+		mobileReadingCss,
+		/\.award-list\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/,
+	);
 	assert.doesNotMatch(readingSystemCss[1], /font-size:\s*[^;]*vw/i);
 	const readingLetterSpacing = Array.from(
 		readingSystemCss[1].matchAll(/letter-spacing:\s*([^;]+);/gi),
