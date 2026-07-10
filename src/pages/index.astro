@@ -90,6 +90,9 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 	layout="home"
 	ambient="none"
 >
+	<script is:inline data-atlas-boot>
+		document.documentElement.dataset.atlasJs = "true";
+	</script>
 	<article class="home-atlas" data-home-atlas>
 		<header class="atlas-hero" data-atlas-hero>
 			<div class="atlas-hero-grid" aria-hidden="true">
@@ -354,7 +357,7 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 	</article>
 </Layout>
 
-<script is:inline>
+<script is:inline data-atlas-controller>
 	(() => {
 		const root = document.querySelector("[data-home-atlas]");
 		if (!(root instanceof HTMLElement)) return;
@@ -367,6 +370,7 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 		const relayLinks = Array.from(root.querySelectorAll("[data-relay-link]"));
 		const context = root.querySelector("[data-relay-context]");
 		const intersectingPublicationGroups = new Set();
+		let publicationGroupGeneration = 0;
 		const publicationSection = sections.find(
 			(section) => section.getAttribute("data-home-section") === "publications",
 		);
@@ -396,7 +400,11 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 			if (!id) return;
 
 			root.dataset.activeSection = id;
-			if (id !== "publications") delete root.dataset.activeResearchGroup;
+			if (id !== "publications") {
+				publicationGroupGeneration += 1;
+				intersectingPublicationGroups.clear();
+				delete root.dataset.activeResearchGroup;
+			}
 			for (const link of relayLinks) {
 				if (link.getAttribute("data-relay-link") === id) {
 					link.setAttribute("aria-current", "location");
@@ -443,6 +451,8 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 
 		const groupObserver = new IntersectionObserver(
 			(entries) => {
+				publicationGroupGeneration += 1;
+				const callbackGeneration = publicationGroupGeneration;
 				for (const entry of entries) {
 					if (entry.isIntersecting) {
 						intersectingPublicationGroups.add(entry.target);
@@ -451,6 +461,13 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 					}
 				}
 				syncResearchGroup();
+				if (root.dataset.activeSection !== "publications") {
+					queueMicrotask(() => {
+						if (callbackGeneration !== publicationGroupGeneration) return;
+						if (root.dataset.activeSection === "publications") return;
+						intersectingPublicationGroups.clear();
+					});
+				}
 			},
 			{ rootMargin: "-30% 0px -55% 0px", threshold: 0 },
 		);

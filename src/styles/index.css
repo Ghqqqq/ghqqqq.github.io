@@ -221,6 +221,7 @@
 		transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+html:not([data-atlas-js]) .research-relay,
 .home-atlas[data-hero-state="passed"] .research-relay {
 	opacity: 1;
 	transform: none;

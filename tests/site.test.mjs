@@ -166,6 +166,11 @@ function createAtlasControllerFixture({
 		documentElement,
 		querySelector: (selector) => (selector === "[data-home-atlas]" ? root : null),
 	};
+	const microtasks = [];
+	const queueMicrotask = (callback) => microtasks.push(callback);
+	const flushMicrotasks = () => {
+		while (microtasks.length > 0) microtasks.shift()();
+	};
 	const observers = [];
 	class FixtureIntersectionObserver {
 		constructor(callback, options) {
@@ -187,11 +192,14 @@ function createAtlasControllerFixture({
 	return {
 		context,
 		document,
+		flushMicrotasks,
 		hero,
 		HTMLElement: FixtureElement,
 		IntersectionObserver: FixtureIntersectionObserver,
+		microtasks,
 		observers,
 		publicationGroups,
+		queueMicrotask,
 		relayLinks,
 		root,
 		sections,
@@ -622,6 +630,29 @@ test("atlas relay tracks hero, section, and publication-group state", async () =
 	assert.ok(relayComponent, "expected ResearchRelay source");
 	assert.match(html, /data-research-relay/);
 	assert.match(html, /<html[^>]*data-home-hero="passed"/);
+	const sourceBootIndex = indexPage.indexOf("data-atlas-boot");
+	const sourceArticleIndex = indexPage.indexOf("data-home-atlas");
+	assert.notEqual(sourceBootIndex, -1, "expected inline Atlas boot marker");
+	assert.ok(
+		sourceBootIndex < sourceArticleIndex,
+		"expected Atlas boot marker before article markup",
+	);
+	assert.match(
+		indexPage,
+		/<script is:inline data-atlas-boot>[\s\S]*?document\.documentElement\.dataset\.atlasJs\s*=\s*"true";?[\s\S]*?<\/script>/,
+	);
+	const builtBootIndex = html.indexOf("data-atlas-boot");
+	const builtArticleIndex = html.indexOf("data-home-atlas");
+	assert.notEqual(builtBootIndex, -1, "expected built Atlas boot marker");
+	assert.ok(
+		builtBootIndex < builtArticleIndex,
+		"expected built Atlas boot marker before article markup",
+	);
+	assert.match(
+		html,
+		/<script[^>]*data-atlas-boot[^>]*>[\s\S]*?dataset\.atlasJs\s*=\s*"true";?[\s\S]*?<\/script>/,
+	);
+	assert.match(html, /<script[^>]*data-atlas-controller[^>]*>/);
 	const builtRoot = html.match(/<article[^>]*data-home-atlas[^>]*>/);
 	assert.ok(builtRoot, "expected built home Atlas root");
 	assert.doesNotMatch(builtRoot[0], /data-hero-state/);
@@ -684,9 +715,12 @@ test("atlas relay tracks hero, section, and publication-group state", async () =
 		indexCss,
 		/\.research-relay\s*{[^}]*-webkit-backdrop-filter:\s*blur\(18px\)[^}]*backdrop-filter:\s*blur\(18px\)/,
 	);
-	assertCssDeclarations(
+	assertCssDeclarationGroup(
 		indexCss,
-		'.home-atlas[data-hero-state="passed"] .research-relay',
+		[
+			"html:not([data-atlas-js]) .research-relay",
+			'.home-atlas[data-hero-state="passed"] .research-relay',
+		],
 		{
 			opacity: "1",
 			transform: "none",
@@ -731,14 +765,16 @@ test("atlas relay tracks hero, section, and publication-group state", async () =
 	);
 	assert.match(
 		builtCss,
-		/\.home-atlas\[data-hero-state=passed\] \.research-relay\{[^}]*opacity:1[^}]*visibility:visible[^}]*pointer-events:auto/,
+		/html:not\(\[data-atlas-js\]\) \.research-relay,\.home-atlas\[data-hero-state=passed\] \.research-relay\{[^}]*opacity:1[^}]*visibility:visible[^}]*pointer-events:auto/,
 	);
 	assert.doesNotMatch(
 		builtCss,
 		/html\[data-home-hero=passed\] \.research-relay/,
 	);
 
-	const controllerMatch = indexPage.match(/<script is:inline>\s*([\s\S]*?)\s*<\/script>/);
+	const controllerMatch = indexPage.match(
+		/<script is:inline data-atlas-controller>\s*([\s\S]*?)\s*<\/script>/,
+	);
 	assert.ok(controllerMatch, "expected inline Atlas controller");
 
 	const fallback = createAtlasControllerFixture({ hasIntersectionObserver: false });
@@ -827,6 +863,21 @@ test("atlas relay tracks hero, section, and publication-group state", async () =
 	]);
 	assert.equal("activeResearchGroup" in observed.root.dataset, false);
 	assert.equal(observed.context.textContent, "Field work");
+	assert.ok(observed.microtasks.length > 0);
+	observed.flushMicrotasks();
+
+	sectionObserver.callback([
+		{ isIntersecting: true, target: observed.sections[4] },
+	]);
+	assert.equal(observed.root.dataset.activeSection, "publications");
+	assert.equal("activeResearchGroup" in observed.root.dataset, false);
+	assert.equal(observed.context.textContent, "Research branches");
+
+	groupObserver.callback([
+		{ isIntersecting: true, target: observed.publicationGroups[1] },
+	]);
+	assert.equal(observed.root.dataset.activeResearchGroup, "recommendation-bidding");
+	assert.equal(observed.context.textContent, "Recommendation & Bidding");
 
 	const missingHero = createAtlasControllerFixture({
 		hasIntersectionObserver: true,
