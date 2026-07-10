@@ -120,6 +120,28 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.doesNotMatch(html, />Projects<\/h2>/);
 });
 
+test("research atlas data and components expose one shared semantic graph", async () => {
+	const atlasData = await readRepo("src/data/research-atlas.ts");
+	const atlasComponent = await readRepo("src/components/ResearchAtlas.astro");
+	const relayComponent = await readRepo("src/components/ResearchRelay.astro");
+
+	assert.ok(atlasData, "expected research atlas data source");
+	assert.ok(atlasComponent, "expected ResearchAtlas component");
+	assert.ok(relayComponent, "expected ResearchRelay component");
+	assert.match(atlasData, /export const researchAtlas/);
+	assert.match(atlasData, /export const homeSections/);
+	assert.match(atlasData, /Bandits & Online Learning/);
+	assert.match(atlasData, /Safe \/ Constrained Learning/);
+	assert.match(atlasData, /Recommendation & Bidding/);
+	assert.match(atlasData, /Agentic LLMs/);
+	assert.match(atlasComponent, /data-research-atlas/);
+	assert.match(atlasComponent, /aria-label=\{researchAtlas\.label\}/);
+	assert.match(atlasComponent, /aria-hidden="true"/);
+	assert.match(relayComponent, /data-research-relay/);
+	assert.match(relayComponent, /data-relay-link/);
+	assert.match(relayComponent, /aria-current/);
+});
+
 test("publications route and homepage navigation expose full publications", async () => {
 	const publicationsHtml = await readBuilt("publications/index.html");
 	const publicationsPage = await readRepo("src/pages/publications.astro");

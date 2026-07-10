@@ -1,0 +1,30 @@
+---
+import type { HomeSection } from "../data/research-atlas";
+
+interface Props {
+	sections: readonly HomeSection[];
+}
+
+const { sections } = Astro.props;
+---
+
+<nav class="research-relay" aria-label="Homepage sections" data-research-relay>
+	<strong class="research-relay-title">Research Atlas</strong>
+	<ol class="research-relay-track">
+		{
+			sections.map((section, index) => (
+				<li>
+					<a
+						href={`#${section.id}`}
+						data-relay-link={section.id}
+						aria-current={index === 0 ? "location" : undefined}
+					>
+						<span>{section.number}</span>
+						<span class="research-relay-link-label">{section.label}</span>
+					</a>
+				</li>
+			))
+		}
+	</ol>
+	<span class="research-relay-context" data-relay-context>{sections[0].context}</span>
+</nav>

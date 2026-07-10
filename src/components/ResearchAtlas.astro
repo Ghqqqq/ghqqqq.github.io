@@ -1,0 +1,50 @@
+---
+import { researchAtlas } from "../data/research-atlas";
+
+interface Props {
+	mode?: "hero" | "compact";
+}
+
+const { mode = "hero" } = Astro.props;
+const nodes = researchAtlas.groups.flatMap((group) => group.nodes);
+---
+
+<nav
+	class:list={["research-atlas", `research-atlas--${mode}`]}
+	aria-label={researchAtlas.label}
+	data-research-atlas
+>
+	<span class="research-atlas-kicker">{researchAtlas.label}</span>
+	<a class="research-atlas-core" href={researchAtlas.core.href}>
+		<span>{researchAtlas.core.label}</span>
+	</a>
+	<div class="research-atlas-edges" aria-hidden="true">
+		{nodes.map((node) => <span class={`research-atlas-edge edge-${node.id}`} />)}
+	</div>
+	<div class="research-atlas-groups">
+		{
+			researchAtlas.groups.map((group, groupIndex) => (
+				<section class="research-atlas-group" data-atlas-group={group.id}>
+					<h2>
+						<span>{String(groupIndex + 1).padStart(2, "0")}</span>
+						{group.label}
+					</h2>
+					<ul>
+						{group.nodes.map((node) => (
+							<li>
+								<a
+									href={node.href}
+									data-atlas-node={node.id}
+									data-research-group={node.publicationGroup}
+								>
+									<span class="research-atlas-node-label">{node.label}</span>
+									<span class="research-atlas-node-short" aria-hidden="true">{node.shortLabel}</span>
+								</a>
+							</li>
+						))}
+					</ul>
+				</section>
+			))
+		}
+	</div>
+</nav>
