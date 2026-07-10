@@ -92,7 +92,6 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /data-home-atlas/);
 	assert.match(html, /data-atlas-hero/);
 	assert.match(html, /<h1[^>]*class="atlas-hero-name"[^>]*>\s*Hengquan Guo\s*<\/h1>/);
-	assert.match(html, /Research as[\s\S]*a living atlas\./i);
 	assert.match(html, /data-research-atlas/);
 	assert.match(html, /aria-label="Research interests"/);
 	assert.equal(html.match(/data-research-atlas/g)?.length, 1);
@@ -424,6 +423,13 @@ test("homepage renders the cobalt atlas hero without legacy visual layers", asyn
 	assert.match(html, /class="atlas-hero-grid" aria-hidden="true"/);
 	assert.match(html, /class="atlas-hero-grid-line/);
 	assert.equal(html.match(/<h1(?:\s[^>]*)?>/gi)?.length ?? 0, 1, "expected exactly one h1");
+	assert.match(
+		html,
+		/<p class="atlas-hero-statement">\s*Research as\s*<em>\s*a living atlas\.\s*<\/em>\s*<\/p>/,
+	);
+	assertCssDeclarations(atlasComponent, ".research-atlas-kicker", {
+		opacity: "0.74",
+	});
 
 	for (const [label, source] of [
 		["built homepage", html],
