@@ -88,14 +88,15 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 		html,
 		/Research interests[\s\S]*Reinforcement Learning(?:\s*&amp;\s*|\s*&\s*)Bandits[\s\S]*Foundations[\s\S]*Bandits(?:\s*&amp;\s*|\s*&\s*)Online Learning[\s\S]*Safe \/ Constrained Learning[\s\S]*Applications[\s\S]*Recommendation(?:\s*&amp;\s*|\s*&\s*)Bidding[\s\S]*LLM Alignment[\s\S]*Agentic LLMs[\s\S]*Multimodal LLMs/i,
 	);
-	assert.match(html, /class="research-map"/);
-	assert.match(html, /class="research-map-node core"/);
-	assert.match(html, /class="research-map-branch"/);
-	assert.doesNotMatch(html, /class="research-map-node-index"/);
-	assert.match(
-		html,
-		/class="research-map-node core"[\s\S]*class="research-map-node-label"[\s\S]*Reinforcement Learning(?:\s*&amp;\s*|\s*&\s*)Bandits/,
-	);
+	assert.match(html, /class="home-atlas"/);
+	assert.match(html, /data-home-atlas/);
+	assert.match(html, /data-atlas-hero/);
+	assert.match(html, /<h1[^>]*class="atlas-hero-name"[^>]*>\s*Hengquan Guo\s*<\/h1>/);
+	assert.match(html, /Research as[\s\S]*a living atlas\./i);
+	assert.match(html, /data-research-atlas/);
+	assert.match(html, /aria-label="Research interests"/);
+	assert.equal(html.match(/data-research-atlas/g)?.length, 1);
+	assert.doesNotMatch(html, /class="research-map"/);
 	assert.match(html, /Reinforcement Learning/);
 	assert.match(html, /LLM Alignment/);
 	assert.match(html, /Research interests/i);
@@ -370,6 +371,13 @@ test("homepage groups selected publications by research area with real venue bad
 		html,
 		/class="publication-group-index"[\s\S]*02[\s\S]*class="publication-group-rule"[\s\S]*class="publication-group-name"[\s\S]*Recommendation(?:\s*&amp;\s*|\s*&\s*)Bidding/,
 	);
+	for (const id of [
+		"publications-agent-llm-alignment",
+		"publications-recommendation-bidding",
+		"publications-reinforcement-learning-bandits",
+	]) {
+		assert.match(html, new RegExp(`id="${id}"`));
+	}
 	assert.doesNotMatch(html, /publication-teaser compact/);
 	assert.doesNotMatch(html, /publication-cover/);
 });
@@ -400,95 +408,37 @@ test("homepage shell exposes the refreshed avatar and theme toggle", async () =>
 	assert.doesNotMatch(html, /award-entry/);
 });
 
-test("homepage implements the editorial art and motion proposal hooks", async () => {
+test("homepage renders the cobalt atlas hero without legacy visual layers", async () => {
 	const html = await readBuilt("index.html");
 	const indexPage = await readRepo("src/pages/index.astro");
 	const indexCss = await readRepo("src/styles/index.css");
-	const resetCss = await readRepo("src/styles/reset.css");
-	const globalsCss = await readRepo("src/styles/globals.css");
-	const navbar = await readRepo("src/components/Navbar.astro");
-	const themeToggle = await readRepo("src/components/ThemeToggle.astro");
-	const contentConfig = await readRepo("src/content.config.ts");
-	const publicationTeaser = await readRepo("src/components/PublicationTeaser.astro");
 
 	assert.ok(html, "expected built homepage HTML");
 	assert.ok(indexPage, "expected homepage source");
 	assert.ok(indexCss, "expected homepage CSS source");
-	assert.ok(resetCss, "expected reset CSS source");
-	assert.ok(navbar, "expected navbar source");
-	assert.ok(themeToggle, "expected theme toggle source");
-	assert.ok(contentConfig, "expected content config source");
-	assert.ok(publicationTeaser, "expected publication teaser source");
+	assert.match(html, /class="atlas-hero"/);
+	assert.match(html, /class="atlas-hero-portrait"/);
+	assert.match(html, /class="atlas-hero-orbit"/);
+	assert.match(html, /class="atlas-hero-grid" aria-hidden="true"/);
+	assert.match(html, /class="atlas-hero-grid-line/);
+	assert.match(indexCss, /--atlas-cobalt:\s*#1735d6/i);
+	assert.match(indexCss, /\.atlas-hero\s*{[^}]*background:\s*var\(--atlas-cobalt\)/);
+	assert.match(indexCss, /\.atlas-hero-name/);
+	assert.match(indexCss, /\.atlas-hero-statement/);
+	assert.match(indexCss, /\.atlas-hero-grid/);
+	assert.match(indexCss, /\.atlas-hero-name\s*{[^}]*letter-spacing:\s*0/);
+	assert.match(indexCss, /\.atlas-hero-statement\s*{[^}]*letter-spacing:\s*0/);
 
-	assert.match(html, /data-home-motion/);
-	assert.match(html, /data-reveal/);
-	assert.match(html, /data-draw-line/);
-	assert.match(indexPage, /IntersectionObserver/);
-	assert.match(indexPage, /prefers-reduced-motion:\s*reduce/);
-	assert.match(indexPage, /is-active-section/);
-
-	// Paper grain lives in globals.css so the texture applies site-wide (not home-only).
-	assert.match(globalsCss, /body::before/);
-	assert.match(globalsCss, /paper-grain/);
-	assert.match(globalsCss, /mix-blend-mode:\s*multiply/);
-	assert.match(indexCss, /\.home\[data-motion-ready\]\s+\[data-reveal\]/);
-	assert.match(indexCss, /\.hero-avatar\s*{[^}]*border:\s*1px solid/);
-	assert.match(indexCss, /\.hero-avatar img\s*{[^}]*grayscale\(0\.08\)/);
-	assert.match(indexCss, /\.about-pull-quote/);
-	assert.match(indexCss, /\.research-map/);
-	assert.match(indexCss, /\.research-map-node\.core\s*{[\s\S]*text-align:\s*center/);
-	assert.match(indexCss, /\.research-map-node\.core\s*{[^}]*border-radius:\s*8px/);
-	assert.match(indexCss, /\.research-map-branch/);
-	assert.match(indexCss, /\.research-map-node\.leaf:hover\s*{[^}]*translateY\(-1px\)/);
-	assert.doesNotMatch(indexCss, /\.research-map-node-index/);
-	assert.doesNotMatch(indexCss, /\.interest-inline/);
-	assert.match(indexCss, /\.section-head::after/);
-	assert.match(indexCss, /\.section-head\.is-active-section::after/);
-	assert.match(indexCss, /\.section-head\.is-active-section\s+\.section-num/);
-	assert.match(indexCss, /\.section-head:hover::after/);
-	assert.match(indexCss, /\.section-head:hover\s+\.section-num/);
-	// 2.2 — section titles swell their Fraunces SOFT axis on hover/focus.
-	assert.match(
-		indexCss,
-		/\.section-head:hover\s+\.section-title[\s\S]*?"SOFT"\s*100/,
+	const atlasHeroCss = indexCss.match(
+		/\/\* ---------- Atlas Hero ---------- \*\/([\s\S]*?)\/\* ---------- Sections/,
 	);
-	assert.match(indexCss, /\.award-list\s*{[^}]*display:\s*grid/);
-	assert.doesNotMatch(indexCss, /column-count:\s*2/);
-	assert.match(indexCss, /\.publication-group-title/);
-	assert.match(indexCss, /\.publication-group-index/);
-	assert.match(indexCss, /\.publication-group-rule/);
-	assert.match(indexCss, /\.publication-group-name/);
-	assert.match(indexCss, /\.hero-tagline\s*{[^}]*font-style:\s*italic/);
-	assert.match(indexCss, /\.publication-group-name\s*{[^}]*font-style:\s*italic/);
-	assert.doesNotMatch(indexCss, /\.research-map-node\.leaf\s*{[^}]*font-style:\s*italic/);
-	assert.doesNotMatch(indexCss, /\.entry-title\s*{[^}]*font-style:\s*italic/);
-	assert.doesNotMatch(indexCss, /\.award-meta\s*{[^}]*font-style:\s*italic/);
-	assert.doesNotMatch(indexCss, /\.service-meta\s*{[^}]*font-style:\s*italic/);
-	assert.match(contentConfig, /lineage:\s*z[\s\S]*\.object/);
-	assert.match(publicationTeaser, /publication-lineage/);
-	assert.doesNotMatch(publicationTeaser, /\.publication-meta\s*{[^}]*font-style:\s*italic/);
-	assert.doesNotMatch(publicationTeaser, /\.publication-lineage-text\s*{[^}]*font-style:\s*italic/);
-	assert.doesNotMatch(publicationTeaser, /translateX\(2px\)/);
-	assert.match(publicationTeaser, /background-color 0\.18s ease/);
-
-	assert.match(navbar, /class:list=\{\["site-nav"/);
-	assert.match(navbar, /position:\s*sticky/);
-	assert.match(navbar, /backdrop-filter:\s*blur/);
-	assert.match(navbar, /\.site-nav::after/);
-	assert.match(navbar, /nav a::after/);
-	assert.match(navbar, /nav a\.active::after/);
-	assert.match(navbar, /--nav-item-index/);
-	assert.match(navbar, /transition-delay:\s*calc\(var\(--nav-item-index\)/);
-
-	assert.match(resetCss, /prefers-reduced-motion:\s*reduce/);
-	assert.match(resetCss, /transition-duration:\s*0\.01ms\s*!important/);
-	assert.match(resetCss, /scroll-behavior:\s*auto\s*!important/);
-
-	assert.match(themeToggle, /theme-toggle-glyph/);
-	assert.match(themeToggle, /theme-toggle-rays/);
-	assert.match(themeToggle, /theme-toggle-moon-body/);
-	assert.match(themeToggle, /\.theme-toggle-label\s*{[^}]*position:\s*absolute/);
-	assert.doesNotMatch(themeToggle, /lucide/);
+	assert.ok(atlasHeroCss, "expected a bounded Atlas Hero CSS section");
+	assert.doesNotMatch(atlasHeroCss[1], /\b[a-z-]*gradient\s*\(/i);
+	assert.doesNotMatch(atlasHeroCss[1], /font-size:\s*[^;]*vw/i);
+	assert.doesNotMatch(html, /data-draw-line|hero-hairline/);
+	assert.doesNotMatch(indexCss, /ghost numerals/i);
+	assert.doesNotMatch(indexCss, /\.home > \.hairline::before/);
+	assert.doesNotMatch(indexPage, /const researchMap/);
 });
 
 test("single-column layout accounts for mobile side margins", async () => {

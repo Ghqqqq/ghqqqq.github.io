@@ -6,7 +6,9 @@ import { getCollection, getEntry, render } from "astro:content";
 import { name, openGraph } from "homepage:globals";
 import ProfilePicture from "../assets/profile-bird-original.png";
 import PublicationTeaser from "../components/PublicationTeaser.astro";
+import ResearchAtlas from "../components/ResearchAtlas.astro";
 import TencentWordmark from "../components/TencentWordmark.astro";
+import { homeSections } from "../data/research-atlas";
 import Layout from "../layouts/Layout.astro";
 
 const [publications, about, socials, awards, experience, serviceTeaching] =
@@ -68,26 +70,6 @@ const visiblePublicationSections = publicationSections.filter(
 	(section) => section.publications.length > 0,
 );
 
-const researchMap = {
-	label: "Research interests",
-	core: "Reinforcement Learning & Bandits",
-	branches: [
-		{
-			label: "Foundations",
-			nodes: ["Bandits & Online Learning", "Safe / Constrained Learning"],
-		},
-		{
-			label: "Applications",
-			nodes: [
-				"Recommendation & Bidding",
-				"LLM Alignment",
-				"Agentic LLMs",
-				"Multimodal LLMs",
-			],
-		},
-	],
-};
-
 const sortedSocials = [...socials].sort((a, b) => a.data.id - b.data.id);
 const sortedExperience = [...experience].sort((a, b) => a.data.id - b.data.id);
 const sortedAwards = [...awards].sort(
@@ -97,18 +79,8 @@ const sortedServiceTeaching = [...serviceTeaching].sort(
 	(a, b) => a.data.id - b.data.id,
 );
 
-type Section = {
-	num: string;
-	title: string;
-};
-
-const sections: Section[] = [
-	{ num: "01", title: "About" },
-	{ num: "02", title: "Experience" },
-	{ num: "03", title: "Awards" },
-	{ num: "04", title: "Service & Teaching" },
-	{ num: "05", title: "Selected Publications" },
-];
+const heroGridColumns = Array.from({ length: 9 }, (_, index) => index + 1);
+const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 ---
 
 <Layout
@@ -117,52 +89,43 @@ const sections: Section[] = [
 	layout="home"
 	ambient="none"
 >
-	<article class="home" data-home-motion>
-		<header class="hero" data-reveal>
-			<div class="hero-text">
-				<h1 class="hero-name">{name}</h1>
-				<p class="hero-tagline">
-					PhD student, ShanghaiTech University
+	<article class="home-atlas" data-home-atlas>
+		<header class="atlas-hero" data-atlas-hero>
+			<div class="atlas-hero-grid" aria-hidden="true">
+				{heroGridColumns.map((line) => (
+					<span
+						class="atlas-hero-grid-line atlas-hero-grid-line--vertical"
+						style={`--atlas-grid-line: ${line}`}
+					/>
+				))}
+				{heroGridRows.map((line) => (
+					<span
+						class="atlas-hero-grid-line atlas-hero-grid-line--horizontal"
+						style={`--atlas-grid-line: ${line}`}
+					/>
+				))}
+			</div>
+			<div class="atlas-hero-copy">
+				<p class="atlas-hero-kicker">Decision-making under constraints · Shanghai</p>
+				<h1 class="atlas-hero-name">{name}</h1>
+				<p class="atlas-hero-statement">Research as <em>a living atlas.</em></p>
+				<p class="atlas-hero-role">PhD student, ShanghaiTech University</p>
+				<p class="atlas-hero-lede">
+					Reinforcement learning and bandits, from theoretical foundations to
+					agentic and multimodal systems.
 				</p>
-				<p class="hero-lede">
-					Working on reinforcement learning and bandits — theory, and
-					applications.
-				</p>
-				<div class="hero-links" aria-label="Profile links">
-					{
-						sortedSocials.map((item, i) => (
-							<>
-								{item.data.link ? (
-									<a
-										href={item.data.link}
-										class="hero-link"
-										target={
-											item.data.link.startsWith("http")
-												? "_blank"
-												: undefined
-										}
-										rel={
-											item.data.link.startsWith("http")
-												? "noopener noreferrer"
-												: undefined
-										}
-									>
-										{item.data.text}
-									</a>
-								) : (
-									<span class="hero-link hero-link-text">
-										{item.data.text}
-									</span>
-								)}
-								{i < sortedSocials.length - 1 && (
-									<span class="hero-link-sep" aria-hidden="true">·</span>
-								)}
-							</>
-						))
-					}
+				<div class="atlas-hero-links" aria-label="Profile links">
+					{sortedSocials.map((item) => item.data.link ? (
+						<a href={item.data.link} target="_blank" rel="noopener noreferrer">
+							{item.data.text}
+						</a>
+					) : (
+						<span>{item.data.text}</span>
+					))}
 				</div>
 			</div>
-			<div class="hero-avatar">
+			<div class="atlas-hero-portrait">
+				<span class="atlas-hero-orbit" aria-hidden="true"><span /></span>
 				<Image
 					src={ProfilePicture}
 					alt="Blue bird portrait of Hengquan Guo"
@@ -172,14 +135,16 @@ const sections: Section[] = [
 					loading="eager"
 				/>
 			</div>
+			<div class="atlas-hero-coordinates" aria-hidden="true">
+				31.2304° N · 121.4737° E<br />PhD · ShanghaiTech University
+			</div>
+			<div class="atlas-hero-map"><ResearchAtlas /></div>
 		</header>
 
-		<hr class="hairline hero-hairline" data-draw-line />
-
-		<section class="home-section" id="about" data-reveal>
+		<section class="home-section" id="about">
 			<header class="section-head">
-				<span class="section-num">{sections[0].num}</span>
-				<h2 class="section-title">{sections[0].title}</h2>
+				<span class="section-num">{homeSections[0].number}</span>
+				<h2 class="section-title">{homeSections[0].label}</h2>
 			</header>
 			<div class="section-body">
 				<div class="prose">
@@ -188,50 +153,15 @@ const sections: Section[] = [
 				<blockquote class="about-pull-quote">
 					<p>Learning under constraints, feedback, and changing environments.</p>
 				</blockquote>
-				<div class="research-map" aria-labelledby="research-map-title">
-					<div class="research-map-topline">
-						<span class="research-map-kicker" id="research-map-title">
-							{researchMap.label}
-						</span>
-					</div>
-					<div class="research-map-flow">
-						<div class="research-map-node core">
-							<span class="research-map-node-label">{researchMap.core}</span>
-						</div>
-						<div class="research-map-branches">
-							{
-								researchMap.branches.map((branch, branchIndex) => (
-									<section class="research-map-branch">
-										<h3 class="research-map-branch-title">
-											<span class="research-map-branch-index">
-												{String(branchIndex + 1).padStart(2, "0")}
-											</span>
-											<span
-												class="research-map-branch-rule"
-												aria-hidden="true"
-											/>
-											<span>{branch.label}</span>
-										</h3>
-										<ul class="research-map-nodes">
-											{branch.nodes.map((node) => (
-												<li class="research-map-node leaf">{node}</li>
-											))}
-										</ul>
-									</section>
-								))
-							}
-						</div>
-					</div>
-				</div>
 			</div>
 		</section>
 
-		<hr class="hairline" data-draw-line />
+		<hr class="hairline" />
 
-		<section class="home-section" id="experience" data-reveal>
+		<section class="home-section" id="experience">
 			<header class="section-head">
-				<span class="section-num">{sections[1].num}</span>
-				<h2 class="section-title">{sections[1].title}</h2>
+				<span class="section-num">{homeSections[1].number}</span>
+				<h2 class="section-title">{homeSections[1].label}</h2>
 			</header>
 			<div class="section-body">
 				<div class="entry-list">
@@ -274,12 +204,12 @@ const sections: Section[] = [
 			</div>
 		</section>
 
-		<hr class="hairline" data-draw-line />
+		<hr class="hairline" />
 
-		<section class="home-section" id="awards" data-reveal>
+		<section class="home-section" id="awards">
 			<header class="section-head">
-				<span class="section-num">{sections[2].num}</span>
-				<h2 class="section-title">{sections[2].title}</h2>
+				<span class="section-num">{homeSections[2].number}</span>
+				<h2 class="section-title">{homeSections[2].label}</h2>
 			</header>
 			<div class="section-body">
 				<ul class="award-list">
@@ -314,12 +244,12 @@ const sections: Section[] = [
 			</div>
 		</section>
 
-		<hr class="hairline" data-draw-line />
+		<hr class="hairline" />
 
-		<section class="home-section" id="service" data-reveal>
+		<section class="home-section" id="service">
 			<header class="section-head">
-				<span class="section-num">{sections[3].num}</span>
-				<h2 class="section-title">{sections[3].title}</h2>
+				<span class="section-num">{homeSections[3].number}</span>
+				<h2 class="section-title">{homeSections[3].label}</h2>
 			</header>
 			<div class="section-body">
 				<ul class="entry-list-compact service-list">
@@ -353,18 +283,21 @@ const sections: Section[] = [
 			</div>
 		</section>
 
-		<hr class="hairline" data-draw-line />
+		<hr class="hairline" />
 
-		<section class="home-section" id="publications" data-reveal>
+		<section class="home-section" id="publications">
 			<header class="section-head">
-				<span class="section-num">{sections[4].num}</span>
-				<h2 class="section-title">{sections[4].title}</h2>
+				<span class="section-num">{homeSections[4].number}</span>
+				<h2 class="section-title">{homeSections[4].label}</h2>
 			</header>
 			<div class="section-body">
 				<div class="publication-groups">
 					{
 						visiblePublicationSections.map((section, sectionIndex) => (
-							<section class="publication-group">
+							<section
+								class="publication-group"
+								id={`publications-${section.id}`}
+							>
 								<h3 class="publication-group-title">
 									<span class="publication-group-index">
 										{String(sectionIndex + 1).padStart(2, "0")}
@@ -389,87 +322,4 @@ const sections: Section[] = [
 			</div>
 		</section>
 	</article>
-
-	<script is:inline>
-		(() => {
-			const root = document.querySelector("[data-home-motion]");
-
-			if (!root) return;
-
-			const prefersReducedMotion = window.matchMedia(
-				"(prefers-reduced-motion: reduce)",
-			).matches;
-			const revealItems = Array.from(root.querySelectorAll("[data-reveal]"));
-			const drawnLines = Array.from(root.querySelectorAll("[data-draw-line]"));
-			const homeSections = Array.from(root.querySelectorAll(".home-section"));
-			const sectionHeads = homeSections
-				.map((section) => section.querySelector(".section-head"))
-				.filter(Boolean);
-
-			const setActiveSection = (section) => {
-				for (const head of sectionHeads) {
-					head.classList.toggle(
-						"is-active-section",
-						head === section.querySelector(".section-head"),
-					);
-				}
-			};
-
-			const finishImmediately = () => {
-				for (const item of revealItems) item.classList.add("is-in");
-				for (const line of drawnLines) line.classList.add("is-drawn");
-				sectionHeads[0]?.classList.add("is-active-section");
-			};
-
-			if (prefersReducedMotion || !("IntersectionObserver" in window)) {
-				finishImmediately();
-				return;
-			}
-
-			root.setAttribute("data-motion-ready", "");
-
-			const revealObserver = new IntersectionObserver(
-				(entries, observer) => {
-					for (const entry of entries) {
-						if (!entry.isIntersecting) continue;
-
-						entry.target.classList.add("is-in");
-						observer.unobserve(entry.target);
-					}
-				},
-				{ rootMargin: "0px 0px -10% 0px", threshold: 0.12 },
-			);
-
-			const lineObserver = new IntersectionObserver(
-				(entries, observer) => {
-					for (const entry of entries) {
-						if (!entry.isIntersecting) continue;
-
-						entry.target.classList.add("is-drawn");
-						observer.unobserve(entry.target);
-					}
-				},
-				{ rootMargin: "0px 0px -8% 0px", threshold: 0.2 },
-			);
-
-			const activeSectionObserver = new IntersectionObserver(
-				(entries) => {
-					for (const entry of entries) {
-						if (!entry.isIntersecting) continue;
-
-						setActiveSection(entry.target);
-					}
-				},
-				{ rootMargin: "-35% 0px -45% 0px", threshold: 0 },
-			);
-
-			revealItems.forEach((item, index) => {
-				item.style.setProperty("--reveal-delay", `${Math.min(index, 5) * 45}ms`);
-				revealObserver.observe(item);
-			});
-
-			for (const line of drawnLines) lineObserver.observe(line);
-			for (const section of homeSections) activeSectionObserver.observe(section);
-		})();
-	</script>
 </Layout>

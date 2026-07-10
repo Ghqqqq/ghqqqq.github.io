@@ -32,9 +32,10 @@ const nodes = researchAtlas.groups.flatMap((group) => group.nodes);
 					<ul>
 						{group.nodes.map((node) => (
 							<li>
-								<a
-									href={node.href}
-									data-atlas-node={node.id}
+							<a
+								href={node.href}
+								aria-label={node.label}
+								data-atlas-node={node.id}
 									data-research-group={node.publicationGroup}
 								>
 									<span class="research-atlas-node-label">{node.label}</span>
@@ -48,3 +49,205 @@ const nodes = researchAtlas.groups.flatMap((group) => group.nodes);
 		}
 	</div>
 </nav>
+
+<style>
+	.research-atlas {
+		position: relative;
+		min-height: 15rem;
+		padding-top: 2rem;
+		color: #ffffff;
+	}
+
+	.research-atlas-kicker {
+		font-family: var(--font-mono);
+		font-size: 0.68rem;
+		letter-spacing: 0;
+		text-transform: uppercase;
+		opacity: 0.66;
+	}
+
+	.research-atlas-core,
+	.research-atlas-group a {
+		border: 1px solid rgba(255, 255, 255, 0.34);
+		background: rgba(8, 25, 126, 0.62);
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.research-atlas-core {
+		position: absolute;
+		z-index: 3;
+		top: 5.4rem;
+		left: 50%;
+		width: min(16rem, 48%);
+		padding: 0.85rem 1rem;
+		transform: translateX(-50%);
+		border-color: var(--atlas-signal);
+		text-align: center;
+	}
+
+	.research-atlas-groups {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1rem;
+		padding-top: 8.5rem;
+	}
+
+	.research-atlas-group h2 {
+		margin: 0 0 0.55rem;
+		font-family: var(--font-mono);
+		font-size: 0.68rem;
+		font-style: normal;
+		letter-spacing: 0;
+		text-transform: uppercase;
+	}
+
+	.research-atlas-group h2 span {
+		margin-right: 0.55rem;
+		color: var(--atlas-signal);
+	}
+
+	.research-atlas-group ul {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.45rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.research-atlas-group a {
+		display: block;
+		padding: 0.55rem 0.65rem;
+		font-family: var(--font-display);
+		font-size: 0.88rem;
+		line-height: 1.2;
+	}
+
+	.research-atlas a:focus-visible {
+		outline: 2px solid var(--atlas-signal);
+		outline-offset: 3px;
+	}
+
+	.research-atlas-node-short {
+		display: none;
+	}
+
+	.research-atlas-edges {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+
+	.research-atlas-edge {
+		position: absolute;
+		z-index: 1;
+		top: 7rem;
+		left: 50%;
+		width: 34%;
+		height: 1px;
+		background: rgba(245, 255, 101, 0.45);
+		transform-origin: left;
+	}
+
+	.edge-bandits-online-learning {
+		transform: rotate(150deg);
+	}
+
+	.edge-safe-constrained-learning {
+		transform: rotate(128deg);
+	}
+
+	.edge-recommendation-bidding {
+		transform: rotate(30deg);
+	}
+
+	.edge-llm-alignment {
+		transform: rotate(10deg);
+	}
+
+	.edge-agentic-llms {
+		transform: rotate(-10deg);
+	}
+
+	.edge-multimodal-llms {
+		transform: rotate(-30deg);
+	}
+
+	@media screen and (max-width: 640px) {
+		.research-atlas {
+			min-height: 12rem;
+			padding-top: 0;
+		}
+
+		.research-atlas-kicker {
+			font-size: 0.62rem;
+		}
+
+		.research-atlas-core {
+			top: 2rem;
+			width: min(15rem, 76%);
+			padding: 0.55rem 0.75rem;
+			font-size: 0.78rem;
+		}
+
+		.research-atlas-groups {
+			gap: 0.5rem;
+			padding-top: 5.4rem;
+		}
+
+		.research-atlas-group h2 {
+			font-size: 0.58rem;
+		}
+
+		.research-atlas-group ul {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 0.3rem;
+		}
+
+		.research-atlas-group a {
+			padding: 0.35rem 0.4rem;
+			font-size: 0.72rem;
+		}
+
+		.research-atlas-node-label {
+			display: none;
+		}
+
+		.research-atlas-node-short {
+			display: block;
+		}
+
+		.research-atlas-edge {
+			top: 3.7rem;
+		}
+	}
+
+	@media screen and (max-width: 375px) {
+		.research-atlas {
+			min-height: 10.5rem;
+		}
+
+		.research-atlas-core {
+			top: 1.7rem;
+			padding: 0.45rem 0.6rem;
+		}
+
+		.research-atlas-groups {
+			padding-top: 4.75rem;
+		}
+
+		.research-atlas-group h2 {
+			margin-bottom: 0.35rem;
+		}
+
+		.research-atlas-group a {
+			padding: 0.25rem 0.3rem;
+			font-size: 0.68rem;
+		}
+
+		.research-atlas-edge {
+			top: 3.2rem;
+		}
+	}
+</style>
