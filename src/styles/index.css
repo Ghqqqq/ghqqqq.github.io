@@ -6,6 +6,8 @@
 	--atlas-signal: #f5ff65;
 	--atlas-ink: #111116;
 	--atlas-paper: #f1ece2;
+	--home-nav-offset: 3.5rem;
+	--home-relay-height: 3.75rem;
 	width: 100%;
 	color: var(--home-surface-text);
 	background: var(--home-surface);
@@ -197,13 +199,13 @@
 
 .research-relay {
 	position: sticky;
-	top: 3.5rem;
+	top: var(--home-nav-offset);
 	z-index: 28;
 	display: grid;
 	grid-template-columns: 8rem minmax(0, 1fr) auto;
 	align-items: center;
 	gap: 1.25rem;
-	min-height: 3.75rem;
+	min-height: var(--home-relay-height);
 	padding: 0 1.5rem;
 	border-block: 1px solid
 		color-mix(in srgb, var(--home-surface-text) 16%, transparent);
@@ -211,15 +213,19 @@
 	-webkit-backdrop-filter: blur(18px);
 	backdrop-filter: blur(18px);
 	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
 	transform: translateY(-0.4rem);
 	transition:
 		opacity 0.42s ease,
 		transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-html[data-home-hero="passed"] .research-relay {
+.home-atlas[data-hero-state="passed"] .research-relay {
 	opacity: 1;
 	transform: none;
+	visibility: visible;
+	pointer-events: auto;
 }
 
 .research-relay-title {
@@ -318,7 +324,11 @@ html[data-theme="light"]
 	grid-template-columns: minmax(9rem, 11rem) minmax(0, 1fr);
 	column-gap: 2.25rem;
 	padding: clamp(2rem, 3vw, 2.4rem) 0;
-	scroll-margin-top: 4.5rem;
+	scroll-margin-top: calc(
+		var(--home-nav-offset) +
+		var(--home-relay-height) +
+		0.75rem
+	);
 }
 
 .section-head {
@@ -390,7 +400,7 @@ html[data-theme="light"]
 @media screen and (min-width: 861px) {
 	.section-head {
 		position: sticky;
-		top: 4.4rem;
+		top: calc(var(--home-nav-offset) + var(--home-relay-height) + 0.75rem);
 	}
 }
 

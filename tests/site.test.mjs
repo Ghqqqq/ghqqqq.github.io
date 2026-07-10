@@ -14,6 +14,23 @@ async function readBuilt(relativePath) {
 	return null;
 }
 
+async function readBuiltStylesheets(html) {
+	const stylesheetPaths = Array.from(
+		html.matchAll(/<link[^>]*rel="stylesheet"[^>]*href="([^"]+\.css)"/g),
+		([, href]) => href,
+	).filter((href) => href.startsWith("/"));
+	const stylesheets = await Promise.all(
+		stylesheetPaths.map((href) => readBuilt(href.slice(1))),
+	);
+
+	assert.ok(stylesheets.length > 0, "expected built local stylesheets");
+	assert.ok(
+		stylesheets.every(Boolean),
+		"expected every built stylesheet to be readable",
+	);
+	return stylesheets.join("\n");
+}
+
 async function readRepo(relativePath) {
 	try {
 		return await readFile(resolve(relativePath), "utf8");
@@ -77,7 +94,10 @@ function extractCssBlock(source, header) {
 	assert.fail(`expected ${header} to close its CSS block`);
 }
 
-function createAtlasControllerFixture({ hasIntersectionObserver }) {
+function createAtlasControllerFixture({
+	hasIntersectionObserver,
+	hasHero = true,
+}) {
 	class FixtureElement {
 		constructor(attributes = {}) {
 			this.attributes = new Map(Object.entries(attributes));
@@ -130,7 +150,7 @@ function createAtlasControllerFixture({ hasIntersectionObserver }) {
 	const context = new FixtureElement({ "data-relay-context": "" });
 	const root = new FixtureElement({ "data-home-atlas": "" });
 	root.querySelector = (selector) => {
-		if (selector === "[data-atlas-hero]") return hero;
+		if (selector === "[data-atlas-hero]") return hasHero ? hero : null;
 		if (selector === "[data-relay-context]") return context;
 		return null;
 	};
@@ -177,6 +197,21 @@ function createAtlasControllerFixture({ hasIntersectionObserver }) {
 		sections,
 		window,
 	};
+}
+
+function findObserver(fixture, targets, options) {
+	const observer = fixture.observers.find(
+		(candidate) =>
+			candidate.targets.length === targets.length &&
+			candidate.targets.every((target, index) => target === targets[index]) &&
+			Object.entries(options).every(
+				([name, value]) => candidate.options[name] === value,
+			),
+	);
+
+	assert.ok(observer, `expected observer for ${targets.length} target(s)`);
+	assert.deepEqual({ ...observer.options }, options);
+	return observer;
 }
 
 test("homepage renders the academic CV structure and omits excluded personal data", async () => {
@@ -579,11 +614,17 @@ test("atlas relay tracks hero, section, and publication-group state", async () =
 	const html = await readBuilt("index.html");
 	const indexPage = await readRepo("src/pages/index.astro");
 	const indexCss = await readRepo("src/styles/index.css");
+	const relayComponent = await readRepo("src/components/ResearchRelay.astro");
 
 	assert.ok(html, "expected built homepage HTML");
 	assert.ok(indexPage, "expected homepage source");
 	assert.ok(indexCss, "expected homepage CSS source");
+	assert.ok(relayComponent, "expected ResearchRelay source");
 	assert.match(html, /data-research-relay/);
+	assert.match(html, /<html[^>]*data-home-hero="passed"/);
+	const builtRoot = html.match(/<article[^>]*data-home-atlas[^>]*>/);
+	assert.ok(builtRoot, "expected built home Atlas root");
+	assert.doesNotMatch(builtRoot[0], /data-hero-state/);
 
 	const expectedSections = [
 		["about", "Research core"],
@@ -623,10 +664,51 @@ test("atlas relay tracks hero, section, and publication-group state", async () =
 
 	assert.match(indexPage, /new IntersectionObserver/);
 	assert.equal(indexPage.match(/new IntersectionObserver/g)?.length ?? 0, 3);
-	assert.match(indexCss, /\.research-relay\s*{[^}]*position:\s*sticky/);
+	assert.match(
+		relayComponent,
+		/sections:\s*readonly\s*\[HomeSection,\s*\.\.\.HomeSection\[\]\]/,
+	);
+	assertCssDeclarations(indexCss, ".home-atlas", {
+		"--home-nav-offset": "3.5rem",
+		"--home-relay-height": "3.75rem",
+	});
+	assertCssDeclarations(indexCss, ".research-relay", {
+		position: "sticky",
+		top: "var(--home-nav-offset)",
+		"min-height": "var(--home-relay-height)",
+		opacity: "0",
+		visibility: "hidden",
+		"pointer-events": "none",
+	});
 	assert.match(
 		indexCss,
 		/\.research-relay\s*{[^}]*-webkit-backdrop-filter:\s*blur\(18px\)[^}]*backdrop-filter:\s*blur\(18px\)/,
+	);
+	assertCssDeclarations(
+		indexCss,
+		'.home-atlas[data-hero-state="passed"] .research-relay',
+		{
+			opacity: "1",
+			transform: "none",
+			visibility: "visible",
+			"pointer-events": "auto",
+		},
+	);
+	assert.doesNotMatch(
+		indexCss,
+		/html\[data-home-hero=[^\]]+\]\s+\.research-relay/,
+	);
+	assert.match(
+		indexCss,
+		/\.home-section\s*{[^}]*scroll-margin-top:\s*calc\(\s*var\(--home-nav-offset\)\s*\+\s*var\(--home-relay-height\)\s*\+\s*0\.75rem\s*\)/,
+	);
+	const desktopSectionCss = extractCssBlock(
+		indexCss,
+		"@media screen and (min-width: 861px)",
+	);
+	assert.match(
+		desktopSectionCss,
+		/\.section-head\s*{[^}]*position:\s*sticky[^}]*top:\s*calc\(\s*var\(--home-nav-offset\)\s*\+\s*var\(--home-relay-height\)\s*\+\s*0\.75rem\s*\)/,
 	);
 	assert.match(indexCss, /\.research-relay-context\s*{[^}]*letter-spacing:\s*0/);
 	assertCssDeclarations(indexCss, ".research-relay-title", {
@@ -641,6 +723,20 @@ test("atlas relay tracks hero, section, and publication-group state", async () =
 	assertCssDeclarations(indexCss, ".research-relay-context", {
 		color: "var(--home-surface-text)",
 	});
+
+	const builtCss = await readBuiltStylesheets(html);
+	assert.match(
+		builtCss,
+		/\.research-relay\{[^}]*opacity:0[^}]*visibility:hidden[^}]*pointer-events:none/,
+	);
+	assert.match(
+		builtCss,
+		/\.home-atlas\[data-hero-state=passed\] \.research-relay\{[^}]*opacity:1[^}]*visibility:visible[^}]*pointer-events:auto/,
+	);
+	assert.doesNotMatch(
+		builtCss,
+		/html\[data-home-hero=passed\] \.research-relay/,
+	);
 
 	const controllerMatch = indexPage.match(/<script is:inline>\s*([\s\S]*?)\s*<\/script>/);
 	assert.ok(controllerMatch, "expected inline Atlas controller");
@@ -662,21 +758,33 @@ test("atlas relay tracks hero, section, and publication-group state", async () =
 	assert.equal(observed.document.documentElement.dataset.homeHero, "visible");
 	assert.equal(observed.root.dataset.heroState, "visible");
 
-	observed.observers[0].callback([{ isIntersecting: false, target: observed.hero }]);
+	const heroObserver = findObserver(observed, [observed.hero], {
+		threshold: 0.15,
+	});
+	const sectionObserver = findObserver(observed, observed.sections, {
+		rootMargin: "-32% 0px -52% 0px",
+		threshold: 0,
+	});
+	const groupObserver = findObserver(observed, observed.publicationGroups, {
+		rootMargin: "-30% 0px -55% 0px",
+		threshold: 0,
+	});
+
+	heroObserver.callback([{ isIntersecting: false, target: observed.hero }]);
 	assert.equal(observed.document.documentElement.dataset.homeHero, "passed");
 	assert.equal(observed.root.dataset.heroState, "passed");
 
-	observed.observers[1].callback([
+	sectionObserver.callback([
 		{ isIntersecting: true, target: observed.sections[4] },
 	]);
-	observed.observers[2].callback([
+	groupObserver.callback([
 		{ isIntersecting: true, target: observed.publicationGroups[1] },
 	]);
 	assert.equal(observed.root.dataset.activeSection, "publications");
 	assert.equal(observed.root.dataset.activeResearchGroup, "recommendation-bidding");
 	assert.equal(observed.context.textContent, "Recommendation & Bidding");
 
-	observed.observers[1].callback([
+	sectionObserver.callback([
 		{ isIntersecting: true, target: observed.sections[1] },
 	]);
 	assert.equal(observed.root.dataset.activeSection, "experience");
@@ -686,6 +794,29 @@ test("atlas relay tracks hero, section, and publication-group state", async () =
 		observed.relayLinks.map((link) => link.getAttribute("aria-current")),
 		[null, "location", null, null, null],
 	);
+
+	groupObserver.callback([
+		{ isIntersecting: true, target: observed.publicationGroups[2] },
+	]);
+	assert.equal("activeResearchGroup" in observed.root.dataset, false);
+	assert.equal(observed.context.textContent, "Field work");
+
+	const missingHero = createAtlasControllerFixture({
+		hasIntersectionObserver: true,
+		hasHero: false,
+	});
+	runInNewContext(controllerMatch[1], missingHero);
+	assert.equal(missingHero.document.documentElement.dataset.homeHero, "passed");
+	assert.equal(missingHero.root.dataset.heroState, "passed");
+	assert.equal(missingHero.observers.length, 2);
+	findObserver(missingHero, missingHero.sections, {
+		rootMargin: "-32% 0px -52% 0px",
+		threshold: 0,
+	});
+	findObserver(missingHero, missingHero.publicationGroups, {
+		rootMargin: "-30% 0px -55% 0px",
+		threshold: 0,
+	});
 });
 
 test("single-column layout accounts for mobile side margins", async () => {

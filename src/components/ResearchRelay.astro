@@ -2,7 +2,7 @@
 import type { HomeSection } from "../data/research-atlas";
 
 interface Props {
-	sections: readonly HomeSection[];
+	sections: readonly [HomeSection, ...HomeSection[]];
 }
 
 const { sections } = Astro.props;

@@ -385,6 +385,7 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 		};
 
 		const setResearchGroup = (group) => {
+			if (root.dataset.activeSection !== "publications") return;
 			const id = group.getAttribute("data-publication-group");
 			const label = group.getAttribute("data-publication-context");
 			if (!id) return;
@@ -400,10 +401,9 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 			return;
 		}
 
-		document.documentElement.dataset.homeHero = "visible";
-		root.dataset.heroState = "visible";
-
 		if (hero) {
+			document.documentElement.dataset.homeHero = "visible";
+			root.dataset.heroState = "visible";
 			new IntersectionObserver(
 				([entry]) => {
 					const state = entry?.isIntersecting ? "visible" : "passed";
@@ -412,6 +412,9 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 				},
 				{ threshold: 0.15 },
 			).observe(hero);
+		} else {
+			document.documentElement.dataset.homeHero = "passed";
+			root.dataset.heroState = "passed";
 		}
 
 		const sectionObserver = new IntersectionObserver(
