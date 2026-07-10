@@ -1082,7 +1082,7 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 		/\.award-list\s*{[^}]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/,
 	);
 	const mobileReadingCss = extractCssBlock(
-		readingSystemCss[1],
+		indexCss,
 		"@media screen and (max-width: 640px)",
 	);
 	assert.match(
@@ -1698,4 +1698,176 @@ test("repository is configured for GitHub Pages deployment", async () => {
 	assert.match(deployWorkflow, /withastro\/action@v5/);
 	assert.match(deployWorkflow, /actions\/deploy-pages@v4/);
 	assert.match(deployWorkflow, /gh-pages|github-pages/i);
+});
+
+test("research atlas homepage has explicit responsive and reduced-motion contracts", async () => {
+	const indexCss = await readRepo("src/styles/index.css");
+	const atlas = await readRepo("src/components/ResearchAtlas.astro");
+	const relay = await readRepo("src/components/ResearchRelay.astro");
+	const navbar = await readRepo("src/components/Navbar.astro");
+	const teaser = await readRepo("src/components/PublicationTeaser.astro");
+
+	assert.ok(indexCss, "expected homepage CSS source");
+	assert.ok(atlas, "expected ResearchAtlas source");
+	assert.ok(relay, "expected ResearchRelay source");
+	assert.ok(navbar, "expected Navbar source");
+	assert.ok(teaser, "expected PublicationTeaser source");
+
+	assert.match(indexCss, /min-height:\s*calc\(100svh - 64px\)/);
+	assert.equal(
+		indexCss.match(/@media screen and \(max-width:\s*860px\)/g)?.length ?? 0,
+		1,
+		"expected one consolidated tablet breakpoint",
+	);
+	assert.equal(
+		indexCss.match(/@media screen and \(max-width:\s*640px\)/g)?.length ?? 0,
+		1,
+		"expected one consolidated mobile breakpoint",
+	);
+
+	const tabletCss = extractCssBlock(indexCss, "@media screen and (max-width: 860px)");
+	assert.match(
+		tabletCss,
+		/\.home-atlas\s*{[^}]*--home-relay-height:\s*3\.25rem/,
+	);
+	assert.match(
+		tabletCss,
+		/\.research-relay\s*{[^}]*grid-template-columns:\s*6\.5rem minmax\(0,\s*1fr\)/,
+	);
+	assert.match(
+		tabletCss,
+		/\.research-relay-context,\s*\.research-relay-link-label\s*{[^}]*display:\s*none/,
+	);
+	assert.match(
+		tabletCss,
+		/\.research-relay-track a\s*{[^}]*width:\s*100%[^}]*min-height:\s*calc\(var\(--home-relay-height\) - 2px\)[^}]*justify-content:\s*center/,
+	);
+
+	const mobileCss = extractCssBlock(indexCss, "@media screen and (max-width: 640px)");
+	assert.match(
+		mobileCss,
+		/\.home-atlas\s*{[^}]*--home-relay-height:\s*3rem/,
+	);
+	assert.match(
+		mobileCss,
+		/\.research-relay\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/,
+	);
+	assert.match(mobileCss, /\.research-relay-title\s*{[^}]*display:\s*none/);
+	assert.match(indexCss, /\.research-relay-track\s*{[^}]*repeat\(5,\s*minmax\(0,\s*1fr\)\)/);
+	assert.equal(relay.match(/data-relay-link=/g)?.length ?? 0, 1);
+	assert.match(relay, /research-relay-link-label/);
+
+	const atlasMobileCss = extractCssBlock(atlas, "@media screen and (max-width: 640px)");
+	assert.match(
+		atlasMobileCss,
+		/\.research-atlas-kicker,\s*\.research-atlas-edges,\s*\.research-atlas-group h2\s*{[^}]*display:\s*none/,
+	);
+	assert.match(
+		atlasMobileCss,
+		/\.research-atlas-groups\s*{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/,
+	);
+	assert.match(
+		atlasMobileCss,
+		/\.research-atlas-group ul\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/,
+	);
+	assert.match(
+		atlasMobileCss,
+		/\.research-atlas-group a\s*{[^}]*font-size:\s*0\.75rem/,
+	);
+	assert.match(
+		atlasMobileCss,
+		/\.research-atlas-node-label\s*{[^}]*position:\s*absolute[^}]*clip:\s*rect\(0 0 0 0\)/,
+	);
+	assert.match(
+		atlasMobileCss,
+		/\.research-atlas-node-short\s*{[^}]*display:\s*inline/,
+	);
+	assert.match(atlas, /aria-label=\{node\.label\}/);
+	assert.match(atlas, /research-atlas-node-short/);
+	const edgeTopDeclarations = Array.from(
+		atlas.matchAll(/\.research-atlas-edge\s*{([^}]*)}/g),
+		([, body]) => body.match(/(?:^|\n)\s*top:\s*[^;]+;/g)?.length ?? 0,
+	).reduce((sum, count) => sum + count, 0);
+	assert.equal(edgeTopDeclarations, 1, "expected one edge top declaration");
+
+	assert.match(
+		indexCss,
+		/\.atlas-hero-orbit\s*{[^}]*animation:\s*atlas-orbit-entry 650ms[^;]*\s1 both/,
+	);
+	assert.match(
+		indexCss,
+		/\.research-atlas-edge\s*{[^}]*animation:\s*atlas-edge-entry 650ms[^;]*\s1 both/,
+	);
+	assert.match(indexCss, /animation:\s*atlas-node-pulse 420ms[^;]*\s2;/);
+	const pulseCss = extractCssBlock(indexCss, "@keyframes atlas-node-pulse");
+	assert.match(pulseCss, /border-color:/);
+	assert.match(pulseCss, /background:/);
+	assert.match(pulseCss, /color:/);
+	assert.doesNotMatch(pulseCss, /box-shadow|filter|opacity|transform|translate/);
+	for (const [label, source] of [
+		["homepage CSS", indexCss],
+		["ResearchAtlas", atlas],
+		["ResearchRelay", relay],
+		["Navbar", navbar],
+	]) {
+		assert.doesNotMatch(source, /animation(?:-iteration-count)?\s*:\s*[^;]*infinite/i, label);
+		assert.doesNotMatch(source, /font-size:\s*[^;]*vw/i, label);
+	}
+
+	const reducedCss = extractCssBlock(indexCss, "@media (prefers-reduced-motion: reduce)");
+	assert.match(
+		reducedCss,
+		/\.atlas-hero-orbit,\s*\.research-atlas-edge,\s*\.home-atlas\[data-active-research-group\] \[data-atlas-node\]\s*{[^}]*animation:\s*none/,
+	);
+	assert.match(
+		reducedCss,
+		/\.research-relay,\s*\.research-relay-track a,\s*\.publication-teaser\.atlas::before\s*{[^}]*transition:\s*none/,
+	);
+	const navbarReducedCss = extractCssBlock(navbar, "@media (prefers-reduced-motion: reduce)");
+	assert.match(navbarReducedCss, /transition:\s*none/);
+
+	for (const [label, source] of [
+		["homepage CSS", indexCss],
+		["ResearchAtlas", atlas],
+		["Navbar", navbar],
+	]) {
+		const values = Array.from(
+			source.matchAll(/letter-spacing:\s*([^;]+);/gi),
+			([, value]) => value.trim(),
+		);
+		assert.ok(values.length > 0, `expected ${label} tracking declarations`);
+		assert.ok(
+			values.every((value) => value === "0"),
+			`expected zero ${label} tracking, received ${values.join(", ")}`,
+		);
+	}
+	assertCssDeclarations(navbar, ".site-nav", { "letter-spacing": "0" });
+	assertCssDeclarations(navbar, ".site-title", { "letter-spacing": "0" });
+
+	const atlasRow = teaser.match(/\.publication-teaser\.atlas\s*{([^}]*)}/)?.[1];
+	assert.ok(atlasRow, "expected atlas publication row rule");
+	assert.doesNotMatch(atlasRow, /transform|translate/);
+	const atlasHover = teaser.match(
+		/\.publication-teaser\.atlas:has\(\.publication-main-link:hover\),\s*\.publication-teaser\.atlas:has\(\.publication-main-link:focus-visible\)\s*{([^}]*)}/,
+	)?.[1];
+	assert.ok(atlasHover, "expected atlas publication hover and focus rule");
+	assert.match(atlasHover, /background:\s*transparent/);
+	assert.doesNotMatch(atlasHover, /transform|translate|top:|left:|margin:|padding:/);
+	assert.match(
+		teaser,
+		/\.publication-main-link:focus-visible,[\s\S]*?outline:\s*1px solid/,
+	);
+	assert.match(
+		teaser,
+		/\.publication-teaser\.atlas:has\(\.publication-main-link:focus-visible\)::before\s*{[^}]*transform:\s*scaleY\(1\)/,
+	);
+	assert.match(
+		teaser,
+		/\.publication-teaser\.atlas \.publication-main-link:focus-visible h3\s*{[^}]*color:/,
+	);
+	assert.match(
+		teaser,
+		/\.publication-teaser\.atlas:has\(\.publication-main-link:focus-visible\)[\s\S]*?\.publication-atlas-year\s*{[^}]*color:/,
+	);
+	assert.doesNotMatch(teaser, /translateX\(2px\)/);
 });

@@ -77,7 +77,7 @@ const links = [
 		padding: 0.78rem 0;
 		font-family: var(--font-sans);
 		font-size: 0.88rem;
-		letter-spacing: 0.01em;
+		letter-spacing: 0;
 		background-color: var(--nav-overlay-bg);
 		background: color-mix(in srgb, var(--page-bg) 86%, transparent);
 		backdrop-filter: blur(18px);
@@ -101,7 +101,7 @@ const links = [
 		font-family: var(--font-display);
 		font-weight: 500;
 		font-size: 1.2rem;
-		letter-spacing: -0.01em;
+		letter-spacing: 0;
 		color: var(--text-primary);
 		text-decoration: none;
 	}
@@ -327,5 +327,14 @@ const links = [
 
 	:global(html[data-home-hero="visible"]) .site-nav-atlas::after {
 		background: rgba(255, 255, 255, 0.24);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		nav a,
+		.mobile-nav-toggle,
+		.nav-links,
+		.nav-links li {
+			transition: none;
+		}
 	}
 </style>

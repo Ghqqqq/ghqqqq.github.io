@@ -164,6 +164,16 @@
 	inset: -1.25rem;
 	border: 1px dashed rgba(255, 255, 255, 0.3);
 	border-radius: 50%;
+	animation: atlas-orbit-entry 650ms cubic-bezier(0.22, 1, 0.36, 1) 1 both;
+}
+
+@keyframes atlas-orbit-entry {
+	from {
+		transform: rotate(-22deg);
+	}
+	to {
+		transform: rotate(32deg);
+	}
 }
 
 .atlas-hero-orbit span {
@@ -231,6 +241,7 @@ html:not([data-atlas-js]) .research-relay,
 
 .research-relay-title {
 	color: var(--home-surface-text);
+	letter-spacing: 0;
 }
 
 .research-relay-track {
@@ -264,6 +275,7 @@ html:not([data-atlas-js]) .research-relay,
 	color: var(--home-surface-muted);
 	font-family: var(--font-mono);
 	font-size: 0.68rem;
+	letter-spacing: 0;
 	text-decoration: none;
 }
 
@@ -316,6 +328,40 @@ html[data-theme="light"]
 	[data-research-group="reinforcement-learning-bandits"] {
 	border-color: var(--atlas-signal);
 	opacity: 1;
+	animation: atlas-node-pulse 420ms cubic-bezier(0.22, 1, 0.36, 1) 2;
+}
+
+@keyframes atlas-edge-entry {
+	from {
+		opacity: 0;
+		scale: 0 1;
+	}
+	to {
+		opacity: 1;
+		scale: 1 1;
+	}
+}
+
+.research-atlas-edge {
+	animation: atlas-edge-entry 650ms cubic-bezier(0.22, 1, 0.36, 1) 1 both;
+}
+
+@keyframes atlas-node-pulse {
+	0%,
+	100% {
+		border-color: var(--atlas-signal);
+		background: rgba(8, 25, 126, 0.62);
+		color: #ffffff;
+	}
+	50% {
+		border-color: #ffffff;
+		background: color-mix(
+			in srgb,
+			var(--atlas-signal) 14%,
+			rgba(8, 25, 126, 0.62)
+		);
+		color: var(--atlas-signal);
+	}
 }
 
 /* ---------- Sections (spacing-led reading system) ---------- */
@@ -691,81 +737,6 @@ html[data-theme="light"]
 	letter-spacing: 0;
 }
 
-@media screen and (max-width: 1100px) {
-	.section-title {
-		font-size: 2.25rem;
-	}
-
-	.about-manifesto {
-		font-size: 3.75rem;
-	}
-}
-
-@media screen and (max-width: 860px) {
-	.home-section {
-		grid-template-columns: minmax(0, 1fr);
-		row-gap: 2rem;
-		padding: 4.5rem 2rem;
-	}
-
-	.section-head {
-		display: flex;
-		align-items: baseline;
-		gap: 0.75rem;
-	}
-
-	.section-num {
-		font-size: 0.74rem;
-		letter-spacing: 0;
-	}
-
-	.section-title {
-		margin: 0;
-		font-size: 2.1rem;
-	}
-
-	.about-manifesto {
-		font-size: 3.2rem;
-	}
-
-	.award-list {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
-}
-
-@media screen and (max-width: 640px) {
-	.home-section {
-		padding: 4rem 1rem;
-	}
-
-	.section-title {
-		font-size: 1.75rem;
-	}
-
-	.about-manifesto {
-		font-size: 2.25rem;
-		line-height: 1.08;
-	}
-
-	.award-list {
-		grid-template-columns: minmax(0, 1fr);
-	}
-
-	.award-item {
-		min-height: 8rem;
-	}
-
-	.entry-compact-year,
-	.service-kind {
-		margin-left: 0;
-	}
-
-	.service-heading {
-		grid-template-columns: minmax(0, 1fr);
-		row-gap: 0.1rem;
-	}
-}
-
 /* ---------- Publications ---------- */
 
 .publication-groups {
@@ -827,18 +798,6 @@ html[data-theme="light"] .publication-group-index {
 	padding-top: 0;
 }
 
-@media screen and (max-width: 1100px) {
-	.publication-group-name {
-		font-size: 2rem;
-	}
-}
-
-@media screen and (max-width: 640px) {
-	.publication-group-name {
-		font-size: 1.65rem;
-	}
-}
-
 /* ---------- Responsive ---------- */
 
 @media screen and (max-width: 1100px) {
@@ -854,6 +813,18 @@ html[data-theme="light"] .publication-group-index {
 	.atlas-hero-portrait {
 		width: 12rem;
 	}
+
+	.section-title {
+		font-size: 2.25rem;
+	}
+
+	.about-manifesto {
+		font-size: 3.75rem;
+	}
+
+	.publication-group-name {
+		font-size: 2rem;
+	}
 }
 
 @media screen and (min-width: 861px) and (max-height: 850px) {
@@ -863,6 +834,10 @@ html[data-theme="light"] .publication-group-index {
 }
 
 @media screen and (max-width: 860px) {
+	.home-atlas {
+		--home-relay-height: 3.25rem;
+	}
+
 	.atlas-hero {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) 10rem;
@@ -901,9 +876,60 @@ html[data-theme="light"] .publication-group-index {
 		width: 100%;
 		margin-top: 1rem;
 	}
+
+	.research-relay {
+		grid-template-columns: 6.5rem minmax(0, 1fr);
+		gap: 1rem;
+		padding: 0 1.5rem;
+	}
+
+	.research-relay-context,
+	.research-relay-link-label {
+		display: none;
+	}
+
+	.research-relay-track a {
+		width: 100%;
+		min-height: calc(var(--home-relay-height) - 2px);
+		justify-content: center;
+	}
+
+	.home-section {
+		grid-template-columns: minmax(0, 1fr);
+		row-gap: 2rem;
+		padding: 4.5rem 2rem;
+	}
+
+	.section-head {
+		display: flex;
+		align-items: baseline;
+		gap: 0.75rem;
+	}
+
+	.section-num {
+		font-size: 0.74rem;
+		letter-spacing: 0;
+	}
+
+	.section-title {
+		margin: 0;
+		font-size: 2.1rem;
+	}
+
+	.about-manifesto {
+		font-size: 3.2rem;
+	}
+
+	.award-list {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
 }
 
 @media screen and (max-width: 640px) {
+	.home-atlas {
+		--home-relay-height: 3rem;
+	}
+
 	.atlas-hero {
 		display: block;
 		padding: 4.5rem 1rem 1.5rem;
@@ -948,6 +974,52 @@ html[data-theme="light"] .publication-group-index {
 	.atlas-hero-map {
 		margin-top: 1.5rem;
 	}
+
+	.research-relay {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0;
+		min-height: var(--home-relay-height);
+		padding: 0 1rem;
+	}
+
+	.research-relay-title {
+		display: none;
+	}
+
+	.home-section {
+		padding: 4rem 1rem;
+	}
+
+	.section-title {
+		font-size: 1.75rem;
+	}
+
+	.about-manifesto {
+		font-size: 2.25rem;
+		line-height: 1.08;
+	}
+
+	.award-list {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.award-item {
+		min-height: 8rem;
+	}
+
+	.entry-compact-year,
+	.service-kind {
+		margin-left: 0;
+	}
+
+	.service-heading {
+		grid-template-columns: minmax(0, 1fr);
+		row-gap: 0.1rem;
+	}
+
+	.publication-group-name {
+		font-size: 1.65rem;
+	}
 }
 
 @media screen and (max-width: 375px) {
@@ -962,5 +1034,28 @@ html[data-theme="light"] .publication-group-index {
 
 	.atlas-hero-map {
 		margin-top: 1rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.atlas-hero-orbit,
+	.research-atlas-edge,
+	.home-atlas[data-active-research-group] [data-atlas-node] {
+		animation: none;
+	}
+
+	.research-relay,
+	.research-relay-track a,
+	.publication-teaser.atlas::before {
+		transition: none;
+	}
+
+	.atlas-hero-links a,
+	.prose a,
+	.service-note a,
+	.publication-teaser.atlas,
+	.publication-teaser.atlas h3,
+	.publication-atlas-year {
+		transition: none;
 	}
 }
