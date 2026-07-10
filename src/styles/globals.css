@@ -74,6 +74,12 @@ main.main-single {
 	gap: 0;
 }
 
+main.main-home {
+	max-width: 1280px;
+	gap: 0;
+	padding-top: 0;
+}
+
 .glow-icon {
 	color: currentColor;
 }

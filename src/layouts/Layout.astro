@@ -13,14 +13,22 @@ interface Props {
 	title: string;
 	description?: string;
 	image?: ImageMetadata;
-	layout?: "split" | "single";
+	layout?: "split" | "single" | "home";
+	ambient?: "manuscript" | "none";
 	article?: {
 		createdAt: Date;
 		updatedAt?: Date;
 	};
 }
 
-const { title, description, image, article, layout = "split" } = Astro.props;
+const {
+	title,
+	description,
+	image,
+	article,
+	layout = "split",
+	ambient = "manuscript",
+} = Astro.props;
 const lightThemeColor = "#f4efe4";
 const darkThemeColor = "#15130f";
 const currentYear = new Date().getFullYear();
@@ -96,20 +104,28 @@ const socialImage = new URL(image?.src ?? "/img/og.png", Astro.site).href;
 		{description && <meta name="twitter:description" content={description} />}
 		<meta name="twitter:image" content={socialImage} />
 	</head>
-	<body>
-		<ManuscriptLayer />
-		<main class:list={[layout === "single" && "main-single"]}>
+	<body class:list={[layout === "home" && "page-home"]}>
+		{ambient === "manuscript" && <ManuscriptLayer />}
+		<main
+			class:list={[
+				layout === "single" && "main-single",
+				layout === "home" && "main-home",
+			]}
+			data-layout={layout}
+		>
 			<Navbar />
-			{layout === "single" ? (
-				<LayoutGrid variant="single">
-					<slot />
-				</LayoutGrid>
-			) : (
+			{
+				layout === "split" ? (
 				<LayoutGrid>
 					<slot name="left" slot="left" />
 					<slot name="right" slot="right" />
 				</LayoutGrid>
-			)}
+				) : (
+					<LayoutGrid variant={layout}>
+						<slot />
+					</LayoutGrid>
+				)
+			}
 			<slot name="404" />
 			<footer class:list={["site-footer", layout === "single" && "site-footer-single"]}>
 				<hr class="hairline" />

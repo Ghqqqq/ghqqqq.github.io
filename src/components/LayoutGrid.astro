@@ -1,19 +1,19 @@
 ---
 interface Props {
-	variant?: "split" | "single";
+	variant?: "split" | "single" | "home";
 }
 
 const { variant = "split" } = Astro.props;
 ---
 
-{variant === "single" ? (
-  <div class="layout-single">
-    <slot />
-  </div>
-) : (
+{variant === "split" ? (
   <div class="layout-grid">
     <slot name="left" />
     <slot name="right" />
+  </div>
+) : (
+  <div class:list={[variant === "single" ? "layout-single" : "layout-home"]}>
+    <slot />
   </div>
 )}
 
@@ -29,6 +29,11 @@ const { variant = "split" } = Astro.props;
   }
 
   .layout-single {
+    position: relative;
+    width: 100%;
+  }
+
+  .layout-home {
     position: relative;
     width: 100%;
   }

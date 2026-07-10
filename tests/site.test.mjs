@@ -545,60 +545,22 @@ test("homepage ships the editorial fine-print upgrade", async () => {
 	assert.match(navbar, /@keyframes reading-fill/);
 });
 
-test("manuscript layer typesets compiled math into the page background", async () => {
-	const html = await readBuilt("index.html");
-	const layer = await readRepo("src/components/ManuscriptLayer.astro");
-	const globalsCss = await readRepo("src/styles/globals.css");
+test("the homepage opts out of the manuscript layer without changing secondary pages", async () => {
+	const homeHtml = await readBuilt("index.html");
+	const publicationsHtml = await readBuilt("publications/index.html");
+	const layout = await readRepo("src/layouts/Layout.astro");
+	const layoutGrid = await readRepo("src/components/LayoutGrid.astro");
 
-	assert.ok(html, "expected built homepage HTML");
-	assert.ok(layer, "expected ManuscriptLayer source");
-	assert.ok(globalsCss, "expected globals CSS source");
-
-	// Build-time MathJax compilation: TeX strings in source, typeset SVG out.
-	assert.match(layer, /mathjax-full/);
-	assert.match(layer, /aria-hidden="true"/);
-	assert.match(html, /class="manuscript-layer"/);
-	const lineCount = (html.match(/class="ms-line/g) ?? []).length;
-	assert.ok(lineCount >= 120, `expected >= 120 typeset lines, got ${lineCount}`);
-	assert.match(html, /manuscript-layer[\s\S]*?<svg/);
-
-	// Library breadth: 60+ unique formulas and 60+ unique terms, so no entry
-	// dominates the rotation. Sentinels from the expanded libraries:
-	assert.ok(
-		(layer.match(/String\.raw/g) ?? []).length >= 60,
-		"expected >= 60 TeX formulas in the library",
-	);
-	assert.match(layer, /McDiarmid/);
-	assert.match(layer, /Frank–Wolfe/);
-	assert.match(layer, /experience replay/);
-
-	// Textbook RL/bandits canon only — nothing lifted from the owner's papers.
-	assert.match(layer, /Q-learning/);
-	assert.doesNotMatch(layer, /drift-plus-penalty/);
-	assert.doesNotMatch(layer, /mathrm\{ref\}/);
-	assert.doesNotMatch(layer, /J_c\(\\pi\)|J_c\(\pi\)/);
-
-	// Roughly half the field is prose: named theorems and terminology set in
-	// the display serif, alongside the compiled formulas.
-	assert.match(layer, /Azuma–Hoeffding inequality/);
-	assert.match(layer, /optimism in the face of uncertainty/);
-	const termCount = (html.match(/class="ms-line ms-term/g) ?? []).length;
-	assert.ok(termCount >= 40, `expected >= 40 term lines, got ${termCount}`);
-
-	// Ambient field: a fixed full-viewport layer whose lines drift in and out
-	// on staggered CSS cycles; a mask keeps the reading column subdued. The
-	// content no longer occludes the layer (whole-page coverage).
-	assert.match(layer, /position:\s*fixed/);
-	assert.match(layer, /@keyframes ms-cycle/);
-	assert.match(layer, /animation-delay/);
-	assert.match(layer, /mask-image/);
-	assert.match(layer, /prefers-reduced-motion/);
-	assert.doesNotMatch(globalsCss, /main\s*{[^}]*background(?:-color)?:\s*var\(--page-bg\)/);
-
-	// Decorative only: inert, gone on narrow screens and in print.
-	assert.match(layer, /pointer-events:\s*none/);
-	assert.match(layer, /max-width:\s*1023px[\s\S]*?display:\s*none/);
-	assert.match(layer, /@media print[\s\S]*?display:\s*none/);
+	assert.ok(homeHtml, "expected built homepage HTML");
+	assert.ok(publicationsHtml, "expected built publications HTML");
+	assert.ok(layout, "expected Layout source");
+	assert.ok(layoutGrid, "expected LayoutGrid source");
+	assert.doesNotMatch(homeHtml, /class="manuscript-layer"/);
+	assert.match(publicationsHtml, /class="manuscript-layer"/);
+	assert.match(homeHtml, /class="main-home"/);
+	assert.match(homeHtml, /class="page-home"/);
+	assert.match(layout, /ambient\?: "manuscript" \| "none"/);
+	assert.match(layoutGrid, /"split" \| "single" \| "home"/);
 });
 
 test("social sharing metadata produces valid link previews", async () => {
