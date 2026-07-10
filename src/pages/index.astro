@@ -90,8 +90,148 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 	layout="home"
 	ambient="none"
 >
-	<script is:inline data-atlas-boot>
-		document.documentElement.dataset.atlasJs = "true";
+	<script is:inline data-atlas-controller>
+		(() => {
+			const documentRoot = document.documentElement;
+			documentRoot.dataset.atlasJs = "booting";
+			documentRoot.dataset.homeHero = "visible";
+
+			const init = () => {
+				const root = document.querySelector("[data-home-atlas]");
+				if (!(root instanceof HTMLElement)) {
+					throw new Error("Atlas root is unavailable");
+				}
+
+				const hero = root.querySelector("[data-atlas-hero]");
+				const sections = Array.from(root.querySelectorAll("[data-home-section]"));
+				const publicationGroups = Array.from(
+					root.querySelectorAll("[data-publication-group]"),
+				);
+				const relayLinks = Array.from(root.querySelectorAll("[data-relay-link]"));
+				const context = root.querySelector("[data-relay-context]");
+				const intersectingSections = new Set();
+				const intersectingPublicationGroups = new Set();
+				const publicationSection = sections.find(
+					(section) => section.getAttribute("data-home-section") === "publications",
+				);
+
+				const syncResearchGroup = () => {
+					if (root.dataset.activeSection !== "publications") return;
+
+					const group = publicationGroups.find((candidate) =>
+						intersectingPublicationGroups.has(candidate),
+					);
+					if (group) {
+						const id = group.getAttribute("data-publication-group");
+						const label = group.getAttribute("data-publication-context");
+						if (id) root.dataset.activeResearchGroup = id;
+						if (context && label) context.textContent = label;
+						return;
+					}
+
+					delete root.dataset.activeResearchGroup;
+					const label = publicationSection?.getAttribute("data-section-context");
+					if (context && label) context.textContent = label;
+				};
+
+				const setSection = (section) => {
+					const id = section.getAttribute("data-home-section");
+					const label = section.getAttribute("data-section-context");
+					if (!id) return;
+
+					root.dataset.activeSection = id;
+					if (id !== "publications") {
+						intersectingPublicationGroups.clear();
+						delete root.dataset.activeResearchGroup;
+					}
+					for (const link of relayLinks) {
+						if (link.getAttribute("data-relay-link") === id) {
+							link.setAttribute("aria-current", "location");
+						} else {
+							link.removeAttribute("aria-current");
+						}
+					}
+					if (context && label) context.textContent = label;
+				};
+
+				if (sections[0]) setSection(sections[0]);
+
+				if (!("IntersectionObserver" in window)) {
+					documentRoot.dataset.homeHero = "passed";
+					root.dataset.heroState = "passed";
+					return;
+				}
+
+				if (hero) {
+					root.dataset.heroState = "visible";
+					new IntersectionObserver(
+						([entry]) => {
+							const state = entry?.isIntersecting ? "visible" : "passed";
+							documentRoot.dataset.homeHero = state;
+							root.dataset.heroState = state;
+						},
+						{ threshold: 0.15 },
+					).observe(hero);
+				} else {
+					documentRoot.dataset.homeHero = "passed";
+					root.dataset.heroState = "passed";
+				}
+
+				const contentObserver = new IntersectionObserver(
+					(entries) => {
+						for (const entry of entries) {
+							const sectionId = entry.target.getAttribute("data-home-section");
+							const groupId = entry.target.getAttribute("data-publication-group");
+
+							if (sectionId) {
+								if (entry.isIntersecting) {
+									intersectingSections.add(entry.target);
+								} else {
+									intersectingSections.delete(entry.target);
+								}
+							}
+							if (groupId) {
+								if (entry.isIntersecting) {
+									intersectingPublicationGroups.add(entry.target);
+								} else {
+									intersectingPublicationGroups.delete(entry.target);
+								}
+							}
+						}
+
+						let activeSection;
+						for (const section of sections) {
+							if (intersectingSections.has(section)) activeSection = section;
+						}
+						if (activeSection) setSection(activeSection);
+						if (root.dataset.activeSection !== "publications") {
+							intersectingPublicationGroups.clear();
+						}
+						syncResearchGroup();
+					},
+					{ rootMargin: "-30% 0px -55% 0px", threshold: 0 },
+				);
+
+				for (const section of sections) contentObserver.observe(section);
+				for (const group of publicationGroups) contentObserver.observe(group);
+			};
+
+			const run = () => {
+				try {
+					init();
+					documentRoot.dataset.atlasJs = "ready";
+				} catch {
+					documentRoot.dataset.homeHero = "passed";
+					delete documentRoot.dataset.atlasJs;
+				}
+			};
+
+			if (document.readyState === "loading") {
+				document.addEventListener("DOMContentLoaded", run, { once: true });
+			} else {
+				run();
+			}
+		})();
 	</script>
 	<article class="home-atlas" data-home-atlas>
 		<header class="atlas-hero" data-atlas-hero>
@@ -356,123 +496,3 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 		</section>
 	</article>
 </Layout>
-
-<script is:inline data-atlas-controller>
-	(() => {
-		const root = document.querySelector("[data-home-atlas]");
-		if (!(root instanceof HTMLElement)) return;
-
-		const hero = root.querySelector("[data-atlas-hero]");
-		const sections = Array.from(root.querySelectorAll("[data-home-section]"));
-		const publicationGroups = Array.from(
-			root.querySelectorAll("[data-publication-group]"),
-		);
-		const relayLinks = Array.from(root.querySelectorAll("[data-relay-link]"));
-		const context = root.querySelector("[data-relay-context]");
-		const intersectingPublicationGroups = new Set();
-		let publicationGroupGeneration = 0;
-		const publicationSection = sections.find(
-			(section) => section.getAttribute("data-home-section") === "publications",
-		);
-
-		const syncResearchGroup = () => {
-			if (root.dataset.activeSection !== "publications") return;
-
-			const group = publicationGroups.find((candidate) =>
-				intersectingPublicationGroups.has(candidate),
-			);
-			if (group) {
-				const id = group.getAttribute("data-publication-group");
-				const label = group.getAttribute("data-publication-context");
-				if (id) root.dataset.activeResearchGroup = id;
-				if (context && label) context.textContent = label;
-				return;
-			}
-
-			delete root.dataset.activeResearchGroup;
-			const label = publicationSection?.getAttribute("data-section-context");
-			if (context && label) context.textContent = label;
-		};
-
-		const setSection = (section) => {
-			const id = section.getAttribute("data-home-section");
-			const label = section.getAttribute("data-section-context");
-			if (!id) return;
-
-			root.dataset.activeSection = id;
-			if (id !== "publications") {
-				publicationGroupGeneration += 1;
-				intersectingPublicationGroups.clear();
-				delete root.dataset.activeResearchGroup;
-			}
-			for (const link of relayLinks) {
-				if (link.getAttribute("data-relay-link") === id) {
-					link.setAttribute("aria-current", "location");
-				} else {
-					link.removeAttribute("aria-current");
-				}
-			}
-			if (context && label) context.textContent = label;
-			if (id === "publications") syncResearchGroup();
-		};
-
-		if (sections[0]) setSection(sections[0]);
-
-		if (!("IntersectionObserver" in window)) {
-			document.documentElement.dataset.homeHero = "passed";
-			root.dataset.heroState = "passed";
-			return;
-		}
-
-		if (hero) {
-			document.documentElement.dataset.homeHero = "visible";
-			root.dataset.heroState = "visible";
-			new IntersectionObserver(
-				([entry]) => {
-					const state = entry?.isIntersecting ? "visible" : "passed";
-					document.documentElement.dataset.homeHero = state;
-					root.dataset.heroState = state;
-				},
-				{ threshold: 0.15 },
-			).observe(hero);
-		} else {
-			document.documentElement.dataset.homeHero = "passed";
-			root.dataset.heroState = "passed";
-		}
-
-		const sectionObserver = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) setSection(entry.target);
-				}
-			},
-			{ rootMargin: "-32% 0px -52% 0px", threshold: 0 },
-		);
-
-		const groupObserver = new IntersectionObserver(
-			(entries) => {
-				publicationGroupGeneration += 1;
-				const callbackGeneration = publicationGroupGeneration;
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						intersectingPublicationGroups.add(entry.target);
-					} else {
-						intersectingPublicationGroups.delete(entry.target);
-					}
-				}
-				syncResearchGroup();
-				if (root.dataset.activeSection !== "publications") {
-					queueMicrotask(() => {
-						if (callbackGeneration !== publicationGroupGeneration) return;
-						if (root.dataset.activeSection === "publications") return;
-						intersectingPublicationGroups.clear();
-					});
-				}
-			},
-			{ rootMargin: "-30% 0px -55% 0px", threshold: 0 },
-		);
-
-		for (const section of sections) sectionObserver.observe(section);
-		for (const group of publicationGroups) groupObserver.observe(group);
-	})();
-</script>
