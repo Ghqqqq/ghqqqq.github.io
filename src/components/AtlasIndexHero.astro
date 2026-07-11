@@ -1,0 +1,201 @@
+---
+interface Props {
+	eyebrow: string;
+	title: string;
+	lede: string;
+	meta: string;
+}
+
+const { eyebrow, title, lede, meta } = Astro.props;
+const gridColumns = Array.from({ length: 8 }, (_, index) => index + 1);
+const gridRows = Array.from({ length: 4 }, (_, index) => index + 1);
+---
+
+<header class="atlas-index-hero" data-atlas-index-hero>
+	<div class="atlas-index-grid" aria-hidden="true">
+		{
+			gridColumns.map((line) => (
+				<span
+					class="atlas-index-grid-line atlas-index-grid-line--vertical"
+					style={`--atlas-index-grid-line: ${line}`}
+				/>
+			))
+		}
+		{
+			gridRows.map((line) => (
+				<span
+					class="atlas-index-grid-line atlas-index-grid-line--horizontal"
+					style={`--atlas-index-grid-line: ${line}`}
+				/>
+			))
+		}
+	</div>
+	<div class="atlas-index-hero-inner">
+		<p class="atlas-index-eyebrow"><span>00</span>{eyebrow}</p>
+		<h1>{title}</h1>
+		<div class="atlas-index-hero-footer">
+			<p class="atlas-index-lede">{lede}</p>
+			<p class="atlas-index-meta">{meta}</p>
+		</div>
+	</div>
+</header>
+
+<script is:inline>
+	(() => {
+		const root = document.documentElement;
+		const hero = document.querySelector("[data-atlas-index-hero]");
+		if (!hero || !("IntersectionObserver" in window)) return;
+
+		root.dataset.homeHero = "visible";
+		const observer = new IntersectionObserver(
+			([entry]) => {
+				root.dataset.homeHero = entry?.isIntersecting ? "visible" : "passed";
+			},
+			{ rootMargin: "-56px 0px 0px", threshold: 0 },
+		);
+		observer.observe(hero);
+		window.addEventListener("pagehide", () => observer.disconnect(), { once: true });
+	})();
+</script>
+
+<style>
+	.atlas-index-hero {
+		--atlas-index-gutter: max(
+			clamp(1.5rem, 5vw, 4rem),
+			calc((100vw - 1280px) / 2 + 4rem)
+		);
+		position: relative;
+		min-height: clamp(24rem, 46vh, 31rem);
+		overflow: hidden;
+		padding: clamp(7.5rem, 13vh, 9.5rem) var(--atlas-index-gutter) 3.5rem;
+		color: #ffffff;
+		background: var(--home-cobalt);
+	}
+
+	.atlas-index-grid {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		grid-template-columns: repeat(8, minmax(0, 1fr));
+		grid-template-rows: repeat(4, minmax(0, 1fr));
+		pointer-events: none;
+	}
+
+	.atlas-index-grid-line {
+		display: block;
+		background: rgba(255, 255, 255, 0.055);
+	}
+
+	.atlas-index-grid-line--vertical {
+		grid-column: var(--atlas-index-grid-line);
+		grid-row: 1 / -1;
+		width: 1px;
+		height: 100%;
+		justify-self: start;
+	}
+
+	.atlas-index-grid-line--horizontal {
+		grid-column: 1 / -1;
+		grid-row: var(--atlas-index-grid-line);
+		width: 100%;
+		height: 1px;
+		align-self: start;
+	}
+
+	.atlas-index-hero-inner {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		min-height: 14rem;
+		flex-direction: column;
+		justify-content: space-between;
+	}
+
+	.atlas-index-eyebrow,
+	.atlas-index-meta {
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+		letter-spacing: 0;
+		text-transform: uppercase;
+	}
+
+	.atlas-index-eyebrow {
+		display: flex;
+		gap: 0.8rem;
+		margin: 0;
+		color: rgba(255, 255, 255, 0.68);
+	}
+
+	.atlas-index-eyebrow span,
+	.atlas-index-meta {
+		color: var(--home-signal);
+	}
+
+	h1 {
+		max-width: 64rem;
+		margin: 1.3rem 0 auto;
+		font-family: var(--font-display);
+		font-size: clamp(4rem, 8vw, 7rem);
+		font-weight: 500;
+		line-height: 0.88;
+		letter-spacing: 0;
+		font-variation-settings:
+			"opsz" 144,
+			"SOFT" 30;
+	}
+
+	.atlas-index-hero-footer {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		gap: 2rem;
+		margin-top: 2.25rem;
+	}
+
+	.atlas-index-lede,
+	.atlas-index-meta {
+		margin: 0;
+	}
+
+	.atlas-index-lede {
+		max-width: 36rem;
+		color: rgba(255, 255, 255, 0.76);
+		font-size: 1rem;
+		line-height: 1.55;
+	}
+
+	.atlas-index-meta {
+		white-space: nowrap;
+	}
+
+	@media screen and (max-width: 760px) {
+		.atlas-index-hero {
+			min-height: 22rem;
+			padding: 5.5rem 1rem 2.5rem;
+		}
+
+		.atlas-index-hero-inner {
+			min-height: 14rem;
+		}
+
+		h1 {
+			font-size: clamp(3.25rem, 16vw, 4.5rem);
+		}
+
+		.atlas-index-hero-footer {
+			align-items: start;
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		.atlas-index-meta {
+			white-space: normal;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.atlas-index-hero * {
+			transition: none;
+		}
+	}
+</style>

@@ -509,6 +509,9 @@ test("research atlas data and components expose one shared semantic graph", asyn
 test("publications route and homepage navigation expose full publications", async () => {
 	const publicationsHtml = await readBuilt("publications/index.html");
 	const publicationsPage = await readRepo("src/pages/publications.astro");
+	const projectsPage = await readRepo("src/pages/projects.astro");
+	const atlasIndexHero = await readRepo("src/components/AtlasIndexHero.astro");
+	const atlasIndexCss = await readRepo("src/styles/atlas-index.css");
 	const homepageHtml = await readBuilt("index.html");
 	const projectsHtml = await readBuilt("projects/index.html");
 	const blockProjectHtml = await readBuilt("projects/block/index.html");
@@ -516,6 +519,19 @@ test("publications route and homepage navigation expose full publications", asyn
 
 	assert.ok(publicationsHtml, "expected built publications index");
 	assert.ok(publicationsPage, "expected publications page source");
+	assert.ok(projectsPage, "expected projects page source");
+	assert.ok(atlasIndexHero, "expected shared Atlas index hero");
+	assert.ok(atlasIndexCss, "expected shared Atlas index stylesheet");
+	for (const page of [publicationsPage, projectsPage]) {
+		assert.match(page, /import "\.\.\/styles\/atlas-index\.css"/);
+		assert.match(page, /import AtlasIndexHero from "\.\.\/components\/AtlasIndexHero\.astro"/);
+		assert.match(page, /layout="home"\s+ambient="manuscript"/);
+		assert.match(page, /<AtlasIndexHero/);
+	}
+	assert.match(atlasIndexHero, /class="atlas-index-hero" data-atlas-index-hero/);
+	assert.match(atlasIndexHero, /class="atlas-index-grid" aria-hidden="true"/);
+	assert.match(atlasIndexHero, /new IntersectionObserver/);
+	assert.match(atlasIndexCss, /\.atlas-index-content\s*{[^}]*--atlas-index-gutter:/);
 	assert.match(publicationsHtml, /Full Publications|Publications/);
 	assert.match(publicationsHtml, /full-publications-list/);
 	assert.match(publicationsHtml, /publication-archive/);
@@ -556,9 +572,11 @@ test("publications route and homepage navigation expose full publications", asyn
 	assert.match(publicationsPage, /\.publication-year-label\s*{[^}]*position:\s*sticky/);
 	assert.match(
 		publicationsPage,
-		/\.publication-year-group\s*{[^}]*grid-template-columns:\s*minmax\(4\.75rem,\s*6rem\)\s+minmax\(0,\s*1fr\)/,
+		/\.publication-year-group\s*{[^}]*grid-template-columns:\s*minmax\(5rem,\s*7rem\)\s+minmax\(0,\s*1fr\)/,
 	);
-	assert.match(publicationsPage, /\.page-lede\s*{[^}]*font-style:\s*normal/);
+	assert.match(publicationsHtml, /class="atlas-index-hero"/);
+	assert.match(publicationsHtml, /class="site-nav site-nav-atlas"/);
+	assert.match(publicationsHtml, /class="manuscript-layer"/);
 	assert.match(
 		publicationsPage,
 		/\.publication-archive\s+:global\(\.publication-teaser\.list\)\s*{[^}]*padding:\s*1\.2rem\s+0/,
@@ -584,9 +602,14 @@ test("publications route and homepage navigation expose full publications", asyn
 	assert.match(homepageHtml, /href="\/publications"/);
 	assert.match(homepageHtml, />\s*Full Publications\s*</);
 	assert.ok(projectsHtml, "expected built projects index");
+	assert.match(projectsHtml, /class="atlas-index-hero"/);
+	assert.match(projectsHtml, /class="site-nav site-nav-atlas"/);
+	assert.match(projectsHtml, /class="manuscript-layer"/);
 	assert.match(projectsHtml, /BLOCK/);
 	assert.match(projectsHtml, /Codex Overleaf Link/);
 	assert.doesNotMatch(projectsHtml, /Project Placeholder/);
+	assert.match(projectsPage, /\.projects-list\s*{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+	assert.match(projectsPage, /@media screen and \(max-width:\s*760px\)[\s\S]*\.projects-list\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
 	assert.ok(blockProjectHtml, "expected built BLOCK project page");
 	assert.ok(codexOverleafProjectHtml, "expected built Codex Overleaf Link project page");
 	assert.match(
@@ -1751,10 +1774,12 @@ test("homepage shell exposes the cobalt dual-surface navigation contract", async
 	assert.match(homeHtml, /<nav[^>]*class="[^"]*site-nav-atlas[^"]*"[^>]*data-nav-variant="atlas"/);
 	assert.match(homeHtml, /<meta name="theme-color" content="#1735d6"/);
 	assert.match(publicationsHtml, /<html[^>]*data-theme="dark"[^>]*>/);
-	assert.doesNotMatch(publicationsHtml, /<html[^>]*data-home-hero=/);
-	assert.match(publicationsHtml, /<nav[^>]*class="site-nav"[^>]*data-nav-variant="default"/);
-	assert.doesNotMatch(publicationsHtml, /class="[^"]*site-nav-atlas/);
-	assert.match(publicationsHtml, /<meta name="theme-color" content="#15130f"/);
+	assert.match(publicationsHtml, /<html[^>]*data-home-hero="passed"/);
+	assert.match(
+		publicationsHtml,
+		/<nav[^>]*class="[^"]*site-nav-atlas[^"]*"[^>]*data-nav-variant="atlas"/,
+	);
+	assert.match(publicationsHtml, /<meta name="theme-color" content="#1735d6"/);
 
 	assert.match(navbar, /variant\?: "default" \| "atlas"/);
 	assert.match(navbar, /data-nav-variant=\{variant\}/);

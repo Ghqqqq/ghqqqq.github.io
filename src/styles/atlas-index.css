@@ -1,0 +1,21 @@
+.atlas-index-page {
+	width: 100%;
+	color: var(--home-surface-text);
+	background: transparent;
+}
+
+.atlas-index-content {
+	--atlas-index-gutter: max(
+		clamp(1.5rem, 5vw, 4rem),
+		calc((100vw - 1280px) / 2 + 4rem)
+	);
+	min-height: 42rem;
+	padding: clamp(4rem, 7vw, 6rem) var(--atlas-index-gutter);
+}
+
+@media screen and (max-width: 760px) {
+	.atlas-index-content {
+		min-height: 0;
+		padding: 3rem 1rem;
+	}
+}

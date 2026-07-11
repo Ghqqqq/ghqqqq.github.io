@@ -1,9 +1,11 @@
 ---
 import "../styles/article-list.css";
+import "../styles/atlas-index.css";
 
 import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
 import { openGraph } from "homepage:globals";
+import AtlasIndexHero from "../components/AtlasIndexHero.astro";
 import Layout from "../layouts/Layout.astro";
 
 const projects = await getCollection("projects");
@@ -20,20 +22,19 @@ const formatProjectDate = (date: Date) =>
 <Layout
 	title={openGraph.projects.title || "Projects"}
 	description={openGraph.projects.description}
-	layout="single"
+	layout="home"
+	ambient="manuscript"
 >
-	<article class="page-index">
-		<header class="page-hero">
-			<p class="page-eyebrow">Index</p>
-			<h1 class="page-title">Projects</h1>
-			<p class="page-lede">
-				Things I'm building, iterating on, or thinking through.
-			</p>
-		</header>
+	<article class="atlas-index-page projects-index-page">
+		<AtlasIndexHero
+			eyebrow="Working systems"
+			title="Projects"
+			lede="Research tools and open systems developed through iterative experiments, model work, and real workflows."
+			meta={`${sortedProjects.length} active builds`}
+		/>
 
-		<hr class="hairline" />
-
-		<div class="projects-list">
+		<div class="atlas-index-content">
+			<div class="projects-list">
 			{
 				sortedProjects.map((post) => (
 					<a href={`/projects/${post.id}`} class="project-item">
@@ -60,102 +61,66 @@ const formatProjectDate = (date: Date) =>
 					</a>
 				))
 			}
+			</div>
 		</div>
 	</article>
 </Layout>
 
 <style>
-	.page-index {
-		width: 100%;
-	}
-
-	.page-hero {
-		padding: 3rem 0 1.5rem;
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
-	}
-
-	.page-eyebrow {
-		margin: 0;
-		font-family: var(--font-mono);
-		font-size: 0.76rem;
-		letter-spacing: 0.18em;
-		text-transform: uppercase;
-		color: var(--text-tertiary);
-	}
-
-	.page-title {
-		margin: 0;
-		font-family: var(--font-display);
-		font-weight: 450;
-		font-size: clamp(2.4rem, 5vw, 3.5rem);
-		letter-spacing: -0.02em;
-		line-height: 1.05;
-		font-variation-settings:
-			"opsz" 144,
-			"SOFT" 30;
-	}
-
-	.page-lede {
-		margin: 0.25rem 0 0;
-		color: var(--text-secondary);
-		font-family: var(--font-display);
-		font-style: italic;
-		font-size: 1rem;
-	}
-
 	.projects-list {
-		display: flex;
-		flex-direction: column;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1px;
+		border: 1px solid color-mix(in srgb, var(--primary) 38%, transparent);
+		background: color-mix(in srgb, var(--primary) 38%, transparent);
 	}
 
 	.project-item {
-		display: flex;
-		flex-direction: column;
-		gap: 1.25rem;
-		padding: 2rem 0;
-		border-top: 1px solid var(--hairline);
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr);
+		gap: 0;
+		min-width: 0;
+		border: 0;
+		background: color-mix(in srgb, var(--home-surface) 94%, transparent);
 		color: var(--text-primary);
 		text-decoration: none;
-		transition: color 0.15s ease;
-	}
-
-	.project-item:first-child {
-		border-top: none;
+		transition:
+			background-color 180ms ease,
+			color 180ms ease;
 	}
 
 	.project-item:hover,
 	.project-item:focus-visible {
-		color: var(--primary);
+		color: var(--primary-light);
+		background: color-mix(in srgb, var(--primary) 8%, var(--home-surface));
 		outline: none;
 		text-decoration: none;
 	}
 
 	.project-item:hover .project-title,
 	.project-item:focus-visible .project-title {
-		color: var(--primary);
+		color: var(--primary-light);
 	}
 
 	.project-image {
 		overflow: hidden;
-		padding: clamp(0.75rem, 2.2vw, 1.25rem);
-		border: 1px solid var(--hairline);
-		border-radius: 6px;
-		background: var(--surface-bg-strong);
+		aspect-ratio: 1185 / 500;
+		border-bottom: 1px solid color-mix(in srgb, var(--primary) 24%, transparent);
+		background: var(--home-surface);
 	}
 
 	.project-image :global(img) {
 		width: 100%;
-		height: auto;
+		height: 100%;
 		display: block;
-		border-radius: 2px;
+		object-fit: cover;
 	}
 
 	.project-copy {
 		display: flex;
 		flex-direction: column;
 		gap: 0.6rem;
+		padding: clamp(1.2rem, 2.5vw, 1.8rem);
 	}
 
 	.project-header {
@@ -170,8 +135,8 @@ const formatProjectDate = (date: Date) =>
 		margin: 0;
 		font-family: var(--font-display);
 		font-weight: 450;
-		font-size: clamp(1.6rem, 2.5vw, 2rem);
-		letter-spacing: -0.015em;
+		font-size: clamp(1.65rem, 2.5vw, 2.2rem);
+		letter-spacing: 0;
 		line-height: 1.15;
 		color: var(--text-primary);
 		transition: color 0.15s ease;
@@ -191,13 +156,9 @@ const formatProjectDate = (date: Date) =>
 		line-height: 1.6;
 	}
 
-	@media screen and (max-width: 640px) {
-		.page-hero {
-			padding: 1.5rem 0 1rem;
-		}
-
-		.project-item {
-			padding: 1.5rem 0;
+	@media screen and (max-width: 760px) {
+		.projects-list {
+			grid-template-columns: minmax(0, 1fr);
 		}
 	}
 </style>

@@ -1,8 +1,10 @@
 ---
 import "../styles/article-list.css";
+import "../styles/atlas-index.css";
 
 import { getCollection } from "astro:content";
 import { openGraph } from "homepage:globals";
+import AtlasIndexHero from "../components/AtlasIndexHero.astro";
 import PublicationTeaser from "../components/PublicationTeaser.astro";
 import Layout from "../layouts/Layout.astro";
 
@@ -35,20 +37,19 @@ const publicationYearGroups = publications.reduce(
 <Layout
 	title={openGraph.blog.title || "Full Publications"}
 	description={openGraph.blog.description}
-	layout="single"
+	layout="home"
+	ambient="manuscript"
 >
-	<article class="page-index">
-		<header class="page-hero">
-			<p class="page-eyebrow">Index</p>
-			<h1 class="page-title">Publications</h1>
-			<p class="page-lede">
-				{publications.length} paper{publications.length === 1 ? "" : "s"}, sorted by year.
-			</p>
-		</header>
+	<article class="atlas-index-page publication-index-page">
+		<AtlasIndexHero
+			eyebrow="Research archive"
+			title="Publications"
+			lede="A chronological index of work across reinforcement learning, bandits, recommendation, bidding, and multimodal systems."
+			meta={`${publications.length} papers · ${publicationYearGroups.at(-1)?.year ?? ""}—${publicationYearGroups[0]?.year ?? ""}`}
+		/>
 
-		<hr class="hairline" />
-
-		<div class="publication-archive full-publications-list">
+		<div class="atlas-index-content">
+			<div class="publication-archive full-publications-list">
 			{
 				publicationYearGroups.map((group) => (
 					<section
@@ -70,56 +71,12 @@ const publicationYearGroups = publications.reduce(
 					</section>
 				))
 			}
+			</div>
 		</div>
 	</article>
 </Layout>
 
 <style>
-	.page-index {
-		width: 100%;
-	}
-
-	.page-hero {
-		padding: 2.25rem 0 1.1rem;
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
-		align-items: end;
-		gap: 0.55rem 1.5rem;
-	}
-
-	.page-eyebrow {
-		grid-column: 1 / -1;
-		margin: 0;
-		font-family: var(--font-mono);
-		font-size: 0.76rem;
-		letter-spacing: 0.18em;
-		text-transform: uppercase;
-		color: var(--text-tertiary);
-	}
-
-	.page-title {
-		margin: 0;
-		font-family: var(--font-display);
-		font-weight: 450;
-		font-size: clamp(2.4rem, 5vw, 3.5rem);
-		letter-spacing: -0.02em;
-		line-height: 1.05;
-		font-variation-settings:
-			"opsz" 144,
-			"SOFT" 30;
-	}
-
-	.page-lede {
-		margin: 0 0 0.25rem;
-		color: var(--text-secondary);
-		font-family: var(--font-mono);
-		font-style: normal;
-		font-size: 0.78rem;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		white-space: nowrap;
-	}
-
 	.publication-archive {
 		display: flex;
 		flex-direction: column;
@@ -127,10 +84,10 @@ const publicationYearGroups = publications.reduce(
 
 	.publication-year-group {
 		display: grid;
-		grid-template-columns: minmax(4.75rem, 6rem) minmax(0, 1fr);
-		column-gap: 1.35rem;
-		padding-top: 1.2rem;
-		border-top: 1px solid var(--hairline);
+		grid-template-columns: minmax(5rem, 7rem) minmax(0, 1fr);
+		column-gap: clamp(1.5rem, 4vw, 3.5rem);
+		padding: 1.75rem 0 2.5rem;
+		border-top: 1px solid color-mix(in srgb, var(--primary) 42%, transparent);
 	}
 
 	.publication-year-group:first-child {
@@ -143,9 +100,9 @@ const publicationYearGroups = publications.reduce(
 		top: 5rem;
 		align-self: start;
 		margin: 0.15rem 0 0;
-		color: var(--text-tertiary);
+		color: var(--primary-light);
 		font-family: var(--font-mono);
-		font-size: 0.88rem;
+		font-size: 1rem;
 		font-weight: 500;
 		letter-spacing: 0.08em;
 		line-height: 1;
@@ -191,7 +148,7 @@ const publicationYearGroups = publications.reduce(
 		:global(.publication-teaser.list:has(.publication-main-link:hover)::before),
 	.publication-archive
 		:global(.publication-teaser.list:has(.publication-main-link:focus-visible)::before) {
-		background-color: rgba(var(--primary-rgb), 0.74);
+		background-color: var(--primary-light);
 	}
 
 	.publication-archive :global(.publication-teaser.list .publication-copy) {
@@ -213,22 +170,10 @@ const publicationYearGroups = publications.reduce(
 	}
 
 	@media screen and (max-width: 640px) {
-		.page-hero {
-			grid-template-columns: minmax(0, 1fr);
-			align-items: start;
-			padding: 1.5rem 0 1rem;
-			gap: 0.45rem;
-		}
-
-		.page-lede {
-			margin: 0.1rem 0 0;
-			white-space: normal;
-		}
-
 		.publication-year-group {
 			grid-template-columns: minmax(0, 1fr);
 			row-gap: 0.85rem;
-			padding-top: 1.25rem;
+			padding: 1.25rem 0 2rem;
 		}
 
 		.publication-year-label {
