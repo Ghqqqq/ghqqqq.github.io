@@ -14,7 +14,7 @@
 	);
 	width: 100%;
 	color: var(--home-surface-text);
-	background: var(--home-surface);
+	background: transparent;
 }
 
 /* ---------- Atlas Hero ---------- */
@@ -467,7 +467,7 @@ html[data-theme="light"]
 	gap: clamp(2rem, 5vw, 4.5rem);
 	min-height: 34rem;
 	padding: clamp(4.5rem, 8vw, 7rem) var(--atlas-frame-gutter);
-	background: var(--home-surface);
+	background: transparent;
 	scroll-margin-top: calc(
 		var(--home-nav-offset) +
 		var(--home-relay-height) +
