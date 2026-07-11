@@ -528,7 +528,8 @@ test("publications route and homepage navigation expose full publications", asyn
 		assert.match(page, /layout="home"\s+ambient="manuscript"/);
 		assert.match(page, /<AtlasIndexHero/);
 	}
-	assert.match(atlasIndexHero, /class="atlas-index-hero" data-atlas-index-hero/);
+	assert.match(atlasIndexHero, /class:list=\{\["atlas-index-hero"/);
+	assert.match(atlasIndexHero, /data-atlas-index-hero/);
 	assert.match(atlasIndexHero, /class="atlas-index-grid" aria-hidden="true"/);
 	assert.match(atlasIndexHero, /new IntersectionObserver/);
 	assert.match(atlasIndexCss, /\.atlas-index-content\s*{[^}]*--atlas-index-gutter:/);
@@ -602,14 +603,25 @@ test("publications route and homepage navigation expose full publications", asyn
 	assert.match(homepageHtml, /href="\/publications"/);
 	assert.match(homepageHtml, />\s*Full Publications\s*</);
 	assert.ok(projectsHtml, "expected built projects index");
-	assert.match(projectsHtml, /class="atlas-index-hero"/);
+	assert.match(projectsHtml, /class="atlas-index-hero(?:\s+[^"]*)?"/);
 	assert.match(projectsHtml, /class="site-nav site-nav-atlas"/);
 	assert.match(projectsHtml, /class="manuscript-layer"/);
 	assert.match(projectsHtml, /BLOCK/);
 	assert.match(projectsHtml, /Codex Overleaf Link/);
 	assert.doesNotMatch(projectsHtml, /Project Placeholder/);
-	assert.match(projectsPage, /\.projects-list\s*{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
-	assert.match(projectsPage, /@media screen and \(max-width:\s*760px\)[\s\S]*\.projects-list\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+	assert.match(projectsPage, /<AtlasIndexHero[\s\S]*compact/);
+	assert.match(projectsHtml, /class="atlas-index-hero atlas-index-hero--compact"/);
+	assert.equal(projectsHtml.match(/class="project-index"/g)?.length ?? 0, 2);
+	assert.match(projectsPage, /\.projects-list\s*{[^}]*display:\s*flex[^}]*flex-direction:\s*column/);
+	assert.match(
+		projectsPage,
+		/\.project-item\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.6fr\)\s+minmax\(16rem,\s*0\.75fr\)/,
+	);
+	assert.doesNotMatch(projectsPage, /repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+	assert.match(
+		projectsPage,
+		/@media screen and \(max-width:\s*760px\)[\s\S]*\.project-item\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/,
+	);
 	assert.ok(blockProjectHtml, "expected built BLOCK project page");
 	assert.ok(codexOverleafProjectHtml, "expected built Codex Overleaf Link project page");
 	assert.match(

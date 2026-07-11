@@ -31,12 +31,13 @@ const formatProjectDate = (date: Date) =>
 			title="Projects"
 			lede="Research tools and open systems developed through iterative experiments, model work, and real workflows."
 			meta={`${sortedProjects.length} active builds`}
+			compact
 		/>
 
 		<div class="atlas-index-content">
 			<div class="projects-list">
 			{
-				sortedProjects.map((post) => (
+				sortedProjects.map((post, projectIndex) => (
 					<a href={`/projects/${post.id}`} class="project-item">
 						{post.data.image && (
 							<div class="project-image">
@@ -50,6 +51,9 @@ const formatProjectDate = (date: Date) =>
 							</div>
 						)}
 						<div class="project-copy">
+							<span class="project-index">
+								{String(projectIndex + 1).padStart(2, "0")}
+							</span>
 							<div class="project-header">
 								<h2 class="project-title">{post.data.title}</h2>
 								<span class="project-date">
@@ -68,31 +72,35 @@ const formatProjectDate = (date: Date) =>
 
 <style>
 	.projects-list {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 1px;
-		border: 1px solid color-mix(in srgb, var(--primary) 38%, transparent);
-		background: color-mix(in srgb, var(--primary) 38%, transparent);
+		display: flex;
+		max-width: 74rem;
+		margin: 0 auto;
+		flex-direction: column;
 	}
 
 	.project-item {
 		display: grid;
-		grid-template-rows: auto minmax(0, 1fr);
-		gap: 0;
+		grid-template-columns: minmax(0, 1.6fr) minmax(16rem, 0.75fr);
+		grid-template-areas: "image copy";
+		align-items: center;
+		gap: clamp(2rem, 5vw, 5rem);
 		min-width: 0;
-		border: 0;
-		background: color-mix(in srgb, var(--home-surface) 94%, transparent);
+		padding: clamp(2.75rem, 5vw, 4.5rem) 0;
+		border-top: 1px solid color-mix(in srgb, var(--primary) 36%, transparent);
+		background: transparent;
 		color: var(--text-primary);
 		text-decoration: none;
-		transition:
-			background-color 180ms ease,
-			color 180ms ease;
+		transition: color 180ms ease;
+	}
+
+	.project-item:first-child {
+		padding-top: 0;
+		border-top: 0;
 	}
 
 	.project-item:hover,
 	.project-item:focus-visible {
 		color: var(--primary-light);
-		background: color-mix(in srgb, var(--primary) 8%, var(--home-surface));
 		outline: none;
 		text-decoration: none;
 	}
@@ -102,11 +110,18 @@ const formatProjectDate = (date: Date) =>
 		color: var(--primary-light);
 	}
 
+	.project-item:hover .project-image,
+	.project-item:focus-visible .project-image {
+		border-color: var(--primary-light);
+	}
+
 	.project-image {
+		grid-area: image;
 		overflow: hidden;
 		aspect-ratio: 1185 / 500;
-		border-bottom: 1px solid color-mix(in srgb, var(--primary) 24%, transparent);
+		border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
 		background: var(--home-surface);
+		transition: border-color 180ms ease;
 	}
 
 	.project-image :global(img) {
@@ -117,18 +132,25 @@ const formatProjectDate = (date: Date) =>
 	}
 
 	.project-copy {
+		grid-area: copy;
 		display: flex;
 		flex-direction: column;
-		gap: 0.6rem;
-		padding: clamp(1.2rem, 2.5vw, 1.8rem);
+		align-self: center;
+		gap: 0.8rem;
+		padding: 0;
+	}
+
+	.project-index {
+		color: var(--primary-light);
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+		letter-spacing: 0;
 	}
 
 	.project-header {
 		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: 0.35rem 1rem;
+		flex-direction: column;
+		gap: 0.45rem;
 	}
 
 	.project-title {
@@ -143,6 +165,7 @@ const formatProjectDate = (date: Date) =>
 	}
 
 	.project-date {
+		order: -1;
 		font-family: var(--font-mono);
 		font-size: 0.8rem;
 		color: var(--text-tertiary);
@@ -157,8 +180,17 @@ const formatProjectDate = (date: Date) =>
 	}
 
 	@media screen and (max-width: 760px) {
-		.projects-list {
+		.project-item {
 			grid-template-columns: minmax(0, 1fr);
+			grid-template-areas:
+				"image"
+				"copy";
+			gap: 1.5rem;
+			padding: 2.5rem 0;
+		}
+
+		.project-copy {
+			gap: 0.65rem;
 		}
 	}
 </style>

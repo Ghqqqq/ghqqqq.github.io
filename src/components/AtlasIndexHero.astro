@@ -4,14 +4,18 @@ interface Props {
 	title: string;
 	lede: string;
 	meta: string;
+	compact?: boolean;
 }
 
-const { eyebrow, title, lede, meta } = Astro.props;
+const { eyebrow, title, lede, meta, compact = false } = Astro.props;
 const gridColumns = Array.from({ length: 8 }, (_, index) => index + 1);
 const gridRows = Array.from({ length: 4 }, (_, index) => index + 1);
 ---
 
-<header class="atlas-index-hero" data-atlas-index-hero>
+<header
+	class:list={["atlas-index-hero", compact && "atlas-index-hero--compact"]}
+	data-atlas-index-hero
+>
 	<div class="atlas-index-grid" aria-hidden="true">
 		{
 			gridColumns.map((line) => (
@@ -79,6 +83,16 @@ const gridRows = Array.from({ length: 4 }, (_, index) => index + 1);
 		grid-template-columns: repeat(8, minmax(0, 1fr));
 		grid-template-rows: repeat(4, minmax(0, 1fr));
 		pointer-events: none;
+	}
+
+	.atlas-index-hero--compact {
+		min-height: clamp(19rem, 36vh, 24rem);
+		padding-top: clamp(6.5rem, 10vh, 7.5rem);
+		padding-bottom: 2.75rem;
+	}
+
+	.atlas-index-hero--compact .atlas-index-hero-inner {
+		min-height: 11rem;
 	}
 
 	.atlas-index-grid-line {
@@ -176,6 +190,15 @@ const gridRows = Array.from({ length: 4 }, (_, index) => index + 1);
 
 		.atlas-index-hero-inner {
 			min-height: 14rem;
+		}
+
+		.atlas-index-hero--compact {
+			min-height: 20rem;
+			padding-top: 5rem;
+		}
+
+		.atlas-index-hero--compact .atlas-index-hero-inner {
+			min-height: 12.5rem;
 		}
 
 		h1 {
