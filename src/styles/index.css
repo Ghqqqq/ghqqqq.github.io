@@ -8,6 +8,10 @@
 	--atlas-paper: #f1ece2;
 	--home-nav-offset: 3.5rem;
 	--home-relay-height: 3.75rem;
+	--atlas-frame-gutter: max(
+		clamp(1.5rem, 5vw, 4rem),
+		calc((100vw - 1280px) / 2 + 4rem)
+	);
 	width: 100%;
 	color: var(--home-surface-text);
 	background: var(--home-surface);
@@ -19,7 +23,7 @@
 	position: relative;
 	min-height: calc(100svh - 64px);
 	overflow: hidden;
-	padding: clamp(7rem, 12vh, 9rem) clamp(1.5rem, 5vw, 4rem) 3rem;
+	padding: clamp(7rem, 12vh, 9rem) var(--atlas-frame-gutter) 3rem;
 	color: #ffffff;
 	background: var(--atlas-cobalt);
 }
@@ -147,7 +151,7 @@
 	position: absolute;
 	z-index: 4;
 	top: clamp(9rem, 20vh, 13rem);
-	right: clamp(2rem, 7vw, 6rem);
+	right: max(clamp(2rem, 7vw, 6rem), calc((100vw - 1280px) / 2 + 6rem));
 	width: 15rem;
 	aspect-ratio: 1;
 }
@@ -282,7 +286,7 @@
 	position: absolute;
 	z-index: 3;
 	top: clamp(22rem, 47vh, 30rem);
-	right: clamp(2rem, 7vw, 6rem);
+	right: max(clamp(2rem, 7vw, 6rem), calc((100vw - 1280px) / 2 + 6rem));
 	color: rgba(255, 255, 255, 0.62);
 	line-height: 1.7;
 	text-align: right;
@@ -291,7 +295,7 @@
 .atlas-hero-map {
 	position: absolute;
 	z-index: 3;
-	right: clamp(1.5rem, 4vw, 3.5rem);
+	right: max(clamp(1.5rem, 4vw, 3.5rem), calc((100vw - 1280px) / 2 + 3.5rem));
 	bottom: 1.5rem;
 	width: min(50%, 42rem);
 }
@@ -307,7 +311,7 @@
 	align-items: center;
 	gap: 1.25rem;
 	min-height: var(--home-relay-height);
-	padding: 0 1.5rem;
+	padding: 0 max(1.5rem, calc((100vw - 1280px) / 2 + 1.5rem));
 	border-block: 1px solid
 		color-mix(in srgb, var(--home-surface-text) 16%, transparent);
 	background: color-mix(in srgb, var(--home-surface) 94%, transparent);
@@ -462,7 +466,7 @@ html[data-theme="light"]
 	grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
 	gap: clamp(2rem, 5vw, 4.5rem);
 	min-height: 34rem;
-	padding: clamp(4.5rem, 8vw, 7rem) clamp(1.5rem, 5vw, 4rem);
+	padding: clamp(4.5rem, 8vw, 7rem) var(--atlas-frame-gutter);
 	background: var(--home-surface);
 	scroll-margin-top: calc(
 		var(--home-nav-offset) +

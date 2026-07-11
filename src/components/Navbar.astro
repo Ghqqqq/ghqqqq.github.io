@@ -118,6 +118,11 @@ const links = [
 		-webkit-backdrop-filter: blur(18px);
 	}
 
+	.site-nav-atlas {
+		--atlas-nav-gutter: max(2rem, calc((100vw - 1280px) / 2));
+		padding-inline: var(--atlas-nav-gutter);
+	}
+
 	.site-nav::after {
 		content: "";
 		position: absolute;

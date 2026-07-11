@@ -104,6 +104,7 @@ body.page-home {
 	--primary-rgb: 49, 81, 255;
 	--primary-light: var(--home-signal);
 	--primary-lightest: var(--home-cobalt-bright);
+	padding-inline: 0;
 	background: var(--home-surface);
 }
 

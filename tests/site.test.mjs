@@ -2023,6 +2023,35 @@ test("homepage hero reserves responsive tracks before the absolute composition c
 	);
 });
 
+test("homepage bands bleed to the viewport while content stays on the atlas frame", async () => {
+	const resetCss = await readRepo("src/styles/reset.css");
+	const globalCss = await readRepo("src/styles/globals.css");
+	const indexCss = await readRepo("src/styles/index.css");
+	const navbar = await readRepo("src/components/Navbar.astro");
+
+	assert.ok(resetCss, "expected reset CSS source");
+	assert.ok(globalCss, "expected global CSS source");
+	assert.ok(indexCss, "expected homepage CSS source");
+	assert.ok(navbar, "expected Navbar source");
+
+	assert.match(
+		globalCss,
+		/main\.main-home\s*{[^}]*max-width:\s*none/,
+		"homepage canvas should fill ultrawide viewports",
+	);
+	assert.match(
+		resetCss,
+		/body\.page-home\s*{[^}]*padding-inline:\s*0/,
+		"homepage should not inherit the generic desktop body gutter",
+	);
+	assert.match(
+		indexCss,
+		/--atlas-frame-gutter:\s*max\(\s*clamp\(1\.5rem, 5vw, 4rem\),\s*calc\(\(100vw - 1280px\) \/ 2 \+ 4rem\)\s*\)/,
+		"homepage content should remain aligned to the original 1280px atlas frame",
+	);
+	assert.match(navbar, /\.site-nav-atlas\s*{[^}]*padding-inline:\s*var\(--atlas-nav-gutter\)/);
+});
+
 test("homepage portrait uses a restrained layered galaxy with reduced-motion fallback", async () => {
 	const indexPage = await readRepo("src/pages/index.astro");
 	const indexCss = await readRepo("src/styles/index.css");
