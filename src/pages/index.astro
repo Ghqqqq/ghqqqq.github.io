@@ -5,6 +5,7 @@ import { Image } from "astro:assets";
 import { getCollection, getEntry, render } from "astro:content";
 import { name, openGraph } from "homepage:globals";
 import ProfilePicture from "../assets/profile-bird-original.png";
+import AtlasFormulaField from "../components/AtlasFormulaField.astro";
 import PublicationTeaser from "../components/PublicationTeaser.astro";
 import ResearchAtlas from "../components/ResearchAtlas.astro";
 import ResearchRelay from "../components/ResearchRelay.astro";
@@ -292,6 +293,7 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 					/>
 				))}
 			</div>
+			<AtlasFormulaField />
 			<div class="atlas-hero-copy">
 				<p class="atlas-hero-kicker">Decision-making under constraints · Shanghai</p>
 				<h1 class="atlas-hero-name">{name}</h1>

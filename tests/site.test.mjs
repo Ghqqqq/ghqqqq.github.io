@@ -2099,6 +2099,32 @@ test("homepage portrait uses a restrained layered galaxy with reduced-motion fal
 	);
 });
 
+test("homepage hero carries a sparse build-time atlas formula field", async () => {
+	const indexPage = await readRepo("src/pages/index.astro");
+	const formulaField = await readRepo("src/components/AtlasFormulaField.astro");
+
+	assert.ok(indexPage, "expected homepage source");
+	assert.ok(formulaField, "expected AtlasFormulaField source");
+	assert.match(indexPage, /import AtlasFormulaField from "\.\.\/components\/AtlasFormulaField\.astro"/);
+	assert.match(indexPage, /<AtlasFormulaField\s*\/>/);
+	assert.match(formulaField, /class="atlas-formula-field" aria-hidden="true"/);
+	assert.equal(
+		formulaField.match(/String\.raw`/g)?.length ?? 0,
+		5,
+		"formula field should stay deliberately sparse",
+	);
+	assert.match(formulaField, /new SVG\(\{ fontCache: "local" \}\)/);
+	assert.doesNotMatch(formulaField, /<script/);
+	assert.match(formulaField, /animation:\s*atlas-formula-drift var\(--formula-duration\) linear infinite/);
+	const formulaDurations = [...formulaField.matchAll(/duration:\s*(\d+),/g)].map((match) =>
+		Number(match[1]),
+	);
+	assert.equal(formulaDurations.length, 5);
+	assert.ok(formulaDurations.every((duration) => duration >= 28 && duration <= 45));
+	assert.match(formulaField, /@media screen and \(max-width: 860px\)[\s\S]*\.atlas-formula-field\s*{[^}]*display:\s*none/);
+	assert.match(formulaField, /@media \(prefers-reduced-motion: reduce\)[\s\S]*animation:\s*none/);
+});
+
 test("research atlas homepage has explicit responsive and reduced-motion contracts", async () => {
 	const indexCss = await readRepo("src/styles/index.css");
 	const atlas = await readRepo("src/components/ResearchAtlas.astro");
