@@ -102,6 +102,8 @@ body.page-home {
 	--text-secondary: var(--home-surface-muted);
 	--primary: var(--home-cobalt-bright);
 	--primary-rgb: 49, 81, 255;
+	--primary-light: var(--home-signal);
+	--primary-lightest: var(--home-cobalt-bright);
 	background: var(--home-surface);
 }
 
@@ -109,6 +111,8 @@ html[data-theme="light"] body.page-home {
 	--home-surface: var(--home-paper);
 	--home-surface-text: var(--home-text-light);
 	--home-surface-muted: rgba(21, 21, 27, 0.62);
+	--primary-light: var(--home-cobalt);
+	--primary-lightest: var(--home-cobalt-bright);
 }
 
 *,

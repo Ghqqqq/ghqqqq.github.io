@@ -237,6 +237,7 @@ function assertAwardsContract(awardsHtml, expectedTuples) {
 
 function createAtlasControllerFixture({
 	hasIntersectionObserver,
+	hash = "",
 	hasHero = true,
 	hasRoot = true,
 	queryThrows = false,
@@ -324,6 +325,7 @@ function createAtlasControllerFixture({
 		document.readyState = "complete";
 		for (const listener of eventListeners.get("DOMContentLoaded") ?? []) listener();
 	};
+	const windowEventListeners = new Map();
 	const observers = [];
 	class FixtureIntersectionObserver {
 		constructor(callback, options) {
@@ -338,9 +340,21 @@ function createAtlasControllerFixture({
 		}
 	}
 
-	const window = hasIntersectionObserver
-		? { IntersectionObserver: FixtureIntersectionObserver }
-		: {};
+	const window = {
+		location: { hash },
+		addEventListener(type, callback) {
+			const listeners = windowEventListeners.get(type) ?? [];
+			listeners.push(callback);
+			windowEventListeners.set(type, listeners);
+		},
+		...(hasIntersectionObserver
+			? { IntersectionObserver: FixtureIntersectionObserver }
+			: {}),
+	};
+	const setHash = (nextHash) => {
+		window.location.hash = nextHash;
+		for (const listener of windowEventListeners.get("hashchange") ?? []) listener();
+	};
 
 	return {
 		context,
@@ -355,7 +369,9 @@ function createAtlasControllerFixture({
 		relayLinks,
 		root,
 		sections,
+		setHash,
 		window,
+		windowEventListeners,
 	};
 }
 
@@ -487,7 +503,7 @@ test("research atlas data and components expose one shared semantic graph", asyn
 	assert.match(atlasComponent, /aria-hidden="true"/);
 	assert.match(relayComponent, /data-research-relay/);
 	assert.match(relayComponent, /data-relay-link/);
-	assert.match(relayComponent, /aria-current/);
+	assert.match(relayComponent, /data-relay-context/);
 });
 
 test("publications route and homepage navigation expose full publications", async () => {
@@ -824,7 +840,7 @@ test("homepage publications use the atlas index variant without changing the arc
 	assert.doesNotMatch(groupNameRule, /clamp\(|vw/);
 	assert.match(
 		homeStyles,
-		/@media screen and \(max-width:\s*1100px\)[\s\S]*\.publication-group-name\s*{[^}]*font-size:\s*2rem/,
+		/@media screen and \(max-width:\s*1260px\)[\s\S]*\.publication-group-name\s*{[^}]*font-size:\s*2rem/,
 	);
 	assert.match(
 		homeStyles,
@@ -1139,6 +1155,12 @@ test("atlas relay tracks hero, section, and publication-group state", async () =
 	);
 	assert.equal(html.match(/data-atlas-controller/g)?.length ?? 0, 1);
 	assert.doesNotMatch(html, /data-atlas-boot/);
+	const builtRelayMarkup = html.match(
+		/<nav\b(?=[^>]*data-research-relay)[^>]*>[\s\S]*?<\/nav>/,
+	);
+	assert.ok(builtRelayMarkup, "expected built Relay navigation");
+	assert.doesNotMatch(builtRelayMarkup[0], /aria-current=/);
+	assert.match(builtRelayMarkup[0], />\s*Section guide\s*<\/span>/);
 	const builtRoot = html.match(/<article[^>]*data-home-atlas[^>]*>/);
 	assert.ok(builtRoot, "expected built home Atlas root");
 	assert.doesNotMatch(builtRoot[0], /data-hero-state/);
@@ -1423,6 +1445,89 @@ test("atlas relay tracks hero, section, and publication-group state", async () =
 	}
 });
 
+test("Relay fallback stays neutral and resolves every homepage hash without IntersectionObserver", async () => {
+	const indexPage = await readRepo("src/pages/index.astro");
+	const relayComponent = await readRepo("src/components/ResearchRelay.astro");
+
+	assert.ok(indexPage, "expected homepage source");
+	assert.ok(relayComponent, "expected ResearchRelay source");
+	assert.doesNotMatch(relayComponent, /aria-current=/);
+	assert.match(
+		relayComponent,
+		/data-relay-context[^>]*aria-live="polite"[^>]*>\s*Section guide\s*</,
+	);
+	assert.match(relayComponent, /href=\{`#\$\{section\.id\}`\}/);
+
+	const controllerMatch = indexPage.match(
+		/<script is:inline data-atlas-controller>\s*([\s\S]*?)\s*<\/script>/,
+	);
+	assert.ok(controllerMatch, "expected inline Atlas controller");
+	const hashCases = [
+		["#about", "about", null, "Research core"],
+		["#experience", "experience", null, "Field work"],
+		["#awards", "awards", null, "Recognition"],
+		["#service", "service", null, "Community"],
+		["#publications", "publications", null, "Research branches"],
+		[
+			"#publications-agent-llm-alignment",
+			"publications",
+			"agent-llm-alignment",
+			"Agent / LLM Alignment",
+		],
+		[
+			"#publications-recommendation-bidding",
+			"publications",
+			"recommendation-bidding",
+			"Recommendation & Bidding",
+		],
+		[
+			"#publications-reinforcement-learning-bandits",
+			"publications",
+			"reinforcement-learning-bandits",
+			"Reinforcement Learning & Bandits",
+		],
+	];
+
+	for (const [hash, sectionId, groupId, context] of hashCases) {
+		const fixture = createAtlasControllerFixture({
+			hasIntersectionObserver: false,
+			hash,
+		});
+		runInNewContext(controllerMatch[1], fixture);
+		assert.equal(fixture.root.dataset.activeSection, sectionId, hash);
+		assert.equal(fixture.root.dataset.activeResearchGroup ?? null, groupId, hash);
+		assert.equal(fixture.context.textContent, context, hash);
+		assert.deepEqual(
+			fixture.relayLinks.map((link) => link.getAttribute("aria-current")),
+			["about", "experience", "awards", "service", "publications"].map((id) =>
+				id === sectionId ? "location" : null,
+			),
+			hash,
+		);
+		assert.equal(fixture.windowEventListeners.get("hashchange")?.length, 1, hash);
+	}
+
+	const synchronized = createAtlasControllerFixture({
+		hasIntersectionObserver: false,
+		hash: "#about",
+	});
+	runInNewContext(controllerMatch[1], synchronized);
+	synchronized.setHash("#publications-recommendation-bidding");
+	assert.equal(synchronized.root.dataset.activeSection, "publications");
+	assert.equal(synchronized.root.dataset.activeResearchGroup, "recommendation-bidding");
+	assert.equal(synchronized.context.textContent, "Recommendation & Bidding");
+});
+
+test("publication group fragments clear the combined Navbar and Relay chrome", async () => {
+	const indexCss = await readRepo("src/styles/index.css");
+
+	assert.ok(indexCss, "expected homepage CSS source");
+	assert.match(
+		indexCss,
+		/\.publication-group\s*{[^}]*scroll-margin-top:\s*calc\(\s*var\(--home-nav-offset\)\s*\+\s*var\(--home-relay-height\)\s*\+\s*0\.75rem\s*\)/,
+	);
+});
+
 test("single-column layout accounts for mobile side margins", async () => {
 	const layoutGrid = await readRepo("src/components/LayoutGrid.astro");
 
@@ -1460,6 +1565,95 @@ test("public-facing repository text omits template traces and keeps footer attri
 	);
 	assert.match(layout, /Powered by[\s\S]*Codex[\s\S]*Claude Code/);
 	assert.doesNotMatch(packageJson, /"name":\s*"spectre"/i);
+});
+
+test("mobile Navbar progressively enhances while CSP fallback links stay available", async () => {
+	const layout = await readRepo("src/layouts/Layout.astro");
+	const navbar = await readRepo("src/components/Navbar.astro");
+
+	assert.ok(layout, "expected Layout source");
+	assert.ok(navbar, "expected Navbar source");
+	const markerIndex = layout.indexOf("data-nav-enhancement");
+	const bodyIndex = layout.indexOf("<body");
+	assert.notEqual(markerIndex, -1, "expected early navigation enhancement marker");
+	assert.ok(markerIndex < bodyIndex, "expected navigation marker before body markup");
+	assert.match(
+		layout,
+		/<script is:inline data-nav-enhancement>[\s\S]*dataset\.navJs\s*=\s*"ready"[\s\S]*<\/script>/,
+	);
+
+	const mobileCss = extractCssBlock(navbar, "@media screen and (max-width: 640px)");
+	assertCssDeclarations(mobileCss, ':global(html[data-nav-js="ready"]) .site-nav', {
+		height: "3.5rem",
+		"box-sizing": "border-box",
+	});
+	assertCssDeclarations(
+		mobileCss,
+		':global(html[data-nav-js="ready"]) .mobile-nav-toggle',
+		{ display: "flex" },
+	);
+	assertCssDeclarations(mobileCss, ':global(html[data-nav-js="ready"]) .nav-links', {
+		position: "absolute",
+		opacity: "0",
+		visibility: "hidden",
+		"pointer-events": "none",
+	});
+	assertCssDeclarations(
+		mobileCss,
+		':global(html[data-nav-js="ready"]) .site-nav.active .nav-links',
+		{
+			opacity: "1",
+			visibility: "visible",
+			"pointer-events": "auto",
+		},
+	);
+	assertCssDeclarations(mobileCss, ":global(html:not([data-nav-js])) .nav-links", {
+		position: "static",
+		opacity: "1",
+		visibility: "visible",
+		"pointer-events": "auto",
+	});
+	assertCssDeclarations(
+		mobileCss,
+		":global(html:not([data-nav-js])) .site-nav-atlas",
+		{ "margin-bottom": "0" },
+	);
+
+	assert.match(navbar, /setAttribute\("aria-hidden", "true"\)/);
+	assert.match(navbar, /setAttribute\("inert", ""\)/);
+	assert.match(navbar, /removeAttribute\("aria-hidden"\)/);
+	assert.match(navbar, /removeAttribute\("inert"\)/);
+	assert.match(
+		navbar,
+		/if \(isActive\)\s*{[^}]*navLinks\.querySelector\("a"\)\?\.focus\(\)/,
+	);
+	assert.match(navbar, /matchMedia\("\(max-width: 640px\)"\)/);
+	assert.match(
+		navbar,
+		/\.site-nav \.site-title:focus-visible\s*{[^}]*outline:\s*2px solid var\(--primary\)[^}]*outline-offset:\s*4px/,
+	);
+});
+
+test("homepage link interaction tokens stay inside the Atlas palette", async () => {
+	const resetCss = await readRepo("src/styles/reset.css");
+
+	assert.ok(resetCss, "expected reset CSS");
+	assertCssDeclarations(resetCss, ":root,\nhtml[data-theme=\"light\"]", {
+		"--primary-light": "#8a3e25",
+		"--primary-lightest": "#6a2f1c",
+	});
+	assertCssDeclarations(resetCss, 'html[data-theme="dark"]', {
+		"--primary-light": "#e7a384",
+		"--primary-lightest": "#f4c5ad",
+	});
+	assertCssDeclarations(resetCss, "body.page-home", {
+		"--primary-light": "var(--home-signal)",
+		"--primary-lightest": "var(--home-cobalt-bright)",
+	});
+	assertCssDeclarations(resetCss, 'html[data-theme="light"] body.page-home', {
+		"--primary-light": "var(--home-cobalt)",
+		"--primary-lightest": "var(--home-cobalt-bright)",
+	});
 });
 
 test("homepage shell exposes the cobalt dual-surface navigation contract", async (t) => {
@@ -1700,6 +1894,83 @@ test("repository is configured for GitHub Pages deployment", async () => {
 	assert.match(deployWorkflow, /gh-pages|github-pages/i);
 });
 
+test("homepage hero reserves responsive tracks before the absolute composition collides", async () => {
+	const indexCss = await readRepo("src/styles/index.css");
+	const atlas = await readRepo("src/components/ResearchAtlas.astro");
+
+	assert.ok(indexCss, "expected homepage CSS source");
+	assert.ok(atlas, "expected ResearchAtlas source");
+	assertCssDeclarations(indexCss, ".atlas-hero-links", {
+		width: "fit-content",
+		"max-width": "100%",
+	});
+	assertCssDeclarations(indexCss, ".atlas-hero-map", {
+		bottom: "1.5rem",
+	});
+	assert.equal(
+		indexCss.match(/@media screen and \(max-width:\s*1260px\)/g)?.length ?? 0,
+		1,
+		"expected one authoritative fluid Hero breakpoint",
+	);
+
+	const fluidHeroCss = extractCssBlock(
+		indexCss,
+		"@media screen and (max-width: 1260px)",
+	);
+	assert.match(
+		fluidHeroCss,
+		/\.atlas-hero\s*{[^}]*display:\s*grid[^}]*grid-template-areas:\s*"copy portrait"\s*"atlas atlas"/,
+	);
+	assertCssDeclarations(fluidHeroCss, ".atlas-hero-copy", {
+		"grid-area": "copy",
+	});
+	assert.match(
+		fluidHeroCss,
+		/\.atlas-hero-portrait\s*{[^}]*position:\s*relative[^}]*grid-area:\s*portrait/,
+	);
+	assert.match(
+		fluidHeroCss,
+		/\.atlas-hero-map\s*{[^}]*position:\s*relative[^}]*grid-area:\s*atlas/,
+	);
+
+	const tabletCss = extractCssBlock(indexCss, "@media screen and (max-width: 860px)");
+	assert.match(
+		tabletCss,
+		/\.atlas-hero\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\) 7\.5rem/,
+	);
+	assert.match(
+		tabletCss,
+		/\.atlas-hero-name\s*{[^}]*font-size:\s*3\.4rem/,
+	);
+	const mobileCss = extractCssBlock(indexCss, "@media screen and (max-width: 640px)");
+	assert.match(
+		mobileCss,
+		/\.atlas-hero\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)[^}]*grid-template-areas:\s*"copy"\s*"portrait"\s*"atlas"/,
+	);
+	assert.doesNotMatch(indexCss, /@media screen and \(max-width:\s*375px\)/);
+
+	const compactAtlasCss = extractCssBlock(
+		atlas,
+		"@media screen and (max-width: 1260px)",
+	);
+	assert.match(
+		compactAtlasCss,
+		/\.research-atlas\s*{[^}]*min-height:\s*12rem/,
+	);
+	const tabletAtlasCss = extractCssBlock(
+		atlas,
+		"@media screen and (max-width: 860px)",
+	);
+	assert.match(
+		tabletAtlasCss,
+		/\.research-atlas-node-label\s*{[^}]*position:\s*absolute[^}]*clip:\s*rect\(0 0 0 0\)/,
+	);
+	assert.match(
+		tabletAtlasCss,
+		/\.research-atlas-node-short\s*{[^}]*display:\s*inline/,
+	);
+});
+
 test("research atlas homepage has explicit responsive and reduced-motion contracts", async () => {
 	const indexCss = await readRepo("src/styles/index.css");
 	const atlas = await readRepo("src/components/ResearchAtlas.astro");
@@ -1761,11 +2032,11 @@ test("research atlas homepage has explicit responsive and reduced-motion contrac
 		navbar,
 		"@media screen and (max-width: 640px)",
 	);
-	assertCssDeclarations(navbarMobileCss, ".site-nav", {
+	assertCssDeclarations(navbarMobileCss, ':global(html[data-nav-js="ready"]) .site-nav', {
 		height: "3.5rem",
 		"box-sizing": "border-box",
-		padding: "0 1rem",
 	});
+	assertCssDeclarations(navbarMobileCss, ".site-nav", { padding: "0 1rem" });
 	assertCssDeclarations(navbarMobileCss, ".nav-links a", {
 		display: "block",
 		padding: "0.82rem 0",
@@ -1777,6 +2048,7 @@ test("research atlas homepage has explicit responsive and reduced-motion contrac
 	);
 
 	const atlasMobileCss = extractCssBlock(atlas, "@media screen and (max-width: 640px)");
+	const atlasTabletCss = extractCssBlock(atlas, "@media screen and (max-width: 860px)");
 	assert.match(
 		atlasMobileCss,
 		/\.research-atlas-kicker,\s*\.research-atlas-edges,\s*\.research-atlas-group h2\s*{[^}]*display:\s*none/,
@@ -1790,15 +2062,15 @@ test("research atlas homepage has explicit responsive and reduced-motion contrac
 		/\.research-atlas-group ul\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/,
 	);
 	assert.match(
-		atlasMobileCss,
+		atlasTabletCss,
 		/\.research-atlas-group a\s*{[^}]*font-size:\s*0\.75rem/,
 	);
 	assert.match(
-		atlasMobileCss,
+		atlasTabletCss,
 		/\.research-atlas-node-label\s*{[^}]*position:\s*absolute[^}]*clip:\s*rect\(0 0 0 0\)/,
 	);
 	assert.match(
-		atlasMobileCss,
+		atlasTabletCss,
 		/\.research-atlas-node-short\s*{[^}]*display:\s*inline/,
 	);
 	assert.match(atlas, /aria-label=\{node\.label\}/);

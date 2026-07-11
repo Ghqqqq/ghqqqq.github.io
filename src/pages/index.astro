@@ -114,6 +114,14 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 				const publicationSection = sections.find(
 					(section) => section.getAttribute("data-home-section") === "publications",
 				);
+				const setResearchGroup = (group) => {
+					const id = group.getAttribute("data-publication-group");
+					const label = group.getAttribute("data-publication-context");
+					if (!id) return;
+
+					root.dataset.activeResearchGroup = id;
+					if (context && label) context.textContent = label;
+				};
 
 				const syncResearchGroup = () => {
 					if (root.dataset.activeSection !== "publications") return;
@@ -122,10 +130,7 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 						intersectingPublicationGroups.has(candidate),
 					);
 					if (group) {
-						const id = group.getAttribute("data-publication-group");
-						const label = group.getAttribute("data-publication-context");
-						if (id) root.dataset.activeResearchGroup = id;
-						if (context && label) context.textContent = label;
+						setResearchGroup(group);
 						return;
 					}
 
@@ -154,11 +159,49 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 					if (context && label) context.textContent = label;
 				};
 
+				const readHashId = () => {
+					const value = window.location.hash.replace(/^#/, "");
+					try {
+						return decodeURIComponent(value);
+					} catch {
+						return value;
+					}
+				};
+
+				const syncHashState = () => {
+					const hashId = readHashId();
+					intersectingSections.clear();
+					intersectingPublicationGroups.clear();
+					delete root.dataset.activeResearchGroup;
+
+					const group = publicationGroups.find(
+						(candidate) =>
+							`publications-${candidate.getAttribute("data-publication-group")}` ===
+							hashId,
+					);
+					if (group && publicationSection) {
+						setSection(publicationSection);
+						setResearchGroup(group);
+						return;
+					}
+
+					const section = sections.find(
+						(candidate) => candidate.getAttribute("data-home-section") === hashId,
+					);
+					if (section) {
+						setSection(section);
+					} else if (sections[0]) {
+						setSection(sections[0]);
+					}
+				};
+
 				if (sections[0]) setSection(sections[0]);
 
 				if (!("IntersectionObserver" in window)) {
 					documentRoot.dataset.homeHero = "passed";
 					root.dataset.heroState = "passed";
+					syncHashState();
+					window.addEventListener("hashchange", syncHashState);
 					return;
 				}
 

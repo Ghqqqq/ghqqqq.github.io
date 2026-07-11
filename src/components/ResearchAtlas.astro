@@ -142,7 +142,7 @@ const nodes = researchAtlas.groups.flatMap((group) => group.nodes);
 	.research-atlas-edge {
 		position: absolute;
 		z-index: 1;
-		top: 7rem;
+		top: var(--atlas-edge-top, 7rem);
 		left: 50%;
 		width: 34%;
 		height: 1px;
@@ -172,6 +172,63 @@ const nodes = researchAtlas.groups.flatMap((group) => group.nodes);
 
 	.edge-multimodal-llms {
 		transform: rotate(-30deg);
+	}
+
+	@media screen and (max-width: 1260px) {
+		.research-atlas {
+			--atlas-edge-top: 4.6rem;
+			min-height: 12rem;
+			padding-top: 1rem;
+		}
+
+		.research-atlas-core {
+			top: 2.75rem;
+		}
+
+		.research-atlas-groups {
+			padding-top: 7rem;
+		}
+	}
+
+	@media screen and (max-width: 860px) {
+		.research-atlas {
+			--atlas-edge-top: 4.15rem;
+			min-height: 11.5rem;
+		}
+
+		.research-atlas-core {
+			top: 2.25rem;
+			width: min(14rem, 48%);
+			padding: 0.65rem 0.75rem;
+			font-size: 0.82rem;
+		}
+
+		.research-atlas-groups {
+			padding-top: 5.75rem;
+		}
+
+		.research-atlas-group a {
+			padding: 0.4rem 0.45rem;
+			font-family: var(--font-mono);
+			font-size: 0.75rem;
+		}
+
+		.research-atlas-node-label {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0 0 0 0);
+			clip-path: inset(50%);
+			white-space: nowrap;
+			border: 0;
+		}
+
+		.research-atlas-node-short {
+			display: inline;
+		}
 	}
 
 	@media screen and (max-width: 640px) {
@@ -205,26 +262,7 @@ const nodes = researchAtlas.groups.flatMap((group) => group.nodes);
 		}
 
 		.research-atlas-group a {
-			padding: 0.35rem 0.45rem;
-			font-family: var(--font-mono);
-			font-size: 0.75rem;
-		}
-
-		.research-atlas-node-label {
-			position: absolute;
-			width: 1px;
-			height: 1px;
-			padding: 0;
-			margin: -1px;
-			overflow: hidden;
-			clip: rect(0 0 0 0);
-			clip-path: inset(50%);
-			white-space: nowrap;
-			border: 0;
-		}
-
-		.research-atlas-node-short {
-			display: inline;
+			padding-block: 0.35rem;
 		}
 	}
 </style>

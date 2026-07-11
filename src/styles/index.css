@@ -117,6 +117,8 @@
 .atlas-hero-links {
 	display: flex;
 	flex-wrap: wrap;
+	width: fit-content;
+	max-width: 100%;
 	gap: 0.65rem 1.1rem;
 	margin-top: 1.4rem;
 	font-size: 0.82rem;
@@ -201,8 +203,8 @@
 	position: absolute;
 	z-index: 3;
 	right: clamp(1.5rem, 4vw, 3.5rem);
-	bottom: 2rem;
-	width: min(55%, 42rem);
+	bottom: 1.5rem;
+	width: min(50%, 42rem);
 }
 
 /* ---------- Research Relay ---------- */
@@ -751,6 +753,11 @@ html[data-theme="light"]
 	flex-direction: column;
 	gap: 0.55rem;
 	padding-top: 0.95rem;
+	scroll-margin-top: calc(
+		var(--home-nav-offset) +
+		var(--home-relay-height) +
+		0.75rem
+	);
 }
 
 .publication-group-title {
@@ -800,18 +807,54 @@ html[data-theme="light"] .publication-group-index {
 
 /* ---------- Responsive ---------- */
 
-@media screen and (max-width: 1100px) {
+@media screen and (max-width: 1260px) {
+	.atlas-hero {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 11rem;
+		grid-template-areas:
+			"copy portrait"
+			"atlas atlas";
+		align-content: start;
+		gap: 1rem 2rem;
+		min-height: calc(100svh - 3.5rem);
+		padding: 5rem 2rem 1.5rem;
+	}
+
+	.atlas-hero-copy {
+		grid-area: copy;
+		max-width: none;
+	}
+
 	.atlas-hero-name {
-		font-size: 6rem;
+		font-size: 5.25rem;
 	}
 
 	.atlas-hero-statement {
-		margin-left: 3rem;
-		font-size: 4rem;
+		margin-left: 2.5rem;
+		font-size: 3.5rem;
 	}
 
 	.atlas-hero-portrait {
-		width: 12rem;
+		position: relative;
+		top: auto;
+		right: auto;
+		grid-area: portrait;
+		width: 11rem;
+		margin-top: 4rem;
+		justify-self: end;
+	}
+
+	.atlas-hero-coordinates {
+		display: none;
+	}
+
+	.atlas-hero-map {
+		position: relative;
+		right: auto;
+		bottom: auto;
+		grid-area: atlas;
+		width: 100%;
+		margin-top: 0;
 	}
 
 	.section-title {
@@ -839,42 +882,24 @@ html[data-theme="light"] .publication-group-index {
 	}
 
 	.atlas-hero {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) 10rem;
-		gap: 1.5rem 2rem;
-		align-content: start;
-		padding: 5rem 2rem 2rem;
+		grid-template-columns: minmax(0, 1fr) 7.5rem;
+		gap: 0.75rem 1.5rem;
+		padding: 4.5rem 2rem 1.25rem;
 	}
 
 	.atlas-hero-name {
-		font-size: 5rem;
+		font-size: 3.4rem;
+		line-height: 0.9;
 	}
 
 	.atlas-hero-statement {
-		margin-left: 2rem;
-		font-size: 3.4rem;
+		margin-left: 1.5rem;
+		font-size: 2.65rem;
 	}
 
 	.atlas-hero-portrait {
-		position: relative;
-		top: auto;
-		right: auto;
-		width: 9rem;
+		width: 7.5rem;
 		margin-top: 4rem;
-		justify-self: end;
-	}
-
-	.atlas-hero-coordinates {
-		display: none;
-	}
-
-	.atlas-hero-map {
-		position: relative;
-		right: auto;
-		bottom: auto;
-		grid-column: 1 / -1;
-		width: 100%;
-		margin-top: 1rem;
 	}
 
 	.research-relay {
@@ -931,8 +956,14 @@ html[data-theme="light"] .publication-group-index {
 	}
 
 	.atlas-hero {
-		display: block;
-		padding: 4.5rem 1rem 1.5rem;
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas:
+			"copy"
+			"portrait"
+			"atlas";
+		gap: 1rem;
+		min-height: calc(100svh - 3rem);
+		padding: 3.75rem 1rem 1.25rem;
 	}
 
 	.atlas-hero-kicker {
@@ -967,12 +998,12 @@ html[data-theme="light"] .publication-group-index {
 	}
 
 	.atlas-hero-portrait {
-		width: 7.5rem;
-		margin: 2rem 1.25rem 0 auto;
+		width: 6rem;
+		margin: 0 1rem 0 auto;
 	}
 
 	.atlas-hero-map {
-		margin-top: 1.5rem;
+		margin-top: 0;
 	}
 
 	.research-relay {
@@ -1019,21 +1050,6 @@ html[data-theme="light"] .publication-group-index {
 
 	.publication-group-name {
 		font-size: 1.65rem;
-	}
-}
-
-@media screen and (max-width: 375px) {
-	.atlas-hero {
-		padding: 3.75rem 1rem 1.25rem;
-	}
-
-	.atlas-hero-portrait {
-		width: 6rem;
-		margin: 1.25rem 1rem 0 auto;
-	}
-
-	.atlas-hero-map {
-		margin-top: 1rem;
 	}
 }
 

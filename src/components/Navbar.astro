@@ -29,7 +29,7 @@ const links = [
 	data-nav-variant={variant}
 >
 	<a class="site-title" href="/">{name}</a>
-	<ul class="nav-links">
+	<ul class="nav-links" id="primary-navigation-links" data-nav-links>
 		{
 			links.map((link, index) => (
 				<li style={`--nav-item-index: ${index}`}>
@@ -45,6 +45,7 @@ const links = [
 		<button
 			class="mobile-nav-toggle"
 			aria-label="Mobile menu trigger"
+			aria-controls="primary-navigation-links"
 			aria-expanded="false"
 			type="button"
 		>
@@ -56,13 +57,46 @@ const links = [
 
 <script is:inline>
 	const nav = document.querySelector(".site-nav");
-	const navToggle = document.querySelector(".mobile-nav-toggle");
+	const navToggle = nav?.querySelector(".mobile-nav-toggle");
+	const navLinks = nav?.querySelector("[data-nav-links]");
+	const mobileNavQuery = window.matchMedia("(max-width: 640px)");
 
-	navToggle?.addEventListener("click", () => {
-		const isActive = nav?.classList.toggle("active") ?? false;
+	const setMenuState = (open) => {
+		if (!nav || !navToggle || !navLinks) return;
+
+		const isEnhancedMobile =
+			document.documentElement.dataset.navJs === "ready" && mobileNavQuery.matches;
+		const isActive = isEnhancedMobile && open;
+		nav.classList.toggle("active", isActive);
 		navToggle.classList.toggle("active", isActive);
 		navToggle.setAttribute("aria-expanded", String(isActive));
+
+		if (isEnhancedMobile && !isActive) {
+			navLinks.setAttribute("aria-hidden", "true");
+			navLinks.setAttribute("inert", "");
+		} else {
+			navLinks.removeAttribute("aria-hidden");
+			navLinks.removeAttribute("inert");
+		}
+
+		if (isActive) {
+			navLinks.querySelector("a")?.focus();
+		}
+	};
+
+	setMenuState(false);
+
+	navToggle?.addEventListener("click", () => {
+		setMenuState(!nav?.classList.contains("active"));
 	});
+
+	document.addEventListener("keydown", (event) => {
+		if (event.key !== "Escape" || !nav?.classList.contains("active")) return;
+		setMenuState(false);
+		navToggle?.focus();
+	});
+
+	mobileNavQuery.addEventListener("change", () => setMenuState(false));
 </script>
 
 <style>
@@ -166,6 +200,11 @@ const links = [
 		transform: scaleX(1);
 	}
 
+	.site-nav .site-title:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 4px;
+	}
+
 	.mobile-nav-toggle {
 		display: none;
 		width: 2rem;
@@ -205,25 +244,27 @@ const links = [
 	@media screen and (max-width: 640px) {
 		.site-nav {
 			box-sizing: border-box;
-			height: 3.5rem;
+			min-height: 3.5rem;
 			grid-template-columns: minmax(0, 1fr) auto;
 			padding: 0 1rem;
 			background: var(--nav-overlay-bg);
 		}
 
+		.site-title {
+			grid-row: 1;
+			grid-column: 1;
+		}
+
 		.nav-actions {
+			grid-row: 1;
+			grid-column: 2;
 			gap: 0.45rem;
 		}
 
-		.mobile-nav-toggle {
-			display: flex;
-		}
-
 		.nav-links {
-			position: absolute;
-			top: 100%;
-			left: 0;
-			right: 0;
+			position: static;
+			grid-row: 2;
+			grid-column: 1 / -1;
 			display: flex;
 			flex-direction: column;
 			align-items: stretch;
@@ -234,7 +275,38 @@ const links = [
 			backdrop-filter: blur(18px);
 			-webkit-backdrop-filter: blur(18px);
 			border-bottom: 1px solid var(--hairline);
+			opacity: 1;
+			visibility: visible;
+			pointer-events: auto;
+		}
+
+		.nav-links li {
+			border-top: 1px solid var(--hairline);
+			opacity: 1;
+		}
+
+		.nav-links li:last-child {
+			border-bottom: 1px solid var(--hairline);
+		}
+
+		:global(html[data-nav-js="ready"]) .site-nav {
+			box-sizing: border-box;
+			height: 3.5rem;
+		}
+
+		:global(html[data-nav-js="ready"]) .mobile-nav-toggle {
+			display: flex;
+		}
+
+		:global(html[data-nav-js="ready"]) .nav-links {
+			position: absolute;
+			top: 100%;
+			left: 0;
+			right: 0;
+			grid-row: auto;
+			grid-column: auto;
 			opacity: 0;
+			visibility: hidden;
 			pointer-events: none;
 			user-select: none;
 			transform: translateY(-0.35rem);
@@ -243,14 +315,14 @@ const links = [
 				transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 		}
 
-		.site-nav.active .nav-links {
+		:global(html[data-nav-js="ready"]) .site-nav.active .nav-links {
 			opacity: 1;
+			visibility: visible;
 			pointer-events: auto;
 			transform: translateY(0);
 		}
 
-		.nav-links li {
-			border-top: 1px solid var(--hairline);
+		:global(html[data-nav-js="ready"]) .nav-links li {
 			opacity: 0;
 			transform: translateY(-0.45rem);
 			transition:
@@ -259,13 +331,20 @@ const links = [
 			transition-delay: calc(var(--nav-item-index) * 55ms);
 		}
 
-		.site-nav.active .nav-links li {
+		:global(html[data-nav-js="ready"]) .site-nav.active .nav-links li {
 			opacity: 1;
 			transform: translateY(0);
 		}
 
-		.nav-links li:last-child {
-			border-bottom: 1px solid var(--hairline);
+		:global(html:not([data-nav-js])) .nav-links {
+			position: static;
+			opacity: 1;
+			visibility: visible;
+			pointer-events: auto;
+		}
+
+		:global(html:not([data-nav-js])) .site-nav-atlas {
+			margin-bottom: 0;
 		}
 
 		:global(html[data-home-hero="visible"]) .site-nav-atlas .nav-links {
@@ -312,6 +391,10 @@ const links = [
 	:global(html[data-home-hero="visible"]) .site-nav-atlas .site-title,
 	:global(html[data-home-hero="visible"]) .site-nav-atlas .nav-link {
 		color: #ffffff;
+	}
+
+	:global(html[data-home-hero="visible"]) .site-nav-atlas .site-title:focus-visible {
+		outline-color: var(--home-signal);
 	}
 
 	:global(html[data-home-hero="visible"]) .site-nav-atlas .mobile-nav-toggle {

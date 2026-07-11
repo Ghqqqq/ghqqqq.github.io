@@ -12,12 +12,11 @@ const { sections } = Astro.props;
 	<strong class="research-relay-title">Research Atlas</strong>
 	<ol class="research-relay-track">
 		{
-			sections.map((section, index) => (
+			sections.map((section) => (
 				<li>
 					<a
 						href={`#${section.id}`}
 						data-relay-link={section.id}
-						aria-current={index === 0 ? "location" : undefined}
 					>
 						<span>{section.number}</span>
 						<span class="research-relay-link-label">{section.label}</span>
@@ -26,5 +25,7 @@ const { sections } = Astro.props;
 			))
 		}
 	</ol>
-	<span class="research-relay-context" data-relay-context>{sections[0].context}</span>
+	<span class="research-relay-context" data-relay-context aria-live="polite">
+		Section guide
+	</span>
 </nav>
