@@ -890,7 +890,7 @@ test("homepage renders the cobalt atlas hero without legacy visual layers", asyn
 	assert.ok(atlasComponent, "expected Research Atlas source");
 	assert.match(html, /class="atlas-hero"/);
 	assert.match(html, /class="atlas-hero-portrait"/);
-	assert.match(html, /class="atlas-hero-orbit"/);
+	assert.match(html, /class="atlas-hero-orbits"/);
 	assert.match(html, /class="atlas-hero-grid" aria-hidden="true"/);
 	assert.match(html, /class="atlas-hero-grid-line/);
 	assert.equal(html.match(/<h1(?:\s[^>]*)?>/gi)?.length ?? 0, 1, "expected exactly one h1");
@@ -2023,6 +2023,53 @@ test("homepage hero reserves responsive tracks before the absolute composition c
 	);
 });
 
+test("homepage portrait uses a restrained layered galaxy with reduced-motion fallback", async () => {
+	const indexPage = await readRepo("src/pages/index.astro");
+	const indexCss = await readRepo("src/styles/index.css");
+
+	assert.ok(indexPage, "expected homepage source");
+	assert.ok(indexCss, "expected homepage CSS source");
+	assert.match(indexPage, /class="atlas-hero-orbits"\s+aria-hidden="true"/);
+	assert.equal(
+		indexPage.match(/class="atlas-orbit-plane atlas-orbit-plane--/g)?.length ?? 0,
+		3,
+		"expected three galaxy orbit planes",
+	);
+	assert.equal(
+		indexPage.match(/class="atlas-orbit-body atlas-orbit-body--/g)?.length ?? 0,
+		2,
+		"expected one signal planet and one paper satellite",
+	);
+	assert.equal(
+		indexPage.match(/class="atlas-orbit-star atlas-orbit-star--/g)?.length ?? 0,
+		3,
+		"expected three static star points",
+	);
+
+	assert.match(
+		indexCss,
+		/\.atlas-orbit-plane--one\s*{[^}]*animation:\s*atlas-galaxy-clockwise 28s linear infinite/,
+	);
+	assert.match(
+		indexCss,
+		/\.atlas-orbit-plane--two\s*{[^}]*animation:\s*atlas-galaxy-counter 36s linear infinite/,
+	);
+	assert.match(
+		indexCss,
+		/\.atlas-orbit-plane--three\s*{[^}]*animation:\s*atlas-galaxy-clockwise 24s linear infinite/,
+	);
+	assert.doesNotMatch(
+		indexCss.match(/\.atlas-hero-portrait img\s*{([^}]*)}/)?.[1] ?? "",
+		/animation|transition|filter|box-shadow/,
+		"portrait image must remain visually stable",
+	);
+	const reducedCss = extractCssBlock(indexCss, "@media (prefers-reduced-motion: reduce)");
+	assert.match(
+		reducedCss,
+		/\.atlas-hero-orbits,\s*\.atlas-orbit-plane,[^}]*animation:\s*none/,
+	);
+});
+
 test("research atlas homepage has explicit responsive and reduced-motion contracts", async () => {
 	const indexCss = await readRepo("src/styles/index.css");
 	const atlas = await readRepo("src/components/ResearchAtlas.astro");
@@ -2135,7 +2182,7 @@ test("research atlas homepage has explicit responsive and reduced-motion contrac
 
 	assert.match(
 		indexCss,
-		/\.atlas-hero-orbit\s*{[^}]*animation:\s*atlas-orbit-entry 650ms[^;]*\s1 both/,
+		/\.atlas-hero-orbits\s*{[^}]*animation:\s*atlas-orbit-entry 650ms[^;]*\s1 both/,
 	);
 	assert.match(
 		indexCss,
@@ -2153,14 +2200,29 @@ test("research atlas homepage has explicit responsive and reduced-motion contrac
 		["ResearchRelay", relay],
 		["Navbar", navbar],
 	]) {
-		assert.doesNotMatch(source, /animation(?:-iteration-count)?\s*:\s*[^;]*infinite/i, label);
+		if (label !== "homepage CSS") {
+			assert.doesNotMatch(
+				source,
+				/animation(?:-iteration-count)?\s*:\s*[^;]*infinite/i,
+				label,
+			);
+		}
 		assert.doesNotMatch(source, /font-size:\s*[^;]*vw/i, label);
 	}
+	const infiniteHomepageAnimations = Array.from(
+		indexCss.matchAll(/animation:\s*([^;]*\binfinite\b[^;]*);/gi),
+		([, value]) => value.trim(),
+	);
+	assert.deepEqual(infiniteHomepageAnimations.sort(), [
+		"atlas-galaxy-clockwise 24s linear infinite",
+		"atlas-galaxy-clockwise 28s linear infinite",
+		"atlas-galaxy-counter 36s linear infinite",
+	]);
 
 	const reducedCss = extractCssBlock(indexCss, "@media (prefers-reduced-motion: reduce)");
 	assert.match(
 		reducedCss,
-		/\.atlas-hero-orbit,\s*\.research-atlas-edge,\s*\.home-atlas\[data-active-research-group\] \[data-atlas-node\]\s*{[^}]*animation:\s*none/,
+		/\.atlas-hero-orbits,\s*\.atlas-orbit-plane,\s*\.research-atlas-edge,\s*\.home-atlas\[data-active-research-group\] \[data-atlas-node\]\s*{[^}]*animation:\s*none/,
 	);
 	assert.match(
 		reducedCss,

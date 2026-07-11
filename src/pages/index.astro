@@ -312,7 +312,18 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 				</div>
 			</div>
 			<div class="atlas-hero-portrait">
-				<span class="atlas-hero-orbit" aria-hidden="true"><span /></span>
+				<div class="atlas-hero-orbits" aria-hidden="true">
+					<span class="atlas-orbit-plane atlas-orbit-plane--one">
+						<span class="atlas-orbit-body atlas-orbit-body--signal" />
+					</span>
+					<span class="atlas-orbit-plane atlas-orbit-plane--two">
+						<span class="atlas-orbit-body atlas-orbit-body--paper" />
+					</span>
+					<span class="atlas-orbit-plane atlas-orbit-plane--three" />
+					<span class="atlas-orbit-star atlas-orbit-star--one" />
+					<span class="atlas-orbit-star atlas-orbit-star--two" />
+					<span class="atlas-orbit-star atlas-orbit-star--three" />
+				</div>
 				<Image
 					src={ProfilePicture}
 					alt="Blue bird portrait of Hengquan Guo"
