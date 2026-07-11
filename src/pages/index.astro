@@ -76,6 +76,21 @@ const sortedExperience = [...experience].sort((a, b) => a.data.id - b.data.id);
 const sortedAwards = [...awards].sort(
 	(a, b) => (b.data.year ?? 0) - (a.data.year ?? 0),
 );
+const awardGroups = sortedAwards.reduce<
+	Array<{ yearLabel: string; awards: typeof sortedAwards }>
+>((groups, award) => {
+	const { yearLabel } = splitAwardMeta(award.data.meta, award.data.year);
+	const label = yearLabel ?? "Earlier";
+	const currentGroup = groups.at(-1);
+
+	if (currentGroup?.yearLabel === label) {
+		currentGroup.awards.push(award);
+	} else {
+		groups.push({ yearLabel: label, awards: [award] });
+	}
+
+	return groups;
+}, []);
 const sortedServiceTeaching = [...serviceTeaching].sort(
 	(a, b) => a.data.id - b.data.id,
 );
@@ -423,35 +438,51 @@ const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
 				<h2 class="section-title">{homeSections[2].label}</h2>
 			</header>
 			<div class="section-body">
-				<ul class="award-list">
+				<div class="award-ledger">
 					{
-						sortedAwards.map((award) => {
-							const { inlineMeta, yearLabel } = splitAwardMeta(
-								award.data.meta,
-								award.data.year,
-							);
+						awardGroups.map((group) => (
+							<div class="award-year-group">
+								<div class="award-year-rail" aria-hidden="true">
+									<span class="award-year-label">{group.yearLabel}</span>
+								</div>
+								<ul class="award-list">
+									{
+										group.awards.map((award) => {
+											const { inlineMeta, yearLabel } = splitAwardMeta(
+												award.data.meta,
+												award.data.year,
+											);
 
-							return (
-								<li class="award-item">
-									<div class="award-title">{award.data.title}</div>
-									{(inlineMeta || yearLabel) && (
-										<div class="award-sub">
-											{inlineMeta && (
-												<span class="award-meta">{inlineMeta}</span>
-											)}
-											{inlineMeta && yearLabel && (
-												<span class="award-sep" aria-hidden="true">·</span>
-											)}
-											{yearLabel && (
-												<span class="award-year">{yearLabel}</span>
-											)}
-										</div>
-									)}
-								</li>
-							);
-						})
+											return (
+												<li class="award-item">
+													<div class="award-title">{award.data.title}</div>
+													<div class="award-sub">
+														{inlineMeta && (
+															<span
+																class="award-meta"
+																data-award-signal={
+																	inlineMeta.startsWith("Top") ? "" : undefined
+																}
+															>
+																{inlineMeta}
+															</span>
+														)}
+														{inlineMeta && yearLabel && (
+															<span class="award-sep" aria-hidden="true">·</span>
+														)}
+														{yearLabel && (
+															<span class="award-year">{yearLabel}</span>
+														)}
+													</div>
+												</li>
+											);
+										})
+									}
+								</ul>
+							</div>
+						))
 					}
-				</ul>
+				</div>
 			</div>
 		</section>
 

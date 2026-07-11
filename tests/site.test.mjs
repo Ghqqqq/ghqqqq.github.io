@@ -1033,6 +1033,19 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 	const awardsSection = extractSectionById(html, "awards");
 	assert.doesNotMatch(awardsSection, /id="service"|class="[^"]*service/);
 	assertAwardsContract(awardsSection, expectedAwardTuples);
+	assert.equal(
+		awardsSection.match(/class="award-year-group"/g)?.length ?? 0,
+		5,
+		"expected awards to be organized into five chronological groups",
+	);
+	for (const yearLabel of ["2026", "2025", "2024", "2023", "2021 - 2025"]) {
+		assert.match(
+			awardsSection,
+			new RegExp(
+				`class="award-year-label"[^>]*>\\s*${escapeRegExp(yearLabel)}\\s*<`,
+			),
+		);
+	}
 	const awardsWithFlexibleMarkup = awardsSection
 		.replace('class="award-item"', 'class="featured award-item pinned"')
 		.replace(
@@ -1059,9 +1072,10 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 		/expected rendered award display tuples in stable year-descending order/,
 	);
 
-	const awardsLoopStart = indexPage.indexOf("sortedAwards.map((award) => {");
+	assert.match(indexPage, /const awardGroups = sortedAwards\.reduce/);
+	const awardsLoopStart = indexPage.indexOf("group.awards.map((award) => {");
 	const awardsLoopEnd = indexPage.indexOf("</ul>", awardsLoopStart);
-	assert.notEqual(awardsLoopStart, -1, "expected unchanged sorted awards loop");
+	assert.notEqual(awardsLoopStart, -1, "expected grouped awards loop");
 	assert.notEqual(awardsLoopEnd, -1, "expected awards loop closing list");
 	const awardsLoopSource = indexPage.slice(awardsLoopStart, awardsLoopEnd);
 	for (const className of [
@@ -1086,16 +1100,17 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 	assertCssDeclarations(indexCss, ".award-item", {
 		border: "0",
 		"border-radius": "0",
+		background: "transparent",
 		"box-shadow": "none",
 	});
 	assertCssDeclarationGroup(
 		indexCss,
-		[
-			".home-section--blue .section-num",
-			".home-section--blue .award-meta",
-			".home-section--blue .award-year",
-		],
+		[".home-section--blue .section-num", ".award-year-label"],
 		{ color: "var(--atlas-signal)" },
+	);
+	assert.match(
+		indexCss,
+		/\.award-meta\[data-award-signal\]\s*{[^}]*color:\s*var\(--atlas-signal\)/,
 	);
 
 	assert.doesNotMatch(homeArticle[0], /<hr class="hairline"/);
@@ -1130,15 +1145,20 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 	assert.doesNotMatch(baseReadingCss, /@media/);
 	assert.match(
 		baseReadingCss,
-		/\.award-list\s*{[^}]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/,
+		/\.award-year-group\s*{[^}]*grid-template-columns:\s*minmax\(5rem,\s*7rem\)\s+minmax\(0,\s*1fr\)/,
 	);
+	assert.match(
+		baseReadingCss,
+		/\.award-list\s*{[^}]*display:\s*flex[^}]*flex-direction:\s*column/,
+	);
+	assert.doesNotMatch(baseReadingCss, /repeat\(4,\s*minmax\(0,\s*1fr\)\)/);
 	const mobileReadingCss = extractCssBlock(
 		indexCss,
 		"@media screen and (max-width: 640px)",
 	);
 	assert.match(
 		mobileReadingCss,
-		/\.award-list\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/,
+		/\.award-year-group\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/,
 	);
 	assert.doesNotMatch(readingSystemCss[1], /font-size:\s*[^;]*vw/i);
 	const readingLetterSpacing = Array.from(
