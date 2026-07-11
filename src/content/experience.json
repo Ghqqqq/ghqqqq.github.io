@@ -3,7 +3,7 @@
 		"id": 1,
 		"title": "Research Intern",
 		"organization": "Analemma",
-		"period": "2026.04 - Present",
+		"period": "2026.04–Present",
 		"logo": "analemma",
 		"description": "Building the first multi-turn auto-research dataset and developing auto-research workflows across agentic harness design, model training, and research-oriented evaluation."
 	},
@@ -11,7 +11,7 @@
 		"id": 2,
 		"title": "Research Intern",
 		"organization": "CDG · Tencent Rhino-Bird Elite Talent Program",
-		"period": "2025.06 - 2026.02",
+		"period": "2025.06–2026.02",
 		"logo": "tencent",
 		"description": "Reinforcement learning for recommendation and online bidding; produced three research works, with papers accepted at ICLR 2026 and the KDD 2026 ADS Track, and one under submission."
 	}

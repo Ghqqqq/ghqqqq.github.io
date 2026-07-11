@@ -117,7 +117,7 @@ function splitAwardMeta(meta, year) {
 	const compactMeta = meta?.trim();
 	const yearLabel = year
 		? String(year)
-		: compactMeta && /^\d{4}\s*-\s*\d{4}$/.test(compactMeta)
+		: compactMeta && /^\d{4}\s*[-–]\s*\d{4}$/.test(compactMeta)
 			? compactMeta
 			: undefined;
 	const inlineMeta = yearLabel === compactMeta ? undefined : compactMeta;
@@ -453,13 +453,13 @@ test("homepage renders the academic CV structure and omits excluded personal dat
 	assert.match(html, /Awards[\s\S]*ICML Silver Reviewer[\s\S]*NeurIPS Top Reviewer/);
 	assert.match(html, /RLChina 2022/);
 	assert.match(html, /Research Intern/);
-	assert.match(html, /2026\.04 - Present/);
+	assert.match(html, /2026\.04–Present/);
 	assert.match(
 		html,
 		/Experience[\s\S]*Analemma[\s\S]*Building the first multi-turn auto-research dataset and developing auto-research workflows across agentic harness design, model training, and research-oriented evaluation\./i,
 	);
 	assert.doesNotMatch(html, /ideation agent/i);
-	assert.match(html, /2025\.06 - 2026\.02/);
+	assert.match(html, /2025\.06–2026\.02/);
 	assert.match(
 		html,
 		/Experience[\s\S]*Research Intern[\s\S]*Reinforcement learning for recommendation and online bidding; produced three research works, with papers accepted at ICLR 2026 and the KDD 2026 ADS Track, and one under submission\./i,
@@ -1038,7 +1038,7 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 		5,
 		"expected awards to be organized into five chronological groups",
 	);
-	for (const yearLabel of ["2026", "2025", "2024", "2023", "2021 - 2025"]) {
+	for (const yearLabel of ["2026", "2025", "2024", "2023", "2021–2025"]) {
 		assert.match(
 			awardsSection,
 			new RegExp(
@@ -1103,11 +1103,12 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 		background: "transparent",
 		"box-shadow": "none",
 	});
-	assertCssDeclarationGroup(
-		indexCss,
-		[".home-section--blue .section-num", ".award-year-label"],
-		{ color: "var(--atlas-signal)" },
-	);
+	assertCssDeclarations(indexCss, ".home-section--blue .section-num", {
+		color: "var(--atlas-signal)",
+	});
+	assertCssDeclarations(indexCss, ".award-year-label", {
+		color: "var(--atlas-signal)",
+	});
 	assert.match(
 		indexCss,
 		/\.award-meta\[data-award-signal\]\s*{[^}]*color:\s*var\(--atlas-signal\)/,
@@ -1174,6 +1175,120 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 		readingSystemCss[1],
 		/\.about-manifesto em\s*{[^}]*font-style:\s*normal/,
 	);
+});
+
+test("homepage applies the final editorial typography polish", async () => {
+	const html = await readBuilt("index.html");
+	const indexPage = await readRepo("src/pages/index.astro");
+	const indexCss = await readRepo("src/styles/index.css");
+	const teaser = await readRepo("src/components/PublicationTeaser.astro");
+	const layout = await readRepo("src/layouts/Layout.astro");
+	const snakeGame = await readRepo("src/components/SnakeGame.astro");
+	const notFoundPage = await readRepo("src/pages/404.astro");
+	const awardsSource = await readRepo("src/content/awards.json");
+	const experienceSource = await readRepo("src/content/experience.json");
+	const serviceSource = await readRepo("src/content/service-teaching.json");
+
+	for (const [label, source] of [
+		["built homepage", html],
+		["homepage source", indexPage],
+		["homepage CSS", indexCss],
+		["publication teaser", teaser],
+		["layout", layout],
+		["snake game", snakeGame],
+		["404 page", notFoundPage],
+		["awards data", awardsSource],
+		["experience data", experienceSource],
+		["service data", serviceSource],
+	]) {
+		assert.ok(source, `expected ${label}`);
+	}
+
+	assert.match(awardsSource, /2021–2025/);
+	assert.match(experienceSource, /2026\.04–Present/);
+	assert.match(experienceSource, /2025\.06–2026\.02/);
+	assert.match(serviceSource, /2022–2025/);
+	assert.doesNotMatch(
+		[awardsSource, experienceSource, serviceSource].join("\n"),
+		/\d{4}(?:\.\d{2})?\s+-\s+(?:\d{4}|Present)/,
+	);
+	assert.match(indexPage, /\^\\d\{4\}\\s\*\[-–\]\\s\*\\d\{4\}\$/);
+
+	assertCssDeclarations(indexCss, ".section-title", { "text-wrap": "balance" });
+	assertCssDeclarations(indexCss, ".about-manifesto", { "text-wrap": "balance" });
+	assertCssDeclarations(indexCss, ".entry-title", {
+		"line-height": "1.25",
+		"text-wrap": "balance",
+	});
+	assertCssDeclarations(indexCss, ".entry-description", { "text-wrap": "pretty" });
+	assertCssDeclarations(indexCss, ".entry-compact-title", {
+		"line-height": "1.3",
+		"text-wrap": "pretty",
+	});
+	assertCssDeclarations(indexCss, ".award-title", { "text-wrap": "pretty" });
+	assertCssDeclarations(indexCss, ".publication-group-name", {
+		"text-wrap": "balance",
+	});
+	assertCssDeclarations(teaser, ".publication-copy h3", { "text-wrap": "pretty" });
+
+	for (const selector of [
+		".entry-date",
+		".entry-compact-year",
+		".award-year-label",
+		".award-meta",
+	]) {
+		assertCssDeclarations(indexCss, selector, {
+			"font-variant-numeric": "tabular-nums",
+		});
+	}
+	assertCssDeclarations(teaser, ".publication-teaser", {
+		"font-variant-numeric": "tabular-nums",
+	});
+	assertCssDeclarations(layout, ".site-footer", {
+		"font-variant-numeric": "tabular-nums",
+		"letter-spacing": "0",
+	});
+
+	assertCssDeclarations(indexCss, ".award-sub", {
+		color: "rgba(255, 255, 255, 0.65)",
+		"line-height": "1.2",
+	});
+	assertCssDeclarations(indexCss, ".entry-date", { "line-height": "1.25" });
+	assertCssDeclarations(indexCss, ".service-kind", { "line-height": "1.3" });
+	assertCssDeclarations(teaser, ".publication-teaser.atlas", {
+		"align-items": "baseline",
+	});
+	const polishedVenueRule = Array.from(
+		teaser.matchAll(/(?:^|\n)\s*\.publication-atlas-venue\s*\{([^}]*)\}/g),
+	).at(-1)?.[1];
+	assert.ok(polishedVenueRule, "expected dedicated polished venue rule");
+	assertCssDeclarations(`.publication-atlas-venue {${polishedVenueRule}}`, ".publication-atlas-venue", {
+		"align-self": "baseline",
+	});
+
+	assert.match(
+		indexCss,
+		/\.prose a:hover,[\s\S]*?\.service-note a:focus-visible\s*{[^}]*background-size:\s*100% 1px/,
+	);
+	assert.doesNotMatch(indexCss, /background-size:\s*100% 2px/);
+	assert.match(notFoundPage, /background-size:\s*100% 1px/);
+	assert.doesNotMatch(notFoundPage, /background-size:\s*100% 2px/);
+
+	assert.match(html, /class="site-footer-credit"/);
+	assertCssDeclarations(layout, ".site-footer-credit", {
+		display: "inline-flex",
+		"align-items": "center",
+	});
+	assert.match(
+		snakeGame,
+		/<button[^>]*class="snake-trigger"[^>]*aria-expanded="false"[^>]*aria-controls="snake-board-wrap"/,
+	);
+	assertCssDeclarations(snakeGame, ".snake-trigger", {
+		width: "1.6rem",
+		height: "1.25rem",
+		"border-radius": "0",
+	});
+	assert.match(snakeGame, /trigger\.setAttribute\("aria-expanded", String\(open\)\)/);
 });
 
 test("atlas relay tracks hero, section, and publication-group state", async () => {

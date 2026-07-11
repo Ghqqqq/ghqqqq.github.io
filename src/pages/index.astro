@@ -31,7 +31,7 @@ const splitAwardMeta = (meta?: string, year?: number) => {
 	const compactMeta = meta?.trim();
 	const yearLabel = year
 		? String(year)
-		: compactMeta && /^\d{4}\s*-\s*\d{4}$/.test(compactMeta)
+		: compactMeta && /^\d{4}\s*[-–]\s*\d{4}$/.test(compactMeta)
 			? compactMeta
 			: undefined;
 	const inlineMeta = yearLabel === compactMeta ? undefined : compactMeta;

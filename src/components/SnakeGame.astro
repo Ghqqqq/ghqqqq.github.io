@@ -1,16 +1,33 @@
 ---
 ---
 
-<span class="snake-trigger" id="snake-trigger" aria-hidden="true"><span class="snake-trigger-dot"></span><span class="snake-trigger-dot"></span></span>
+<button
+	class="snake-trigger"
+	id="snake-trigger"
+	type="button"
+	aria-label="Toggle snake game"
+	title="Toggle snake game"
+	aria-expanded="false"
+	aria-controls="snake-board-wrap"
+>
+	<span class="snake-trigger-dot"></span><span class="snake-trigger-dot"></span>
+</button>
 
 <style is:global>
 	.snake-trigger {
+		appearance: none;
 		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		gap: 2px;
+		width: 1.6rem;
+		height: 1.25rem;
 		cursor: pointer;
-		padding: 4px 6px;
-		vertical-align: middle;
-		margin-left: 0.4rem;
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		color: inherit;
 	}
 
 	.snake-trigger-dot {
@@ -22,8 +39,14 @@
 		transition: opacity 0.2s ease;
 	}
 
-	.snake-trigger:hover .snake-trigger-dot {
+	.snake-trigger:hover .snake-trigger-dot,
+	.snake-trigger:focus-visible .snake-trigger-dot {
 		animation: snake-blink 0.6s ease-in-out infinite alternate;
+	}
+
+	.snake-trigger:focus-visible {
+		outline: 1px solid var(--primary);
+		outline-offset: 2px;
 	}
 
 	@keyframes snake-blink {
@@ -221,6 +244,7 @@
 
 		function toggle() {
 			open = !open;
+			trigger.setAttribute("aria-expanded", String(open));
 			if (open) {
 				wrap.classList.add("open");
 				start();
