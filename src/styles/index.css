@@ -1213,6 +1213,23 @@ html[data-theme="light"] .publication-group-index {
 		gap: 0.35rem;
 	}
 
+	.home-atlas[data-active-research-group]
+		[data-atlas-node][data-research-group] {
+		opacity: 0.62;
+	}
+
+	.home-atlas[data-active-research-group="agent-llm-alignment"]
+		[data-research-group="agent-llm-alignment"],
+	.home-atlas[data-active-research-group="recommendation-bidding"]
+		[data-research-group="recommendation-bidding"],
+	.home-atlas[data-active-research-group="reinforcement-learning-bandits"]
+		[data-research-group="reinforcement-learning-bandits"] {
+		border-color: transparent;
+		background: transparent;
+		color: var(--atlas-signal);
+		animation: none;
+	}
+
 	.award-item {
 		grid-template-columns: minmax(0, 1fr);
 		gap: 0.3rem;

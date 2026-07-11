@@ -2364,15 +2364,54 @@ test("research atlas homepage has explicit responsive and reduced-motion contrac
 	const atlasTabletCss = extractCssBlock(atlas, "@media screen and (max-width: 860px)");
 	assert.match(
 		atlasMobileCss,
-		/\.research-atlas-kicker,\s*\.research-atlas-edges,\s*\.research-atlas-group h2\s*{[^}]*display:\s*none/,
+		/\.research-atlas-kicker,\s*\.research-atlas-edges\s*{[^}]*display:\s*none/,
 	);
+	assertCssDeclarations(atlasMobileCss, ".research-atlas", {
+		"min-height": "0",
+	});
+	assertCssDeclarations(atlasMobileCss, ".research-atlas-core", {
+		display: "block",
+		position: "relative",
+		top: "auto",
+		left: "auto",
+		transform: "none",
+	});
 	assert.match(
 		atlasMobileCss,
 		/\.research-atlas-groups\s*{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/,
 	);
+	assertCssDeclarations(atlasMobileCss, ".research-atlas-group h2", {
+		display: "flex",
+	});
 	assert.match(
 		atlasMobileCss,
 		/\.research-atlas-group ul\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/,
+	);
+	assertCssDeclarations(atlasMobileCss, ".research-atlas-group a", {
+		display: "grid",
+		"grid-template-columns": "0.35rem minmax(0, 1fr)",
+		border: "0",
+		background: "transparent",
+	});
+	assert.match(
+		atlasMobileCss,
+		/\.research-atlas-group a::before\s*{[^}]*border-radius:\s*50%[^}]*background:\s*currentColor/,
+	);
+	assertCssDeclarations(atlasMobileCss, ".research-atlas-node-label", {
+		position: "static",
+		width: "auto",
+		"white-space": "normal",
+	});
+	assertCssDeclarations(atlasMobileCss, ".research-atlas-node-short", {
+		display: "none",
+	});
+	assert.match(
+		mobileCss,
+		/\.home-atlas\[data-active-research-group="agent-llm-alignment"\][\s\S]*?animation:\s*none/,
+	);
+	assert.match(
+		mobileCss,
+		/\.home-atlas\[data-active-research-group="agent-llm-alignment"\][\s\S]*?background:\s*transparent/,
 	);
 	assert.match(
 		atlasTabletCss,
