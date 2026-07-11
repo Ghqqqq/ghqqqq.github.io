@@ -1528,6 +1528,58 @@ test("publication group fragments clear the combined Navbar and Relay chrome", a
 	);
 });
 
+test("no-script mobile chrome releases the Navbar before the Relay becomes sticky", async () => {
+	const navbar = await readRepo("src/components/Navbar.astro");
+	const indexCss = await readRepo("src/styles/index.css");
+
+	assert.ok(navbar, "expected Navbar source");
+	assert.ok(indexCss, "expected homepage CSS source");
+	const mobileNavbar = extractCssBlock(navbar, "@media screen and (max-width: 640px)");
+	assertCssDeclarations(mobileNavbar, ':global(html:not([data-nav-js])) .site-nav', {
+		position: "static",
+	});
+	assertCssDeclarations(
+		mobileNavbar,
+		':global(html:not([data-nav-js])) .site-nav-atlas',
+		{ "margin-bottom": "0" },
+	);
+
+	const mobileHomepage = extractCssBlock(indexCss, "@media screen and (max-width: 640px)");
+	assertCssDeclarations(mobileHomepage, "html:not([data-nav-js]) .home-atlas", {
+		"--home-nav-offset": "0rem",
+	});
+});
+
+test("compact Relay keeps descriptive names and live context available to assistive technology", async () => {
+	const relay = await readRepo("src/components/ResearchRelay.astro");
+	const indexCss = await readRepo("src/styles/index.css");
+
+	assert.ok(relay, "expected ResearchRelay source");
+	assert.ok(indexCss, "expected homepage CSS source");
+	assert.match(relay, /aria-label=\{`\$\{section\.number\} \$\{section\.label\}`\}/);
+	assert.match(
+		relay,
+		/data-relay-context[^>]*aria-live="polite"[^>]*>\s*Section guide\s*</,
+	);
+
+	const compactCss = extractCssBlock(indexCss, "@media screen and (max-width: 860px)");
+	assert.doesNotMatch(
+		compactCss,
+		/\.research-relay-context\s*,\s*\.research-relay-link-label\s*{[^}]*display:\s*none/,
+	);
+	assertCssDeclarations(compactCss, ".research-relay-context", {
+		position: "absolute",
+		width: "1px",
+		height: "1px",
+		padding: "0",
+		margin: "-1px",
+		overflow: "hidden",
+		clip: "rect(0, 0, 0, 0)",
+		"white-space": "nowrap",
+		border: "0",
+	});
+});
+
 test("single-column layout accounts for mobile side margins", async () => {
 	const layoutGrid = await readRepo("src/components/LayoutGrid.astro");
 
@@ -2007,7 +2059,7 @@ test("research atlas homepage has explicit responsive and reduced-motion contrac
 	);
 	assert.match(
 		tabletCss,
-		/\.research-relay-context,\s*\.research-relay-link-label\s*{[^}]*display:\s*none/,
+		/\.research-relay-link-label\s*{[^}]*display:\s*none/,
 	);
 	assert.match(
 		tabletCss,

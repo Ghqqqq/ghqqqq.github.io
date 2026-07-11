@@ -343,6 +343,10 @@ const links = [
 			pointer-events: auto;
 		}
 
+		:global(html:not([data-nav-js])) .site-nav {
+			position: static;
+		}
+
 		:global(html:not([data-nav-js])) .site-nav-atlas {
 			margin-bottom: 0;
 		}

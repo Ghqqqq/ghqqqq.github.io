@@ -908,9 +908,20 @@ html[data-theme="light"] .publication-group-index {
 		padding: 0 1.5rem;
 	}
 
-	.research-relay-context,
 	.research-relay-link-label {
 		display: none;
+	}
+
+	.research-relay-context {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 
 	.research-relay-track a {
@@ -953,6 +964,10 @@ html[data-theme="light"] .publication-group-index {
 @media screen and (max-width: 640px) {
 	.home-atlas {
 		--home-relay-height: 3rem;
+	}
+
+	html:not([data-nav-js]) .home-atlas {
+		--home-nav-offset: 0rem;
 	}
 
 	.atlas-hero {

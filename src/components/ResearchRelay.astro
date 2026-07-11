@@ -17,6 +17,7 @@ const { sections } = Astro.props;
 					<a
 						href={`#${section.id}`}
 						data-relay-link={section.id}
+						aria-label={`${section.number} ${section.label}`}
 					>
 						<span>{section.number}</span>
 						<span class="research-relay-link-label">{section.label}</span>
