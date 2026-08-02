@@ -1023,9 +1023,18 @@ test("homepage uses spacing-led reading sections and a cobalt awards chapter", a
 
 	const awardsData = JSON.parse(awardsSource);
 	assert.ok(Array.isArray(awardsData), "expected awards data array");
-	assert.equal(awardsData.length, 8, "expected exactly eight awards in source data");
+	assert.equal(awardsData.length, 9, "expected exactly nine awards in source data");
+	assert.deepEqual(
+		awardsData.find((award) => award.id === 9),
+		{
+			id: 9,
+			title: "Tencent Rhino-Bird Elite Talent Program Outstanding Award",
+			year: 2025,
+		},
+		"expected the 2025 Rhino-Bird outstanding award",
+	);
 	const expectedAwardTuples = [...awardsData]
-		.sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
+		.sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || a.id - b.id)
 		.map((award) => {
 			const { inlineMeta, yearLabel } = splitAwardMeta(award.meta, award.year);
 			return [award.title, inlineMeta ?? null, yearLabel ?? null];

@@ -74,7 +74,7 @@ const visiblePublicationSections = publicationSections.filter(
 const sortedSocials = [...socials].sort((a, b) => a.data.id - b.data.id);
 const sortedExperience = [...experience].sort((a, b) => a.data.id - b.data.id);
 const sortedAwards = [...awards].sort(
-	(a, b) => (b.data.year ?? 0) - (a.data.year ?? 0),
+	(a, b) => (b.data.year ?? 0) - (a.data.year ?? 0) || a.data.id - b.data.id,
 );
 const awardGroups = sortedAwards.reduce<
 	Array<{ yearLabel: string; awards: typeof sortedAwards }>

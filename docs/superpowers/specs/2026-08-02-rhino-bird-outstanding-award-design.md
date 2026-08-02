@@ -12,7 +12,7 @@ Add the 2025 Tencent Rhino-Bird Elite Talent Program Outstanding Award as a sepa
 
 ## Ordering
 
-Place the new award before the existing program-selection entry within the 2025 award group, so the final distinction appears before its selection context.
+Place the new award after the existing program-selection entry within the 2025 award group, so the selection context leads into the final distinction.
 
 ## Presentation
 
