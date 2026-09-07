@@ -1,575 +1,135 @@
 ---
-import "../styles/index.css";
-
 import { Image } from "astro:assets";
 import { getCollection, getEntry, render } from "astro:content";
-import { name, openGraph } from "homepage:globals";
-import ProfilePicture from "../assets/profile-bird-original.png";
-import PublicationTeaser from "../components/PublicationTeaser.astro";
-import ResearchAtlas from "../components/ResearchAtlas.astro";
-import ResearchRelay from "../components/ResearchRelay.astro";
+import Portrait from "../assets/profile-bird-original.png";
+import {
+	fieldForPaper,
+	fields,
+	type Paper,
+} from "../components/atlas/atlas-data";
+import ManuscriptLayer from "../components/ManuscriptLayer.astro";
 import TencentWordmark from "../components/TencentWordmark.astro";
-import { homeSections } from "../data/research-atlas";
 import Layout from "../layouts/Layout.astro";
+import "../components/atlas/atlas.css";
 
-const [publications, about, socials, awards, experience, serviceTeaching] =
-	await Promise.all([
-		getCollection("publications"),
-		getEntry("other", "about"),
-		getCollection("socials"),
-		getCollection("awards"),
-		getCollection("experience"),
-		getCollection("serviceTeaching"),
-	]);
-
+const [publications, about, experience, awards, services] = await Promise.all([
+	getCollection("publications"),
+	getEntry("other", "about"),
+	getCollection("experience"),
+	getCollection("awards"),
+	getCollection("serviceTeaching"),
+]);
 const { Content: About } = await render(about!);
-
-const formatKindLabel = (kind: "service" | "teaching" | "talk") =>
-	kind.charAt(0).toUpperCase() + kind.slice(1);
-
-const splitAwardMeta = (meta?: string, year?: number) => {
-	const compactMeta = meta?.trim();
-	const yearLabel = year
-		? String(year)
-		: compactMeta && /^\d{4}\s*[-–]\s*\d{4}$/.test(compactMeta)
-			? compactMeta
-			: undefined;
-	const inlineMeta = yearLabel === compactMeta ? undefined : compactMeta;
-
-	return { inlineMeta, yearLabel };
-};
-
-const selectedPublications = publications
-	.filter((publication) => publication.data.selected)
-	.sort(
-		(a, b) =>
-			b.data.year - a.data.year ||
-			b.data.createdAt.getTime() - a.data.createdAt.getTime(),
-	);
-
-const publicationSections = [
-	{
-		id: "agent-llm-alignment",
-		title: "Agent / LLM Alignment",
-	},
-	{
-		id: "recommendation-bidding",
-		title: "Recommendation & Bidding",
-	},
-	{
-		id: "reinforcement-learning-bandits",
-		title: "Reinforcement Learning & Bandits",
-	},
-].map((section) => ({
-	...section,
-	publications: selectedPublications.filter(
-		(publication) => publication.data.homepageCategory === section.id,
-	),
-}));
-
-const visiblePublicationSections = publicationSections.filter(
-	(section) => section.publications.length > 0,
+const ordered = [...publications].sort(
+	(a, b) =>
+		b.data.year - a.data.year ||
+		b.data.createdAt.getTime() - a.data.createdAt.getTime(),
 );
-
-const sortedSocials = [...socials].sort((a, b) => a.data.id - b.data.id);
-const sortedExperience = [...experience].sort((a, b) => a.data.id - b.data.id);
-const sortedAwards = [...awards].sort(
+const papers: Paper[] = ordered.map(({ id, data }) => ({
+	id,
+	title: data.title,
+	authors: data.authors,
+	venue: data.venue,
+	venueShort: data.venueShort,
+	year: data.year,
+	link: data.link,
+	category: data.homepageCategory,
+	selected: data.selected,
+	lineage: data.lineage,
+}));
+const selected = papers.filter((p) => p.selected);
+const readers = await Promise.all(
+	ordered.map(async (paper) => ({ paper, ...(await render(paper)) })),
+);
+const experienceItems = [...experience].sort((a, b) => a.data.id - b.data.id);
+const awardItems = [...awards].sort(
 	(a, b) => (b.data.year ?? 0) - (a.data.year ?? 0) || a.data.id - b.data.id,
 );
-const awardGroups = sortedAwards.reduce<
-	Array<{ yearLabel: string; awards: typeof sortedAwards }>
->((groups, award) => {
-	const { yearLabel } = splitAwardMeta(award.data.meta, award.data.year);
-	const label = yearLabel ?? "Earlier";
-	const currentGroup = groups.at(-1);
-
-	if (currentGroup?.yearLabel === label) {
-		currentGroup.awards.push(award);
-	} else {
-		groups.push({ yearLabel: label, awards: [award] });
-	}
-
-	return groups;
-}, []);
-const sortedServiceTeaching = [...serviceTeaching].sort(
-	(a, b) => a.data.id - b.data.id,
-);
-
-const heroGridColumns = Array.from({ length: 9 }, (_, index) => index + 1);
-const heroGridRows = Array.from({ length: 7 }, (_, index) => index + 1);
+const years = [
+	...new Set(
+		awardItems.map((a) => (a.data.year ? String(a.data.year) : a.data.meta!)),
+	),
+];
+const serviceItems = [...services].sort((a, b) => a.data.id - b.data.id);
+const chapters = [
+	{ id: "overview", label: "Overview" },
+	{ id: "research", label: "Research" },
+	{ id: "journey", label: "Experience" },
+	{ id: "awards", label: "Awards" },
+	{ id: "service", label: "Service" },
+];
 ---
 
-<Layout
-	title={openGraph.home.title || name}
-	description={openGraph.home.description}
-	layout="home"
-	ambient="manuscript"
->
-	<script is:inline data-atlas-controller>
-		(() => {
-			const documentRoot = document.documentElement;
-			documentRoot.dataset.atlasJs = "booting";
-			documentRoot.dataset.homeHero = "visible";
+<Layout title="Hengquan Guo" description="Reinforcement learning and bandits, from theoretical foundations to agentic and multimodal systems." layout="home" ambient="none">
+	<script is:inline>document.documentElement.dataset.atlasPhase = "overview"; document.documentElement.dataset.homeHero = "visible";</script>
+	<article class="atlas-experience" data-atlas-experience data-view="map" data-field="all">
+		<script type="application/json" id="atlas-paper-data" set:html={JSON.stringify(papers).replace(/</g,"\\u003c")} />
+		<div class="atlas-world" data-atlas-world aria-hidden="true"></div>
+		<div class="atlas-manuscript" aria-hidden="true"><ManuscriptLayer /></div>
+		<div class="atlas-annotations" data-atlas-annotations>
+			{fields.map(field => <button class="field-pin" data-field-pin={field.id} data-select-field={field.id} type="button"><span class="field-pin-number">{field.number}</span><span class="field-pin-name">{field.short}</span><span class="field-pin-count">{selected.filter(p => p.category === field.category).length} selected works</span></button>)}
+			{selected.map(paper => <button class="paper-pin" data-paper-pin={paper.id} data-read-paper={paper.id} type="button" aria-label={`${paper.title}, ${paper.venueShort ?? paper.venue}, ${paper.year}`}><span class="paper-pin-dot"></span></button>)}
+			<div class="paper-preview" data-paper-preview aria-hidden="true" hidden><span data-preview-meta></span><strong data-preview-title></strong></div>
+		</div>
+		<nav class="atlas-chapters" aria-label="Atlas chapters">
+			{chapters.map((chapter,index) => <a href={`#${chapter.id}`} data-chapter-link={chapter.id}><span>0{index+1}</span><span>{chapter.label}</span></a>)}
+			<span class="atlas-chapter-line" aria-hidden="true"></span>
+		</nav>
 
-			const init = () => {
-				const root = document.querySelector("[data-home-atlas]");
-				if (!(root instanceof HTMLElement)) {
-					throw new Error("Atlas root is unavailable");
-				}
-
-				const hero = root.querySelector("[data-atlas-hero]");
-				const sections = Array.from(root.querySelectorAll("[data-home-section]"));
-				const publicationGroups = Array.from(
-					root.querySelectorAll("[data-publication-group]"),
-				);
-				const relayLinks = Array.from(root.querySelectorAll("[data-relay-link]"));
-				const context = root.querySelector("[data-relay-context]");
-				const intersectingSections = new Set();
-				const intersectingPublicationGroups = new Set();
-				const publicationSection = sections.find(
-					(section) => section.getAttribute("data-home-section") === "publications",
-				);
-				const setResearchGroup = (group) => {
-					const id = group.getAttribute("data-publication-group");
-					const label = group.getAttribute("data-publication-context");
-					if (!id) return;
-
-					root.dataset.activeResearchGroup = id;
-					if (context && label) context.textContent = label;
-				};
-
-				const syncResearchGroup = () => {
-					if (root.dataset.activeSection !== "publications") return;
-
-					const group = publicationGroups.find((candidate) =>
-						intersectingPublicationGroups.has(candidate),
-					);
-					if (group) {
-						setResearchGroup(group);
-						return;
-					}
-
-					delete root.dataset.activeResearchGroup;
-					const label = publicationSection?.getAttribute("data-section-context");
-					if (context && label) context.textContent = label;
-				};
-
-				const setSection = (section) => {
-					const id = section.getAttribute("data-home-section");
-					const label = section.getAttribute("data-section-context");
-					if (!id) return;
-
-					root.dataset.activeSection = id;
-					if (id !== "publications") {
-						intersectingPublicationGroups.clear();
-						delete root.dataset.activeResearchGroup;
-					}
-					for (const link of relayLinks) {
-						if (link.getAttribute("data-relay-link") === id) {
-							link.setAttribute("aria-current", "location");
-						} else {
-							link.removeAttribute("aria-current");
-						}
-					}
-					if (context && label) context.textContent = label;
-				};
-
-				const readHashId = () => {
-					const value = window.location.hash.replace(/^#/, "");
-					try {
-						return decodeURIComponent(value);
-					} catch {
-						return value;
-					}
-				};
-
-				const syncHashState = () => {
-					const hashId = readHashId();
-					intersectingSections.clear();
-					intersectingPublicationGroups.clear();
-					delete root.dataset.activeResearchGroup;
-
-					const group = publicationGroups.find(
-						(candidate) =>
-							`publications-${candidate.getAttribute("data-publication-group")}` ===
-							hashId,
-					);
-					if (group && publicationSection) {
-						setSection(publicationSection);
-						setResearchGroup(group);
-						return;
-					}
-
-					const section = sections.find(
-						(candidate) => candidate.getAttribute("data-home-section") === hashId,
-					);
-					if (section) {
-						setSection(section);
-					} else if (sections[0]) {
-						setSection(sections[0]);
-					}
-				};
-
-				if (sections[0]) setSection(sections[0]);
-
-				if (!("IntersectionObserver" in window)) {
-					documentRoot.dataset.homeHero = "passed";
-					root.dataset.heroState = "passed";
-					syncHashState();
-					window.addEventListener("hashchange", syncHashState);
-					return;
-				}
-
-				if (hero) {
-					root.dataset.heroState = "visible";
-					new IntersectionObserver(
-						([entry]) => {
-							const state = entry?.isIntersecting ? "visible" : "passed";
-							documentRoot.dataset.homeHero = state;
-							root.dataset.heroState = state;
-						},
-						{ threshold: 0.15 },
-					).observe(hero);
-				} else {
-					documentRoot.dataset.homeHero = "passed";
-					root.dataset.heroState = "passed";
-				}
-
-				const contentObserver = new IntersectionObserver(
-					(entries) => {
-						for (const entry of entries) {
-							const sectionId = entry.target.getAttribute("data-home-section");
-							const groupId = entry.target.getAttribute("data-publication-group");
-
-							if (sectionId) {
-								if (entry.isIntersecting) {
-									intersectingSections.add(entry.target);
-								} else {
-									intersectingSections.delete(entry.target);
-								}
-							}
-							if (groupId) {
-								if (entry.isIntersecting) {
-									intersectingPublicationGroups.add(entry.target);
-								} else {
-									intersectingPublicationGroups.delete(entry.target);
-								}
-							}
-						}
-
-						let activeSection;
-						for (const section of sections) {
-							if (intersectingSections.has(section)) activeSection = section;
-						}
-						if (activeSection) setSection(activeSection);
-						if (root.dataset.activeSection !== "publications") {
-							intersectingPublicationGroups.clear();
-						}
-						syncResearchGroup();
-					},
-					{ rootMargin: "-30% 0px -55% 0px", threshold: 0 },
-				);
-
-				for (const section of sections) contentObserver.observe(section);
-				for (const group of publicationGroups) contentObserver.observe(group);
-			};
-
-			const run = () => {
-				try {
-					init();
-					documentRoot.dataset.atlasJs = "ready";
-				} catch {
-					documentRoot.dataset.homeHero = "passed";
-					delete documentRoot.dataset.atlasJs;
-				}
-			};
-
-			if (document.readyState === "loading") {
-				document.addEventListener("DOMContentLoaded", run, { once: true });
-			} else {
-				run();
-			}
-		})();
-	</script>
-	<article class="home-atlas" data-home-atlas>
-		<header class="atlas-hero" data-atlas-hero>
-			<div class="atlas-hero-grid" aria-hidden="true">
-				{heroGridColumns.map((line) => (
-					<span
-						class="atlas-hero-grid-line atlas-hero-grid-line--vertical"
-						style={`--atlas-grid-line: ${line}`}
-					/>
-				))}
-				{heroGridRows.map((line) => (
-					<span
-						class="atlas-hero-grid-line atlas-hero-grid-line--horizontal"
-						style={`--atlas-grid-line: ${line}`}
-					/>
-				))}
+		<section id="overview" class="atlas-opening" data-atlas-section="overview">
+			<div class="opening-copy">
+				<p class="atlas-overline">Shanghai &middot; Reinforcement learning</p>
+				<h1><span>Hengquan</span><span>Guo<span class="name-period">.</span></span></h1>
+				<p class="opening-statement">Research as<br /><em>a living atlas.</em></p>
+				<div class="opening-profile"><Image src={Portrait} alt="Hengquan Guo's blue bird portrait" width={64} height={64} loading="eager" /><p>PhD student<br /><span>ShanghaiTech University</span></p></div>
+				<div class="opening-links"><a href="https://scholar.google.com/citations?user=8bGinucAAAAJ&hl=zh-CN" target="_blank" rel="noopener noreferrer">Google Scholar <span aria-hidden="true">↗</span></a><a href="mailto:guohq@shanghaitech.edu.cn">guohq (at) shanghaitech.edu.cn</a><a href="mailto:guohq46@qq.com">guohq46 (at) qq.com</a></div>
 			</div>
-			<div class="atlas-hero-copy">
-				<p class="atlas-hero-kicker">Decision-making under constraints · Shanghai</p>
-				<h1 class="atlas-hero-name">{name}</h1>
-				<p class="atlas-hero-statement">Research as <em>a living atlas.</em></p>
-				<p class="atlas-hero-role">PhD student, ShanghaiTech University</p>
-				<p class="atlas-hero-lede">
-					Reinforcement learning and bandits, from theoretical foundations to
-					agentic and multimodal systems.
-				</p>
-				<div class="atlas-hero-links" aria-label="Profile links">
-					{sortedSocials.map((item) => item.data.link ? (
-						<a href={item.data.link} target="_blank" rel="noopener noreferrer">
-							{item.data.text}
-						</a>
-					) : (
-						<span>{item.data.text}</span>
-					))}
-				</div>
-			</div>
-			<div class="atlas-hero-portrait">
-				<div class="atlas-hero-orbits" aria-hidden="true">
-					<span class="atlas-orbit-plane atlas-orbit-plane--one">
-						<span class="atlas-orbit-body atlas-orbit-body--signal" />
-					</span>
-					<span class="atlas-orbit-plane atlas-orbit-plane--two">
-						<span class="atlas-orbit-body atlas-orbit-body--paper" />
-					</span>
-					<span class="atlas-orbit-plane atlas-orbit-plane--three" />
-					<span class="atlas-orbit-star atlas-orbit-star--one" />
-					<span class="atlas-orbit-star atlas-orbit-star--two" />
-					<span class="atlas-orbit-star atlas-orbit-star--three" />
-				</div>
-				<Image
-					src={ProfilePicture}
-					alt="Blue bird portrait of Hengquan Guo"
-					width={288}
-					height={288}
-					quality={100}
-					loading="eager"
-				/>
-			</div>
-			<div class="atlas-hero-coordinates" aria-hidden="true">
-				31.2304° N · 121.4737° E<br />PhD · ShanghaiTech University
-			</div>
-			<div class="atlas-hero-map"><ResearchAtlas /></div>
-		</header>
-
-		<ResearchRelay sections={homeSections} />
-
-		<section
-			class="home-section"
-			id="about"
-			data-home-section="about"
-			data-section-context={homeSections[0].context}
-		>
-			<header class="section-head">
-				<span class="section-num">{homeSections[0].number}</span>
-				<h2 class="section-title">{homeSections[0].label}</h2>
-			</header>
-			<div class="section-body">
-				<p class="about-manifesto">
-					Learning under <em>constraints, feedback,</em> and changing environments.
-				</p>
-				<div class="prose">
-					<About />
-				</div>
+			<div class="opening-map-space" data-scene-frame="overview" aria-hidden="true"></div>
+			<div class="opening-coordinate" aria-hidden="true">31.2304&deg; N<br />121.4737&deg; E</div>
+			<div class="opening-fields">
+				{fields.map(field => <a href="#research" data-select-field={field.id}><span>{field.number}</span><span>{field.short}</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M5 19 19 5M6 5h13v13" /></svg></a>)}
 			</div>
 		</section>
 
-		<section
-			class="home-section"
-			id="experience"
-			data-home-section="experience"
-			data-section-context={homeSections[1].context}
-		>
-			<header class="section-head">
-				<span class="section-num">{homeSections[1].number}</span>
-				<h2 class="section-title">{homeSections[1].label}</h2>
-			</header>
-			<div class="section-body">
-				<div class="entry-list">
-					{
-						sortedExperience.map((item) => (
-							<div class="entry">
-								<div class="entry-header">
-									<h3 class="entry-title">{item.data.title}</h3>
-									<span class="entry-date">{item.data.period}</span>
-								</div>
-								<p class="entry-meta">
-									{item.data.logo === "tencent" && (
-										<TencentWordmark class="org-wordmark" />
-									)}
-									{item.data.logo === "analemma" && (
-										<span
-											class="org-mark org-mark-analemma"
-											aria-hidden="true"
-										/>
-									)}
-									{item.data.organization}
-								</p>
-								{item.data.description && (
-									<p class="entry-description">{item.data.description}</p>
-								)}
-								{item.data.outcomes && item.data.outcomes.length > 0 && (
-									<div class="entry-outcomes">
-										<span class="entry-outcomes-label">Outcomes</span>
-										<ul class="entry-outcomes-list">
-											{item.data.outcomes.map((outcome) => (
-												<li>{outcome}</li>
-											))}
-										</ul>
-									</div>
-								)}
-							</div>
-						))
-					}
+		<section id="research" class="atlas-research" data-atlas-section="research">
+			<div class="research-map-space" data-scene-frame="research" aria-hidden="true"></div>
+			<header class="research-heading"><div><p class="atlas-overline">01 / Research &amp; selected work</p><h2>The research<br /><em>landscape.</em></h2></div><div class="view-control" role="group" aria-label="Publication view"><button type="button" data-view-button="map" aria-pressed="true" title="Atlas view" aria-label="Atlas view"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Zm6-3v15M15 6v15" /></svg></button><button type="button" data-view-button="index" aria-pressed="false" title="Publication index" aria-label="Publication index"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1" /></svg></button></div></header>
+			<div class="research-map-content">
+				<div class="research-overview" data-research-overview>
+					{fields.map(field => <button type="button" class="field-choice" data-select-field={field.id}><span class="field-choice-number">{field.number}</span><span><strong>{field.label}</strong><small>{field.description}</small></span><span class="field-choice-arrow" aria-hidden="true">↗</span></button>)}
 				</div>
+				{fields.map(field => <div class="field-focus" data-field-focus={field.id} hidden><button class="atlas-back" data-map-overview type="button"><span aria-hidden="true">←</span> All directions</button><p class="atlas-overline">{field.number} / {selected.filter(p => p.category===field.category).length} selected works</p><h3>{field.label}</h3><p class="field-description">{field.description}</p><div class="field-paper-list">{selected.filter(p=>p.category===field.category).map(paper => <a class="field-paper" href={`/publications/${paper.id}`} data-read-paper={paper.id}><span class="paper-year">{paper.year}</span><span><strong>{paper.title}</strong><small>{paper.venueShort ?? paper.venue}</small></span><span aria-hidden="true">↗</span></a>)}</div></div>)}
 			</div>
+			<div class="publication-index" data-publication-index>
+				<div class="index-tools"><p>{papers.length} publications</p><label><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg><input type="search" aria-label="Search publications" placeholder="Search publications" data-paper-search /></label></div>
+				{papers.map(paper => <a href={`/publications/${paper.id}`} class="index-paper" data-read-paper={paper.id} data-index-paper data-search-text={`${paper.title} ${paper.authors} ${paper.year} ${paper.venue}`.toLowerCase()}><span class="paper-year">{paper.year}</span><span><h3>{paper.title}</h3><p>{paper.authors}</p><small>{paper.venue}</small></span><span aria-hidden="true">↗</span></a>)}
+				<p data-search-empty hidden>No matching publications.</p>
+			</div>
+			<div class="map-caption"><span data-map-caption>Reinforcement Learning &amp; Bandits</span><div><button type="button" data-reset-camera aria-label="Reset map view" title="Reset map view"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.6 7M3 4v7h7" /></svg></button><button type="button" data-toggle-motion aria-label="Pause scene motion" title="Pause scene motion" aria-pressed="false"><svg data-pause-icon width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg><svg data-play-icon hidden width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m8 5 11 7-11 7Z" /></svg></button></div></div>
 		</section>
 
-		<section
-			class="home-section home-section--blue"
-			id="awards"
-			data-home-section="awards"
-			data-section-context={homeSections[2].context}
-		>
-			<header class="section-head">
-				<span class="section-num">{homeSections[2].number}</span>
-				<h2 class="section-title">{homeSections[2].label}</h2>
-			</header>
-			<div class="section-body">
-				<div class="award-ledger">
-					{
-						awardGroups.map((group) => (
-							<div class="award-year-group">
-								<div class="award-year-rail" aria-hidden="true">
-									<span class="award-year-label">{group.yearLabel}</span>
-								</div>
-								<ul class="award-list">
-									{
-										group.awards.map((award) => {
-											const { inlineMeta, yearLabel } = splitAwardMeta(
-												award.data.meta,
-												award.data.year,
-											);
-
-											return (
-												<li class="award-item">
-													<div class="award-title">{award.data.title}</div>
-													<div class="award-sub">
-														{inlineMeta && (
-															<span
-																class="award-meta"
-																data-award-signal={
-																	inlineMeta.startsWith("Top") ? "" : undefined
-																}
-															>
-																{inlineMeta}
-															</span>
-														)}
-														{inlineMeta && yearLabel && (
-															<span class="award-sep" aria-hidden="true">·</span>
-														)}
-														{yearLabel && (
-															<span class="award-year">{yearLabel}</span>
-														)}
-													</div>
-												</li>
-											);
-										})
-									}
-								</ul>
-							</div>
-						))
-					}
-				</div>
-			</div>
+		<section id="journey" class="atlas-journey reading-chapter" data-atlas-section="journey">
+			<div class="chapter-intro"><p class="atlas-overline">02 / In practice</p><h2>Ideas into<br /><em>experience.</em></h2></div>
+			<div class="journey-content"><div class="atlas-about"><About /></div><div class="journey-entries">{experienceItems.map(({data},index) => <article class="journey-entry"><div class="journey-date"><span>{data.period.split(".")[0]}</span><small>{data.period}</small></div><div><p class="atlas-overline">{data.title}</p><h3>{data.logo === "tencent" ? <TencentWordmark class="journey-tencent" /> : "Analemma"}</h3>{data.logo==="tencent" && <p class="journey-program">CDG &middot; Tencent Rhino-Bird Elite Talent Program</p>}<p>{data.description}</p></div></article>)}</div></div>
 		</section>
 
-		<section
-			class="home-section"
-			id="service"
-			data-home-section="service"
-			data-section-context={homeSections[3].context}
-		>
-			<header class="section-head">
-				<span class="section-num">{homeSections[3].number}</span>
-				<h2 class="section-title">{homeSections[3].label}</h2>
-			</header>
-			<div class="section-body">
-				<ul class="entry-list-compact service-list">
-					{
-						sortedServiceTeaching.map((item) => (
-							<li class="entry-compact service-item">
-								<div class="service-heading">
-									<span class="entry-compact-title">{item.data.title}</span>
-									<span class="service-kind">
-										{formatKindLabel(item.data.kind)}
-									</span>
-								</div>
-								<div class="service-meta">{item.data.meta}</div>
-								{item.data.notePrefix && (
-									<div class="service-note">
-										{item.data.notePrefix}
-										{item.data.noteLink && item.data.noteLinkLabel ? (
-											<a href={item.data.noteLink}>
-												{item.data.noteLinkLabel}
-											</a>
-										) : (
-											item.data.noteLinkLabel
-										)}
-										{item.data.noteSuffix}
-									</div>
-								)}
-							</li>
-						))
-					}
-				</ul>
-			</div>
+		<section id="awards" class="atlas-awards" data-atlas-section="awards">
+			<header class="chapter-intro"><p class="atlas-overline">03 / Recognition</p><h2>Awards<span class="heading-period">.</span></h2></header>
+			<div class="atlas-award-ledger">{years.map(year => <div class="atlas-award-year"><span>{year}</span><ul>{awardItems.filter(item => (item.data.year ? String(item.data.year) : item.data.meta)===year).map(({data}) => <li><h3>{data.title}</h3>{data.year && data.meta && <span class:list={[data.meta.startsWith("Top") && "award-signal"]}>{data.meta}</span>}</li>)}</ul></div>)}</div>
 		</section>
 
-		<section
-			class="home-section"
-			id="publications"
-			data-home-section="publications"
-			data-section-context={homeSections[4].context}
-		>
-			<header class="section-head">
-				<span class="section-num">{homeSections[4].number}</span>
-				<h2 class="section-title">{homeSections[4].label}</h2>
-			</header>
-			<div class="section-body">
-				<div class="publication-groups">
-					{
-						visiblePublicationSections.map((section, sectionIndex) => (
-							<section
-								class="publication-group"
-								id={`publications-${section.id}`}
-								data-publication-group={section.id}
-								data-publication-context={section.title}
-							>
-								<h3 class="publication-group-title">
-									<span class="publication-group-index">
-										{String(sectionIndex + 1).padStart(2, "0")}
-									</span>
-									<span class="publication-group-rule" aria-hidden="true" />
-									<span class="publication-group-name">{section.title}</span>
-								</h3>
-								<div class="publication-list">
-									{section.publications.map((publication) => (
-										<PublicationTeaser
-											publication={publication}
-											href={`/publications/${publication.id}`}
-											variant="atlas"
-											showLineage={true}
-										/>
-									))}
-								</div>
-							</section>
-						))
-					}
-				</div>
-			</div>
+		<section id="service" class="atlas-service reading-chapter" data-atlas-section="service">
+			<header class="chapter-intro"><p class="atlas-overline">04 / Community</p><h2>Service<br /><em>&amp; teaching.</em></h2></header>
+			<div class="atlas-service-list">{serviceItems.map(({data}) => <article><div><span class="atlas-overline">{data.kind}</span><h3>{data.title}</h3><p>{data.meta}</p></div></article>)}</div>
 		</section>
 	</article>
+
+	<dialog class="atlas-reader" data-atlas-reader aria-label="Publication reader">
+		<div class="reader-toolbar"><span class="atlas-overline">Research / Publication</span><div><span class="reader-position" data-reader-position aria-label="Publication position"></span><button data-reader-prev type="button" aria-label="Previous paper" title="Previous paper">←</button><button data-reader-next type="button" aria-label="Next paper" title="Next paper">→</button><button data-reader-close type="button" aria-label="Close publication" title="Close publication"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19" /></svg></button></div></div>
+		{readers.map(({paper,Content}) => <article class="reader-paper" data-reader-paper={paper.id} hidden><p class="reader-year">{paper.data.year} <span>{paper.data.venueShort ?? "Research"}</span></p><h2 tabindex="-1">{paper.data.title}</h2><p class="reader-authors">{paper.data.authors}</p><p class="reader-venue">{paper.data.venue}</p><div class="reader-links">{paper.data.link && <a href={paper.data.link} target="_blank" rel="noopener noreferrer">Paper <span aria-hidden="true">↗</span></a>}<a href={`/publications/${paper.id}`}>Publication page <span aria-hidden="true">↗</span></a></div><div class="reader-prose">{paper.body?.trim() ? <Content /> : <p>{paper.data.description}</p>}</div>{paper.data.lineage && <aside class="reader-lineage"><p class="atlas-overline">Idea lineage</p><p>{paper.data.lineage.text}</p><a href={`/publications/${paper.data.lineage.sourceId}`} data-read-paper={paper.data.lineage.sourceId}>{paper.data.lineage.sourceTitle} <span aria-hidden="true">↗</span></a></aside>}<div class="reader-related"><p class="atlas-overline">In this direction</p>{selected.filter(p=>p.category===paper.data.homepageCategory&&p.id!==paper.id).slice(0,2).map(p=><a href={`/publications/${p.id}`} data-read-paper={p.id}><span>{p.year}</span>{p.title}<span aria-hidden="true">↗</span></a>)}</div></article>)}
+	</dialog>
+	<script>
+		import { mountAtlasExperience } from "../components/atlas/controller";
+		mountAtlasExperience();
+	</script>
 </Layout>

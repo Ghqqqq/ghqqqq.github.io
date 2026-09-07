@@ -9,7 +9,7 @@
 		"start": "astro preview",
 		"preview": "astro preview",
 		"astro": "astro",
-		"test": "node --test tests/site.test.mjs",
+		"test": "node --test tests/*.test.mjs",
 		"verify:site": "pnpm build && pnpm test",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write ."
@@ -24,11 +24,15 @@
 		"@shikijs/themes": "^1.26.1",
 		"astro": "6.0.0",
 		"astro-expressive-code": "^0.38.3",
-		"sharp": "^0.33.5"
+		"d3-contour": "^4.0.2",
+		"sharp": "^0.33.5",
+		"three": "0.185.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.4",
+		"@types/d3-contour": "^3.0.6",
 		"@types/node": "^24.3.0",
+		"@types/three": "^0.185.4",
 		"mathjax-full": "^3.2.2",
 		"shiki": "^1.26.1",
 		"typescript": "^5.9.2",

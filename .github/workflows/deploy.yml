@@ -19,6 +19,9 @@ jobs:
 
       - name: Install, build, and upload your site
         uses: withastro/action@v5
+        with:
+          node-version: "24"
+          build-cmd: pnpm run verify:site
 
   deploy:
     needs: build
