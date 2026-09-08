@@ -2,6 +2,7 @@
 import { Image } from "astro:assets";
 import { getCollection, getEntry, render } from "astro:content";
 import Portrait from "../assets/profile-bird-original.png";
+import AtlasPoster from "../components/atlas/AtlasPoster.astro";
 import {
 	fieldForPaper,
 	fields,
@@ -84,7 +85,7 @@ const chapters = [
 				<div class="opening-profile"><Image src={Portrait} alt="Hengquan Guo's blue bird portrait" width={64} height={64} loading="eager" /><p>PhD student<br /><span>ShanghaiTech University</span></p></div>
 				<div class="opening-links"><a href="https://scholar.google.com/citations?user=8bGinucAAAAJ&hl=zh-CN" target="_blank" rel="noopener noreferrer">Google Scholar <span aria-hidden="true">↗</span></a><a href="mailto:guohq@shanghaitech.edu.cn">guohq (at) shanghaitech.edu.cn</a><a href="mailto:guohq46@qq.com">guohq46 (at) qq.com</a></div>
 			</div>
-			<div class="opening-map-space" data-scene-frame="overview" aria-hidden="true"></div>
+			<div class="opening-map-space" data-scene-frame="overview" aria-hidden="true"><AtlasPoster priority /></div>
 			<div class="opening-coordinate" aria-hidden="true">31.2304&deg; N<br />121.4737&deg; E</div>
 			<div class="opening-fields">
 				{fields.map(field => <a href="#research" data-select-field={field.id}><span>{field.number}</span><span>{field.short}</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M5 19 19 5M6 5h13v13" /></svg></a>)}
@@ -92,7 +93,7 @@ const chapters = [
 		</section>
 
 		<section id="research" class="atlas-research" data-atlas-section="research">
-			<div class="research-map-space" data-scene-frame="research" aria-hidden="true"></div>
+			<div class="research-map-space" data-scene-frame="research" aria-hidden="true"><AtlasPoster /></div>
 			<header class="research-heading"><div><p class="atlas-overline">01 / Research &amp; selected work</p><h2>The research<br /><em>landscape.</em></h2></div><div class="view-control" role="group" aria-label="Publication view"><button type="button" data-view-button="map" aria-pressed="true" title="Atlas view" aria-label="Atlas view"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Zm6-3v15M15 6v15" /></svg></button><button type="button" data-view-button="index" aria-pressed="false" title="Publication index" aria-label="Publication index"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1" /></svg></button></div></header>
 			<div class="research-map-content">
 				<div class="research-overview" data-research-overview>

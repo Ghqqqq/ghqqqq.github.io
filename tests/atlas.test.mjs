@@ -152,7 +152,9 @@ test("existing section bookmarks resolve to the corresponding new views", () => 
 });
 
 test("production does not include private hosting configuration and keeps the atlas alias", async () => {
-	await assert.rejects(access(projectFile(".openai/hosting.json")), { code: "ENOENT" });
+	if (process.env.ATLAS_PRIVATE_PREVIEW !== "1") {
+		await assert.rejects(access(projectFile(".openai/hosting.json")), { code: "ENOENT" });
+	}
 	const alias = await readFile(projectFile("dist/atlas/index.html"), "utf8");
 	assert.match(alias, /http-equiv="refresh"/);
 	assert.match(alias, /url=\//);

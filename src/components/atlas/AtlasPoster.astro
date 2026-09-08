@@ -1,0 +1,14 @@
+---
+import Desktop from "../../assets/atlas/poster-desktop.jpg";
+import Mobile from "../../assets/atlas/poster-mobile.jpg";
+
+interface Props {
+	priority?: boolean;
+}
+const { priority = false } = Astro.props;
+---
+
+<picture class="atlas-poster" aria-hidden="true">
+	<source media="(max-width: 760px)" srcset={Mobile.src} width={Mobile.width} height={Mobile.height} />
+	<img src={Desktop.src} width={Desktop.width} height={Desktop.height} alt="" decoding="async" loading={priority ? "eager" : "lazy"} fetchpriority={priority ? "high" : "auto"} />
+</picture>

@@ -5,7 +5,9 @@ import {
 	type Paper,
 	type Phase,
 } from "./atlas-data";
+import { canExploreScene, needsAmbientFrames } from "./render-policy";
 import { terrainElevation } from "./terrain";
+import { bakeTerrainLighting } from "./terrain-lighting";
 
 export type WorldState = {
 	phase: Phase;
@@ -60,16 +62,27 @@ export async function createAtlasWorld(
 		140,
 	);
 	const segments = innerWidth < 700 ? 180 : 280;
+	const depthSegments = Math.round((segments * 28) / 34);
 	const terrainGeometry = new THREE.PlaneGeometry(
 		34,
 		28,
 		segments,
-		Math.round((segments * 28) / 34),
+		depthSegments,
 	);
 	terrainGeometry.rotateX(-Math.PI / 2);
 	const positions = terrainGeometry.getAttribute("position");
-	for (let i = 0; i < positions.count; i++)
-		positions.setY(i, elevation(positions.getX(i), positions.getZ(i)));
+	const heights = new Float32Array(positions.count);
+	for (let i = 0; i < positions.count; i++) {
+		heights[i] = elevation(positions.getX(i), positions.getZ(i));
+		positions.setY(i, heights[i]);
+	}
+	terrainGeometry.setAttribute(
+		"terrainLight",
+		new THREE.Float32BufferAttribute(
+			bakeTerrainLighting(heights, segments + 1, depthSegments + 1, 34, 28),
+			2,
+		),
+	);
 	terrainGeometry.computeVertexNormals();
 	const terrainMaterial = new THREE.ShaderMaterial({
 		transparent: true,
@@ -85,9 +98,11 @@ export async function createAtlasWorld(
 			focusStrength: { value: 0 },
 		},
 		vertexShader: `
+			attribute vec2 terrainLight; varying vec2 bakedLight;
 			varying vec3 terrainNormal; varying vec3 terrainPosition;
 			varying float distanceToCamera;
 			void main() {
+				bakedLight = terrainLight;
 				terrainNormal = normalize(mat3(modelMatrix) * normal);
 				terrainPosition = (modelMatrix * vec4(position, 1.0)).xyz;
 				vec4 v = modelViewMatrix * vec4(position, 1.0);
@@ -95,6 +110,7 @@ export async function createAtlasWorld(
 				gl_Position = projectionMatrix * v;
 			}`,
 		fragmentShader: `
+			varying vec2 bakedLight;
 			uniform vec3 base; uniform vec3 valley; uniform vec3 summit;
 			uniform vec3 fogColor; uniform float strength; uniform float clock;
 			uniform vec2 focus; uniform float focusStrength;
@@ -109,17 +125,22 @@ export async function createAtlasWorld(
 			void main() {
 				vec3 n = normalize(terrainNormal);
 				vec3 viewDirection = normalize(cameraPosition - terrainPosition);
-				vec3 lightDirection = normalize(vec3(-0.65 + sin(clock * 0.045) * 0.18, 0.9, 0.6));
+				vec3 lightDirection = normalize(vec3(-0.65 + sin(clock * 0.12) * 0.18, 0.9, 0.6));
 				float diffuse = max(0.0, dot(n, lightDirection));
-				float specular = pow(max(0.0, dot(n, normalize(lightDirection + viewDirection))), 36.0);
+				float halfLight = max(0.0, dot(n, normalize(lightDirection + viewDirection)));
+				float satin = pow(halfLight, 26.0) * 0.085 + pow(halfLight, 100.0) * 0.34;
 				float altitude = smoothstep(0.1, 5.2, terrainPosition.y);
 				vec3 mineral = mix(valley, base, smoothstep(0.0, 1.8, terrainPosition.y));
 				mineral = mix(mineral, summit, altitude * altitude * altitude * 0.38);
-				vec3 color = mineral * (0.3 + diffuse * 0.92);
-				color += summit * specular * 0.15;
+				vec3 color = mineral * (0.3 * bakedLight.x + diffuse * 0.92 * bakedLight.y);
+				color *= mix(0.8, 1.0, bakedLight.x);
+				color += summit * satin * (0.4 + 0.6 * bakedLight.y);
 				float rim = pow(1.0 - max(0.0, dot(n, viewDirection)), 3.0);
-				color += summit * rim * 0.025;
-				float lines = max(contour(terrainPosition.y, 0.14) * 0.055, contour(terrainPosition.y, 0.7) * 0.19);
+				color += summit * rim * 0.043 * smoothstep(0.2, 2.0, terrainPosition.y);
+				float edgeLight = pow(max(0.0, dot(n, normalize(vec3(0.8,0.45,-0.6)))),2.0) * rim;
+				color += summit * edgeLight * 0.09;
+				float nearDetail = 1.0 - smoothstep(25.0, 52.0, distanceToCamera);
+				float lines = max(contour(terrainPosition.y, 0.14) * mix(0.025, 0.065, nearDetail), contour(terrainPosition.y, 0.7) * mix(0.12, 0.22, nearDetail));
 				color = mix(color, summit, lines * smoothstep(0.15, 0.5, terrainPosition.y));
 				float localFocus = exp(-dot(terrainPosition.xz - focus, terrainPosition.xz - focus) / 16.0);
 				color += summit * localFocus * focusStrength * 0.085;
@@ -530,12 +551,20 @@ export async function createAtlasWorld(
 	}
 	let lastInspection = 0;
 	let hasRendered = false;
+	let nextFrameAt = 0;
+	let renderCount = 0;
+	const inspect = new URLSearchParams(location.search).has("inspect");
 	function frame(now: number) {
 		if (disposed) return;
 		raf = 0;
+		if (now < nextFrameAt) {
+			raf = requestAnimationFrame(frame);
+			return;
+		}
 		const dt = Math.max(0, Math.min((now - last) / 1000 || 1 / 60, 0.05));
 		last = now;
-		if (!paused) time += dt;
+		const ambientMotion = needsAmbientFrames(state, paused);
+		if (ambientMotion) time += dt;
 		if (
 			innerWidth <= 760 &&
 			!state.reading &&
@@ -548,8 +577,8 @@ export async function createAtlasWorld(
 		const blend = !hasRendered || reduced.matches ? 1 : 1 - Math.exp(-dt * 4.2);
 		const inputBlend =
 			!hasRendered || reduced.matches ? 1 : 1 - Math.exp(-dt * 11);
-		const pointerX = paused || state.reading ? 0 : pointer.x;
-		const pointerY = paused || state.reading ? 0 : pointer.y;
+		const pointerX = ambientMotion ? pointer.x : 0;
+		const pointerY = ambientMotion ? pointer.y : 0;
 		drag = THREE.MathUtils.lerp(drag, targetDrag, inputBlend);
 		easedPointer.x = THREE.MathUtils.lerp(easedPointer.x, pointerX, inputBlend);
 		easedPointer.y = THREE.MathUtils.lerp(easedPointer.y, pointerY, inputBlend);
@@ -621,14 +650,16 @@ export async function createAtlasWorld(
 			markersSettling ||= Math.abs(marker.scale.x - size) > 0.003;
 		}
 		renderer.render(scene, camera);
+		renderCount++;
+		if (inspect) root.dataset.renderCount = String(renderCount);
 		hasRendered = true;
 		projectLabels();
-		if (now - lastInspection > 900) {
+		if (lastInspection === 0 || now - lastInspection > 900) {
 			lastInspection = now;
 			root.dataset.camera = JSON.stringify(
 				camera.position.toArray().map((n) => Math.round(n * 100) / 100),
 			);
-			if (new URLSearchParams(location.search).has("inspect")) {
+			if (inspect) {
 				const gl = renderer.getContext(),
 					pixels = new Uint8Array(
 						gl.drawingBufferWidth * gl.drawingBufferHeight * 4,
@@ -681,13 +712,18 @@ export async function createAtlasWorld(
 				Math.abs(background.g - targetColor.g) +
 				Math.abs(background.b - targetColor.b) >
 				0.001;
-		if (
-			!document.hidden &&
-			((!paused && blue && !state.index && !state.reading) || settling)
-		)
+		root.dataset.sceneActivity = settling
+			? "settling"
+			: ambientMotion
+				? "ambient"
+				: "rest";
+		if (!document.hidden && (ambientMotion || settling)) {
+			nextFrameAt = now + (settling ? 0 : 1000 / 30 - 0.5);
 			raf = requestAnimationFrame(frame);
+		}
 	}
 	function invalidate() {
+		nextFrameAt = 0;
 		if (!raf && !document.hidden && !disposed) {
 			last = performance.now();
 			raf = requestAnimationFrame(frame);
@@ -703,11 +739,14 @@ export async function createAtlasWorld(
 		goals();
 	}
 	listen(window, "resize", resize);
+	void document.fonts.ready.then(() => {
+		if (!disposed) resize();
+	});
 	listen(
 		window,
 		"scroll",
 		() => {
-			if (innerWidth <= 760) invalidate();
+			if (innerWidth <= 760 && canExploreScene(state)) invalidate();
 		},
 		{ passive: true },
 	);
@@ -718,7 +757,12 @@ export async function createAtlasWorld(
 		} else invalidate();
 	});
 	listen(root, "pointermove", ((event: PointerEvent) => {
-		if (event.pointerType === "touch") return;
+		if (
+			event.pointerType === "touch" ||
+			!canExploreScene(state) ||
+			(paused && !dragging)
+		)
+			return;
 		if (!reduced.matches) {
 			pointer.x = event.clientX / innerWidth - 0.5;
 			pointer.y = event.clientY / innerHeight - 0.5;

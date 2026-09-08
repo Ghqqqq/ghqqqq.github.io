@@ -26,6 +26,7 @@ export function mountAtlasExperience() {
 	let paused = matchMedia("(prefers-reduced-motion: reduce)").matches;
 	let returnFocus: HTMLElement | null = null;
 	let readingFromApp = false;
+	const readingPositions = new Map<string, number>();
 	let previewPaper: string | null = null;
 	let previewField: FieldId | null = null;
 	function syncMotionButton() {
@@ -253,6 +254,7 @@ export function mountAtlasExperience() {
 		}
 	}
 	function showPaper(paper: Paper) {
+		rememberReadingPosition();
 		highlightTarget(null);
 		if (!reader!.open) returnFocus = document.activeElement as HTMLElement;
 		reading = paper;
@@ -263,7 +265,7 @@ export function mountAtlasExperience() {
 		))
 			article.hidden = article.dataset.readerPaper !== paper.id;
 		if (!reader!.open) reader!.showModal();
-		reader!.scrollTop = 0;
+		reader!.scrollTop = readingPositions.get(paper.id) ?? 0;
 		reader!
 			.querySelector<HTMLElement>(
 				`[data-reader-paper="${CSS.escape(paper.id)}"] h2`,
@@ -287,11 +289,16 @@ export function mountAtlasExperience() {
 		showPaper(paper);
 	}
 	function hideReader() {
+		rememberReadingPosition();
 		if (reader!.open) reader!.close();
 		reading = null;
 		delete root!.dataset.reading;
 		syncWorld();
 		returnFocus?.focus({ preventScroll: true });
+	}
+	function rememberReadingPosition() {
+		if (reading && reader!.open)
+			readingPositions.set(reading.id, reader!.scrollTop);
 	}
 	function closeReader() {
 		if (readingFromApp && history.state?.reader) {
