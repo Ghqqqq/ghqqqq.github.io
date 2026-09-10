@@ -857,7 +857,7 @@ html[data-atlas-phase="research"] [data-view="index"] .atlas-world {
 }
 .journey-entry h3 {
 	margin: 0.7rem 0 0.8rem;
-	font-size: 2rem;
+	font-size: 1.6rem;
 	font-weight: 400;
 }
 .journey-organization {
@@ -871,6 +871,12 @@ html[data-atlas-phase="research"] [data-view="index"] .atlas-world {
 	background-color: currentColor;
 	-webkit-mask: url("/analemma-mark.png") center / contain no-repeat;
 	mask: url("/analemma-mark.png") center / contain no-repeat;
+}
+.journey-ernie {
+	flex: 0 0 auto;
+	width: 1.12em;
+	height: 1.12em;
+	object-fit: contain;
 }
 .journey-entry > div > p:last-child {
 	font-size: 0.88rem;
@@ -1557,7 +1563,7 @@ body:has(.atlas-reader[open]) {
 		font-size: 1.5rem;
 	}
 	.journey-entry h3 {
-		font-size: 1.8rem;
+		font-size: 1.5rem;
 	}
 	.atlas-award-year {
 		grid-template-columns: 1fr;

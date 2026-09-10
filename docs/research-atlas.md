@@ -14,6 +14,8 @@ The homepage at `/` presents the research landscape, selected publications, expe
 
 Reading offsets are retained per paper for the current page visit. New papers start at the title. Ambient terrain drawing targets 30 frames per second while idle; camera interaction is unthrottled. Covered chapters stop drawing after the camera settles without pausing the independent manuscript animation.
 
+The ERNIE organization mark is the unmodified 64px PNG served by the [official ERNIE site](https://ernie.baidu.com/blog/img/favicon.ico), stored locally as `public/ernie-mark.png`.
+
 ## Reading Interactions
 
 Each paper has an individual camera target. The desktop reader frames its terrain marker in the remaining space, and previous/next follows the selected paper. Closing the reader restores the pre-reading field, index state, and viewing angle. A resized viewport is reframed instead of restoring obsolete dimensions. Non-selected papers acquire a temporary marker only while open; their positions carry no additional academic meaning.

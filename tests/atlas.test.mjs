@@ -159,16 +159,31 @@ test("experience, awards and service retain every current content record", async
 	}
 });
 
+test("the current internship timeline starts with Baidu and keeps Analemma's completed period", async () => {
+	const { html } = await homepage();
+	const entries = [...html.matchAll(/<article class="journey-entry">([\s\S]*?)<\/article>/g)].map(match => visibleText(match[1]));
+	assert.match(entries[0], /Baidu \/ ERNIE/);
+	assert.ok(entries[0].includes("2026.08–Present"));
+	assert.match(entries[0], /RSI and the black-box and white-box evaluation of agentic systems/);
+	assert.match(entries[1], /Analemma/);
+	assert.ok(entries[1].includes("2026.04–2026.07"));
+	assert.match(entries[2], /Tencent Rhino-Bird Elite Talent Program/);
+	assert.ok(entries[2].includes("2025.06–2026.02"));
+});
+
 test("experience organization marks are rendered with their packaged themeable assets", async () => {
 	const { html } = await homepage();
 	const journey = html.match(/<section[^>]*id="journey"[^>]*>([\s\S]*?)<\/section>/)[1];
 	assert.ok(journey.includes('class="journey-analemma" aria-hidden="true"'), "Analemma's mark must accompany its organization name");
 	assert.ok(visibleText(journey).includes("Analemma"));
 	assert.ok(journey.includes("journey-tencent"), "Tencent's existing wordmark must remain available");
+	assert.ok(journey.includes('class="journey-ernie"'));
+	assert.ok(journey.includes('src="/ernie-mark.png"'), "Baidu / ERNIE must use the ERNIE brand mark");
 	const cssFiles = [...html.matchAll(/href="(\/_astro\/[^\"]+\.css)"/g)].map(match => match[1]);
 	const css = (await Promise.all(cssFiles.map(file => readFile(projectFile(`dist${file}`), "utf8")))).join("\n");
 	assert.ok(css.includes("analemma-mark.png"), "The homepage must load the mark's mask styling");
 	assert.deepEqual(await readFile(projectFile("dist/analemma-mark.png")), await readFile(projectFile("public/analemma-mark.png")));
+	assert.deepEqual(await readFile(projectFile("dist/ernie-mark.png")), await readFile(projectFile("public/ernie-mark.png")));
 });
 
 test("IdeaTrail appears in Agents, the reading layer and the complete archive", async () => {

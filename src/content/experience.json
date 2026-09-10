@@ -2,13 +2,21 @@
 	{
 		"id": 1,
 		"title": "Research Intern",
+		"organization": "Baidu / ERNIE",
+		"period": "2026.08–Present",
+		"logo": "ernie",
+		"description": "Working on RSI and the black-box and white-box evaluation of agentic systems."
+	},
+	{
+		"id": 2,
+		"title": "Research Intern",
 		"organization": "Analemma",
-		"period": "2026.04–Present",
+		"period": "2026.04–2026.07",
 		"logo": "analemma",
 		"description": "Building the first multi-turn auto-research dataset and developing auto-research workflows across agentic harness design, model training, and research-oriented evaluation."
 	},
 	{
-		"id": 2,
+		"id": 3,
 		"title": "Research Intern",
 		"organization": "CDG · Tencent Rhino-Bird Elite Talent Program",
 		"period": "2025.06–2026.02",

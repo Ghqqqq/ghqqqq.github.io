@@ -120,7 +120,7 @@ const chapters = [
 						<div class="journey-date"><span>{data.period.split(".")[0]}</span><small>{data.period}</small></div>
 						<div>
 							<p class="atlas-overline">{data.title}</p>
-							<h3 class="journey-organization">{data.logo === "tencent" ? <TencentWordmark class="journey-tencent" /> : <>{data.logo === "analemma" && <span class="journey-analemma" aria-hidden="true" />}<span>{data.organization}</span></>}</h3>
+							<h3 class="journey-organization">{data.logo === "tencent" ? <TencentWordmark class="journey-tencent" /> : <>{data.logo === "analemma" && <span class="journey-analemma" aria-hidden="true" />}{data.logo === "ernie" && <img class="journey-ernie" src="/ernie-mark.png" alt="" width="32" height="32" loading="lazy" decoding="async" />}<span>{data.organization}</span></>}</h3>
 							{data.logo === "tencent" && <p class="journey-program">CDG &middot; Tencent Rhino-Bird Elite Talent Program</p>}
 							<p>{data.description}</p>
 						</div>
