@@ -876,7 +876,6 @@ html[data-atlas-phase="research"] [data-view="index"] .atlas-world {
 	flex: 0 0 auto;
 	width: 1.12em;
 	height: 1.12em;
-	object-fit: contain;
 }
 .journey-entry > div > p:last-child {
 	font-size: 0.88rem;

@@ -164,7 +164,9 @@ test("the current internship timeline starts with Baidu and keeps Analemma's com
 	const entries = [...html.matchAll(/<article class="journey-entry">([\s\S]*?)<\/article>/g)].map(match => visibleText(match[1]));
 	assert.match(entries[0], /Baidu \/ ERNIE/);
 	assert.ok(entries[0].includes("2026.08–Present"));
-	assert.match(entries[0], /RSI and the black-box and white-box evaluation of agentic systems/);
+	assert.match(entries[0], /RSI and the evaluation of agentic systems/);
+	assert.match(entries[0], /black-box assessment of end-to-end behavior and white-box analysis of internal mechanisms/);
+	assert.match(entries[0], /understanding agent capabilities, diagnosing failure modes, and assessing reliability/);
 	assert.match(entries[1], /Analemma/);
 	assert.ok(entries[1].includes("2026.04–2026.07"));
 	assert.match(entries[2], /Tencent Rhino-Bird Elite Talent Program/);
@@ -178,7 +180,9 @@ test("experience organization marks are rendered with their packaged themeable a
 	assert.ok(visibleText(journey).includes("Analemma"));
 	assert.ok(journey.includes("journey-tencent"), "Tencent's existing wordmark must remain available");
 	assert.ok(journey.includes('class="journey-ernie"'));
-	assert.ok(journey.includes('src="/ernie-mark.png"'), "Baidu / ERNIE must use the ERNIE brand mark");
+	assert.ok(journey.includes('href="/ernie-mark.png"'), "Baidu / ERNIE must retain the official mark's original geometry");
+	assert.ok(journey.includes('filter="url(#ernie-mark-ink)"'));
+	assert.ok(journey.includes('flood-color="currentColor"'), "ERNIE's transparent mark must follow the text color");
 	const cssFiles = [...html.matchAll(/href="(\/_astro\/[^\"]+\.css)"/g)].map(match => match[1]);
 	const css = (await Promise.all(cssFiles.map(file => readFile(projectFile(`dist${file}`), "utf8")))).join("\n");
 	assert.ok(css.includes("analemma-mark.png"), "The homepage must load the mark's mask styling");

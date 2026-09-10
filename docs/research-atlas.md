@@ -14,7 +14,7 @@ The homepage at `/` presents the research landscape, selected publications, expe
 
 Reading offsets are retained per paper for the current page visit. New papers start at the title. Ambient terrain drawing targets 30 frames per second while idle; camera interaction is unthrottled. Covered chapters stop drawing after the camera settles without pausing the independent manuscript animation.
 
-The ERNIE organization mark is the unmodified 64px PNG served by the [official ERNIE site](https://ernie.baidu.com/blog/img/favicon.ico), stored locally as `public/ernie-mark.png`.
+The ERNIE organization mark uses the unmodified 64px PNG served by the [official ERNIE site](https://ernie.baidu.com/blog/img/favicon.ico), stored locally as `public/ernie-mark.png`. `ErnieMark.astro` removes its white matte at render time and colors the original silhouette with `currentColor`, matching the other organization marks without redrawing the logo. The alpha filter uses `clamp(1.15 * (alpha - red), 0, 1)` in sRGB: white and transparent pixels disappear while the blue mark remains opaque.
 
 ## Reading Interactions
 

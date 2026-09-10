@@ -5,7 +5,7 @@
 		"organization": "Baidu / ERNIE",
 		"period": "2026.08–Present",
 		"logo": "ernie",
-		"description": "Working on RSI and the black-box and white-box evaluation of agentic systems."
+		"description": "Working on RSI and the evaluation of agentic systems, spanning black-box assessment of end-to-end behavior and white-box analysis of internal mechanisms. The work focuses on understanding agent capabilities, diagnosing failure modes, and assessing reliability."
 	},
 	{
 		"id": 2,
