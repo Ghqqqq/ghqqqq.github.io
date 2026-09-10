@@ -1,0 +1,22 @@
+---
+import type { Paper } from "./atlas-data";
+
+interface Props {
+	source: Paper;
+	target: Paper;
+	direction: "source" | "target";
+}
+const { source, target, direction } = Astro.props;
+const destination = direction === "source" ? source : target;
+const title =
+	direction === "source"
+		? (target.lineage?.sourceTitle ?? source.title)
+		: target.title;
+---
+
+<aside class="reader-lineage" data-lineage-relation data-lineage-from={source.id} data-lineage-to={target.id} data-lineage-direction={direction === "source" ? "backward" : "forward"}>
+	<p class="atlas-overline">Idea lineage</p>
+	<div class="lineage-timeline" aria-hidden="true"><span>{source.year}</span><span class="lineage-track"><i data-lineage-progress></i></span><span>{target.year}</span></div>
+	<p>{target.lineage?.text}</p>
+	<a href={`/publications/${destination.id}`} data-read-paper={destination.id} data-lineage-link={destination.id}>{title} <span aria-hidden="true">↗</span></a>
+</aside>

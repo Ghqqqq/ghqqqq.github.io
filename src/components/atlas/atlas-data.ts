@@ -49,7 +49,7 @@ export type Paper = {
 	link?: string;
 	category?: string;
 	selected?: boolean;
-	lineage?: { sourceId: string; text: string };
+	lineage?: { sourceId: string; sourceTitle?: string; text: string };
 };
 export const fieldForPaper = (paper: Paper) =>
 	fields.find((field) => field.category === paper.category)?.id;

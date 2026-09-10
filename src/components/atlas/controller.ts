@@ -6,7 +6,7 @@ import {
 	type Phase,
 	resolveAtlasHash,
 } from "./atlas-data";
-import { type AtlasWorld, createAtlasWorld } from "./world";
+import { type AtlasView, type AtlasWorld, createAtlasWorld } from "./world";
 
 export function mountAtlasExperience() {
 	const root = document.querySelector<HTMLElement>("[data-atlas-experience]");
@@ -27,6 +27,14 @@ export function mountAtlasExperience() {
 	let returnFocus: HTMLElement | null = null;
 	let readingFromApp = false;
 	const readingPositions = new Map<string, number>();
+	let readerOrigin: {
+		camera: AtlasView | null;
+		field: FieldId | null;
+		view: "map" | "index";
+	} | null = null;
+	let lineageFocus: string | null = null;
+	let traceEpoch = 0;
+	let traceAnimation: Animation | null = null;
 	let previewPaper: string | null = null;
 	let previewField: FieldId | null = null;
 	function syncMotionButton() {
@@ -127,11 +135,105 @@ export function mountAtlasExperience() {
 	listen(root, "focusout", (event) =>
 		highlightTarget((event as FocusEvent).relatedTarget),
 	);
+	function highlightLineage(target: EventTarget | null) {
+		const relation =
+			target instanceof Element
+				? target.closest<HTMLElement>("[data-lineage-relation]")
+				: null;
+		const match = papers.find(
+			(p) =>
+				p.id === relation?.dataset.lineageTo &&
+				p.lineage?.sourceId === relation?.dataset.lineageFrom,
+		);
+		const id = match?.id ?? null;
+		if (id === lineageFocus) return;
+		lineageFocus = id;
+		for (const item of reader!.querySelectorAll<HTMLElement>(
+			"[data-lineage-relation]",
+		))
+			item.toggleAttribute(
+				"data-lineage-active",
+				item.dataset.lineageTo === id,
+			);
+		world?.setState({ lineageFocus: id });
+	}
+	listen(reader, "pointerover", (event) => highlightLineage(event.target));
+	listen(reader, "pointerout", (event) =>
+		highlightLineage((event as PointerEvent).relatedTarget),
+	);
+	listen(reader, "focusin", (event) => highlightLineage(event.target));
+	listen(reader, "focusout", (event) =>
+		highlightLineage((event as FocusEvent).relatedTarget),
+	);
+	function cancelLineage() {
+		traceEpoch++;
+		traceAnimation?.cancel();
+		traceAnimation = null;
+		world?.cancelTrace();
+		reader!.removeAttribute("data-tracing");
+		reader!.removeAttribute("aria-busy");
+		reader!.style.removeProperty("--lineage-progress");
+		delete root!.dataset.lineageTravel;
+		highlightLineage(null);
+	}
+	async function traceLineage(link: HTMLElement) {
+		const destinationId = link.dataset.lineageLink;
+		const current = reading;
+		const destination = papers.find((p) => p.id === destinationId);
+		if (
+			!destinationId ||
+			!current ||
+			!destination ||
+			(current.lineage?.sourceId !== destinationId &&
+				destination.lineage?.sourceId !== current.id) ||
+			reader!.hasAttribute("data-tracing")
+		)
+			return;
+		if (
+			!world ||
+			matchMedia("(prefers-reduced-motion: reduce)").matches ||
+			document.hidden
+		) {
+			openPaper(destinationId);
+			return;
+		}
+		cancelLineage();
+		const epoch = traceEpoch;
+		reader!.setAttribute("data-tracing", "");
+		reader!.setAttribute("aria-busy", "true");
+		root!.dataset.lineageTravel = "true";
+		highlightLineage(link);
+		let completed = false;
+		if (innerWidth <= 760) {
+			const progress = link
+				.closest("[data-lineage-relation]")!
+				.querySelector<HTMLElement>("[data-lineage-progress]")!;
+			traceAnimation = progress.animate(
+				[{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+				{ duration: 280, easing: "ease-in-out", fill: "forwards" },
+			);
+			try {
+				await traceAnimation.finished;
+				completed = true;
+			} catch {}
+		} else {
+			completed = await world.traceLineage(current.id, destinationId, (value) =>
+				reader!.style.setProperty("--lineage-progress", String(value)),
+			);
+		}
+		if (epoch !== traceEpoch || !reader!.open || reading?.id !== current.id)
+			return;
+		cancelLineage();
+		if (completed || root!.dataset.sceneReady === "fallback")
+			openPaper(destinationId);
+	}
 	listen(document, "visibilitychange", () => {
 		root.dataset.pageVisible = String(!document.hidden);
+		if (document.hidden) cancelLineage();
 	});
 	root.dataset.pageVisible = String(!document.hidden);
 	listen(matchMedia("(prefers-reduced-motion: reduce)"), "change", (event) => {
+		cancelLineage();
 		paused = (event as MediaQueryListEvent).matches;
 		syncMotionButton();
 		world?.pause(paused);
@@ -256,15 +358,20 @@ export function mountAtlasExperience() {
 	function showPaper(paper: Paper) {
 		rememberReadingPosition();
 		highlightTarget(null);
-		if (!reader!.open) returnFocus = document.activeElement as HTMLElement;
+		if (!reader!.open) {
+			returnFocus = document.activeElement as HTMLElement;
+			readerOrigin = readingFromApp
+				? { camera: world?.captureView() ?? null, field, view }
+				: null;
+		}
 		reading = paper;
-		const group = fieldForPaper(paper);
-		if (group) focusField(group);
 		for (const article of reader!.querySelectorAll<HTMLElement>(
 			"[data-reader-paper]",
 		))
 			article.hidden = article.dataset.readerPaper !== paper.id;
 		if (!reader!.open) reader!.showModal();
+		const group = fieldForPaper(paper);
+		if (group) focusField(group);
 		reader!.scrollTop = readingPositions.get(paper.id) ?? 0;
 		reader!
 			.querySelector<HTMLElement>(
@@ -278,6 +385,7 @@ export function mountAtlasExperience() {
 	function openPaper(id: string) {
 		const paper = papers.find((p) => p.id === id);
 		if (!paper) return;
+		cancelLineage();
 		const replacing = reader!.open;
 		if (!replacing)
 			history.replaceState(
@@ -289,18 +397,26 @@ export function mountAtlasExperience() {
 		showPaper(paper);
 	}
 	function hideReader() {
+		cancelLineage();
 		rememberReadingPosition();
+		const origin = reader!.open ? readerOrigin : null;
 		if (reader!.open) reader!.close();
+		readerOrigin = null;
 		reading = null;
 		delete root!.dataset.reading;
-		syncWorld();
+		if (origin) {
+			setView(origin.view);
+			focusField(origin.field);
+		} else syncWorld();
 		returnFocus?.focus({ preventScroll: true });
+		return origin;
 	}
 	function rememberReadingPosition() {
 		if (reading && reader!.open)
 			readingPositions.set(reading.id, reader!.scrollTop);
 	}
 	function closeReader() {
+		cancelLineage();
 		if (readingFromApp && history.state?.reader) {
 			history.back();
 			return;
@@ -311,6 +427,7 @@ export function mountAtlasExperience() {
 		goToResearch();
 	}
 	function navigateHash() {
+		cancelLineage();
 		const hash = resolveAtlasHash(location.hash);
 		const legacy = location.hash && location.hash !== `#${hash}`;
 		if (legacy) {
@@ -325,11 +442,12 @@ export function mountAtlasExperience() {
 				?.scrollIntoView({ behavior: "instant", block: "start" });
 		}
 		if (hash.startsWith("paper-")) {
+			readingFromApp = Boolean(history.state?.reader);
 			const paper = papers.find((p) => p.id === hash.slice(6));
 			if (paper) showPaper(paper);
 			return;
 		}
-		hideReader();
+		const origin = hideReader();
 		readingFromApp = false;
 		if (history.state?.view) setView(history.state.view);
 		if (hash === "index") {
@@ -346,6 +464,8 @@ export function mountAtlasExperience() {
 		} else if (history.state?.atlas) focusField(history.state.field ?? null);
 		if (history.state?.atlas && typeof history.state.scroll === "number")
 			window.scrollTo({ top: history.state.scroll, behavior: "instant" });
+		updatePhase();
+		if (origin?.camera) world?.restoreView(origin.camera);
 	}
 	listen(document, "click", ((event: MouseEvent) => {
 		if (
@@ -373,7 +493,9 @@ export function mountAtlasExperience() {
 		const paperLink = target.closest<HTMLElement>("[data-read-paper]");
 		if (paperLink) {
 			event.preventDefault();
-			openPaper(paperLink.dataset.readPaper!);
+			if (paperLink.hasAttribute("data-lineage-link"))
+				void traceLineage(paperLink);
+			else openPaper(paperLink.dataset.readPaper!);
 			return;
 		}
 		const fieldLink = target.closest<HTMLElement>("[data-select-field]");
@@ -506,7 +628,10 @@ export function mountAtlasExperience() {
 		},
 		{ passive: true },
 	);
-	listen(window, "resize", updatePhase);
+	listen(window, "resize", () => {
+		cancelLineage();
+		updatePhase();
+	});
 	const themeObserver = new MutationObserver(syncWorld);
 	themeObserver.observe(document.documentElement, {
 		attributes: true,
@@ -531,6 +656,7 @@ export function mountAtlasExperience() {
 		});
 	if (import.meta.hot)
 		import.meta.hot.dispose(() => {
+			cancelLineage();
 			world?.dispose();
 			themeObserver.disconnect();
 			cancelAnimationFrame(scrollFrame);

@@ -111,6 +111,27 @@ test("all papers, research categories and idea-lineage targets remain available"
 	assert.match(visibleText(html), /Hard constraints.*rectified policy optimization/);
 });
 
+test("idea-lineage traversal exposes both directions of declared relations only", async () => {
+	const { html, papers } = await homepage();
+	const relations = [...html.matchAll(/<aside\b[^>]*data-lineage-relation[^>]*>[\s\S]*?<\/aside>/g)].map(match => match[0]);
+	const declared = papers.filter(paper => paper.lineage);
+	assert.ok(declared.length > 0);
+	assert.equal(relations.length, declared.length * 2);
+	for (const target of declared) {
+		const source = papers.find(paper => paper.id === target.lineage.sourceId);
+		const pair = relations.filter(relation => relation.includes(`data-lineage-from="${source.id}"`) && relation.includes(`data-lineage-to="${target.id}"`));
+		assert.equal(pair.length, 2);
+		for (const [direction, destination] of [["backward", source.id], ["forward", target.id]]) {
+			const relation = pair.find(item => item.includes(`data-lineage-direction="${direction}"`));
+			assert.ok(relation);
+			assert.ok(relation.includes(`data-lineage-link="${destination}"`));
+			assert.ok(relation.includes(`href="/publications/${destination}"`));
+			assert.match(relation, /data-lineage-progress/);
+		}
+	}
+	assert.match(html, /data-reading-map-label[^>]*aria-hidden="true"[^>]*hidden/);
+});
+
 test("experience, awards and service retain every current content record", async () => {
 	const { html } = await homepage();
 	const section = id => html.match(new RegExp(`<section[^>]*id="${id}"[^>]*>([\\s\\S]*?)<\\/section>`))[1];

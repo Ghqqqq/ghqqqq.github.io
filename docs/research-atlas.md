@@ -14,6 +14,12 @@ The homepage at `/` presents the research landscape, selected publications, expe
 
 Reading offsets are retained per paper for the current page visit. New papers start at the title. Ambient terrain drawing targets 30 frames per second while idle; camera interaction is unthrottled. Covered chapters stop drawing after the camera settles without pausing the independent manuscript animation.
 
+## Reading Interactions
+
+Each paper has an individual camera target. The desktop reader frames its terrain marker in the remaining space, and previous/next follows the selected paper. Closing the reader restores the pre-reading field, index state, and viewing angle. A resized viewport is reframed instead of restoring obsolete dimensions. Non-selected papers acquire a temporary marker only while open; their positions carry no additional academic meaning.
+
+`LineageLink.astro` derives both navigation directions from existing `lineage.sourceId` records. Hover and keyboard focus highlight the confirmed endpoints and route without moving the camera. Activation traverses that route in 950ms, with a synchronized timeline in the reader. Mobile uses a 280ms timeline transition while its full-width reader covers the scene; reduced motion and unavailable WebGL use ordinary navigation. Closing, changing papers, resizing, changing motion preference, or hiding the page cancels pending traversal. No relationships are inferred from proximity or shared categories.
+
 Old section links are mapped to the new chapters. `/atlas` redirects to the homepage.
 
 ## Validation

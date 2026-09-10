@@ -17,9 +17,28 @@ export type WorldState = {
 	light: boolean;
 	hovered: FieldId | null;
 	previewPaper: string | null;
+	lineageFocus: string | null;
+};
+export type AtlasView = {
+	phase: Phase;
+	field: FieldId | null;
+	index: boolean;
+	eye: [number, number, number];
+	look: [number, number, number];
+	offset: [number, number];
+	drag: number;
+	viewport: [number, number];
 };
 export type AtlasWorld = {
 	setState: (next: Partial<WorldState>) => void;
+	captureView: () => AtlasView;
+	restoreView: (view: AtlasView) => void;
+	traceLineage: (
+		from: string,
+		to: string,
+		progress: (value: number) => void,
+	) => Promise<boolean>;
+	cancelTrace: () => void;
 	reset: () => void;
 	pause: (value: boolean) => void;
 	dispose: () => void;
@@ -264,20 +283,63 @@ export async function createAtlasWorld(
 			paperMarkers.set(paper.id, mark);
 		});
 	}
+	// Unselected papers are revealed only while reading; unclassified work stays near the origin.
+	for (const [index, paper] of papers.filter((p) => !p.selected).entries()) {
+		const field = fields.find((f) => f.id === fieldForPaper(paper));
+		const angle = 0.7 + index * 1.7;
+		const x = (field?.x ?? 0) + Math.cos(angle) * (field ? 2.6 : 1.8);
+		const z = (field?.z ?? 7.5) + Math.sin(angle) * (field ? 2.4 : 0.8);
+		const point = new THREE.Vector3(x, elevation(x, z) + 0.09, z);
+		paperPositions.set(paper.id, point);
+		const marker = new THREE.Mesh(
+			new THREE.SphereGeometry(0.05, 12, 8),
+			inactiveMaterial,
+		);
+		marker.position.copy(point);
+		marker.visible = false;
+		scene.add(marker);
+		paperMarkers.set(paper.id, marker);
+	}
 	const lineageGroup = new THREE.Group();
-	for (const paper of selected) {
+	const lineages: {
+		from: string;
+		to: string;
+		curve: InstanceType<typeof THREE.QuadraticBezierCurve3>;
+		mesh: InstanceType<typeof THREE.Mesh>;
+		material: InstanceType<typeof THREE.MeshBasicMaterial>;
+		traveler: InstanceType<typeof THREE.Mesh>;
+	}[] = [];
+	for (const paper of papers) {
 		const start = paperPositions.get(paper.lineage?.sourceId ?? ""),
 			end = paperPositions.get(paper.id);
 		if (!start || !end) continue;
 		const middle = start.clone().lerp(end, 0.5);
 		middle.y += 2.8;
 		const curve = new THREE.QuadraticBezierCurve3(start, middle, end);
-		lineageGroup.add(
-			new THREE.Mesh(
-				new THREE.TubeGeometry(curve, 80, 0.023, 5, false),
-				markerMaterial,
-			),
+		const material = new THREE.MeshBasicMaterial({
+			color: 0xf5ff65,
+			transparent: true,
+			opacity: 0.7,
+			fog: false,
+		});
+		const mesh = new THREE.Mesh(
+			new THREE.TubeGeometry(curve, 80, 0.023, 5, false),
+			material,
 		);
+		const traveler = new THREE.Mesh(
+			new THREE.SphereGeometry(0.09, 16, 12),
+			markerMaterial,
+		);
+		traveler.visible = false;
+		lineageGroup.add(mesh, traveler);
+		lineages.push({
+			from: paper.lineage!.sourceId,
+			to: paper.id,
+			curve,
+			mesh,
+			material,
+			traveler,
+		});
 	}
 	lineageGroup.visible = false;
 	scene.add(lineageGroup);
@@ -288,6 +350,9 @@ export async function createAtlasWorld(
 		root.querySelectorAll<HTMLButtonElement>("[data-paper-pin]"),
 	);
 	const paperPreview = root.querySelector<HTMLElement>("[data-paper-preview]")!;
+	const readingLabel = root.querySelector<HTMLElement>(
+		"[data-reading-map-label]",
+	)!;
 	const state: WorldState = {
 		phase: "overview",
 		field: null,
@@ -296,6 +361,7 @@ export async function createAtlasWorld(
 		light: false,
 		hovered: null,
 		previewPaper: null,
+		lineageFocus: null,
 	};
 	const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 	let paused = reduced.matches,
@@ -303,6 +369,7 @@ export async function createAtlasWorld(
 		last = 0,
 		time = 0,
 		disposed = false;
+	let contextLost = false;
 	let drag = 0,
 		targetDrag = 0,
 		dragStart = 0,
@@ -320,6 +387,23 @@ export async function createAtlasWorld(
 		targetOffsetX = offsetX,
 		targetOffsetY = 0;
 	const targetColor = new THREE.Color(0x1735d6);
+	type Pose = {
+		eye: InstanceType<typeof THREE.Vector3>;
+		look: InstanceType<typeof THREE.Vector3>;
+		offsetX: number;
+		offsetY: number;
+	};
+	const readerDirection = new THREE.Vector3(8, 7.5, 14).normalize();
+	let flight: {
+		edge: (typeof lineages)[number];
+		started: number;
+		duration: number;
+		reverse: boolean;
+		start: Pose;
+		end: Pose;
+		progress: (value: number) => void;
+		resolve: (value: boolean) => void;
+	} | null = null;
 	const listeners: (() => void)[] = [];
 	function listen(
 		target: EventTarget,
@@ -335,23 +419,23 @@ export async function createAtlasWorld(
 		research: root.querySelector<HTMLElement>('[data-scene-frame="research"]')!,
 	};
 	let sceneCenterY = innerHeight * 0.5;
-	function composeCamera() {
+	function composeCamera(pose: Pose, readingId = state.reading) {
 		if (state.phase !== "overview" && state.phase !== "research") return;
 		const box = sceneFrames[state.phase].getBoundingClientRect();
 		const mobile = innerWidth <= 760;
 		const reader = document.querySelector<HTMLElement>("[data-atlas-reader]");
 		const readingWidth =
 			innerWidth - (reader?.offsetWidth ?? Math.min(760, innerWidth * 0.57));
-		const width = state.reading ? readingWidth * 0.92 : box.width;
-		const height = state.reading
+		const width = readingId ? readingWidth * 0.92 : box.width;
+		const height = readingId
 			? innerHeight * 0.75
 			: Math.min(box.height, innerHeight * 0.79);
-		const centerX = state.reading ? readingWidth / 2 : box.left + box.width / 2;
+		const centerX = readingId ? readingWidth / 2 : box.left + box.width / 2;
 		sceneCenterY =
-			mobile && !state.reading ? box.top + box.height / 2 : innerHeight * 0.49;
-		targetOffsetX = 0.5 - centerX / innerWidth;
-		targetOffsetY = 0.5 - sceneCenterY / innerHeight;
-		const direction = targetEye.clone().sub(targetLook).normalize();
+			mobile && !readingId ? box.top + box.height / 2 : innerHeight * 0.49;
+		pose.offsetX = 0.5 - centerX / innerWidth;
+		pose.offsetY = 0.5 - sceneCenterY / innerHeight;
+		const direction = pose.eye.clone().sub(pose.look).normalize();
 		const right = new THREE.Vector3()
 			.crossVectors(new THREE.Vector3(0, 1, 0), direction)
 			.normalize();
@@ -359,14 +443,19 @@ export async function createAtlasWorld(
 		const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
 		const tanX = ((tan * Math.max(200, width)) / innerHeight) * 0.9;
 		const tanY = ((tan * Math.max(180, height)) / innerHeight) * 0.84;
-		const focused = fields.find((f) => f.id === state.field);
-		const subjects =
-			focused && state.phase === "research" && !state.index
+		const activePaper = papers.find((p) => p.id === readingId);
+		const paperPoint = readingId ? paperPositions.get(readingId) : null;
+		const focused = fields.find(
+			(f) => f.id === (activePaper ? fieldForPaper(activePaper) : state.field),
+		);
+		const subjects = paperPoint
+			? [{ x: paperPoint.x, z: paperPoint.z }]
+			: focused && state.phase === "research" && !state.index
 				? [focused]
 				: fields;
 		let distance = 0;
 		const includePoint = (point: InstanceType<typeof THREE.Vector3>) => {
-			const relative = point.sub(targetLook);
+			const relative = point.sub(pose.look);
 			const near = relative.dot(direction);
 			distance = Math.max(
 				distance,
@@ -384,17 +473,28 @@ export async function createAtlasWorld(
 			);
 			for (let i = 0; i < 8; i++) {
 				const angle = (i * Math.PI) / 4;
-				const x = subject.x + Math.cos(angle) * 3.5;
-				const z = subject.z + Math.sin(angle) * 3.7;
+				const x = subject.x + Math.cos(angle) * (paperPoint ? 3.0 : 3.5);
+				const z = subject.z + Math.sin(angle) * (paperPoint ? 3.2 : 3.7);
 				includePoint(new THREE.Vector3(x, elevation(x, z), z));
 			}
 		}
-		if (!focused) includePoint(origin.clone());
-		targetEye
-			.copy(targetLook)
-			.addScaledVector(direction, Math.max(15, distance));
+		if (paperPoint && focused)
+			includePoint(
+				new THREE.Vector3(
+					focused.x,
+					elevation(focused.x, focused.z) + 0.8,
+					focused.z,
+				),
+			);
+		if (!focused && !paperPoint) includePoint(origin.clone());
+		pose.eye.copy(pose.look).addScaledVector(direction, Math.max(15, distance));
 	}
-	function goals() {
+	function cameraPose(readingId = state.reading): Pose {
+		const pose = { eye: eye.clone(), look: look.clone(), offsetX, offsetY };
+		const targetEye = pose.eye,
+			targetLook = pose.look;
+		let targetOffsetX = pose.offsetX,
+			targetOffsetY = pose.offsetY;
 		const field = fields.find((f) => f.id === state.field);
 		const mobile = innerWidth <= 760;
 		if (state.phase === "overview") {
@@ -428,16 +528,33 @@ export async function createAtlasWorld(
 			targetOffsetX = -0.25;
 			targetOffsetY = 0;
 		}
-		if (state.reading) {
-			targetOffsetX = 0.25;
-			targetEye.y += 2;
-		}
 		if (mobile) {
 			targetOffsetX = 0;
 			targetOffsetY = state.phase === "overview" ? -0.17 : 0.02;
 			targetEye.y += 4;
 		}
-		composeCamera();
+		const point = readingId ? paperPositions.get(readingId) : null;
+		if (point) {
+			targetLook.copy(point);
+			targetLook.y += 0.18;
+			targetEye.copy(targetLook).addScaledVector(readerDirection, 20);
+		}
+		pose.offsetX = targetOffsetX;
+		pose.offsetY = targetOffsetY;
+		composeCamera(pose, readingId);
+		return pose;
+	}
+	function adoptPose(pose: Pose) {
+		targetEye.copy(pose.eye);
+		targetLook.copy(pose.look);
+		targetOffsetX = pose.offsetX;
+		targetOffsetY = pose.offsetY;
+	}
+	function goals() {
+		adoptPose(cameraPose());
+		appearance();
+	}
+	function appearance() {
 		const blue =
 			state.phase === "overview" ||
 			state.phase === "research" ||
@@ -448,19 +565,56 @@ export async function createAtlasWorld(
 		);
 		if (highlighted)
 			terrainMaterial.uniforms.focus.value.set(highlighted.x, highlighted.z);
-		lineageGroup.visible =
-			state.phase === "research" && !!state.field && state.field === "agents";
+		const related =
+			flight?.edge ?? lineages.find((edge) => edge.to === state.lineageFocus);
+		for (const edge of lineages) {
+			const target = papers.find((p) => p.id === edge.to)!;
+			edge.mesh.visible =
+				(!state.index || !!state.reading) &&
+				(edge === related ||
+					state.reading === edge.to ||
+					state.reading === edge.from ||
+					(!state.reading &&
+						state.phase === "research" &&
+						fieldForPaper(target) === state.field));
+			edge.material.opacity = edge === related ? 1 : state.reading ? 0.4 : 0.7;
+		}
+		lineageGroup.visible = lineages.some((edge) => edge.mesh.visible);
 		for (const [id, mesh] of paperMarkers) {
-			const paper = selected.find((p) => p.id === id)!;
+			const paper = papers.find((p) => p.id === id)!;
+			const connected = related && (id === related.from || id === related.to);
 			mesh.material =
-				state.reading === id || state.previewPaper === id
+				state.reading === id || state.previewPaper === id || connected
 					? markerMaterial
 					: inactiveMaterial;
 			mesh.visible =
-				state.phase === "research" &&
-				(!state.field || fieldForPaper(paper) === state.field);
+				!!connected ||
+				state.reading === id ||
+				(!!paper.selected &&
+					state.phase === "research" &&
+					!state.index &&
+					(!state.field || fieldForPaper(paper) === state.field));
+		}
+		const readingPaper = papers.find((p) => p.id === state.reading);
+		if (readingPaper) {
+			readingLabel.querySelector<HTMLElement>(
+				"[data-reading-map-meta]",
+			)!.textContent =
+				`${readingPaper.year} / ${readingPaper.venueShort ?? "Research"}`;
+			readingLabel.querySelector<HTMLElement>(
+				"[data-reading-map-title]",
+			)!.textContent = readingPaper.title;
 		}
 		invalidate();
+	}
+	function cancelTrace() {
+		const active = flight;
+		if (!active) return;
+		flight = null;
+		active.edge.traveler.visible = false;
+		active.resolve(false);
+		delete root.dataset.lineageFlight;
+		goals();
 	}
 	function projectLabels() {
 		let previewVisible = false;
@@ -548,6 +702,37 @@ export async function createAtlasWorld(
 			}
 		}
 		paperPreview.hidden = !previewVisible;
+		readingLabel.hidden = true;
+		const activePoint = state.reading
+			? paperPositions.get(state.reading)
+			: null;
+		const readerWidth =
+			document.querySelector<HTMLElement>("[data-atlas-reader]")?.offsetWidth ??
+			innerWidth;
+		const available = innerWidth - readerWidth;
+		if (
+			activePoint &&
+			available >= 300 &&
+			!flight &&
+			!root.hasAttribute("data-lineage-travel")
+		) {
+			const point = activePoint.clone().project(camera);
+			const x = (point.x * 0.5 + 0.5) * innerWidth,
+				y = (-point.y * 0.5 + 0.5) * innerHeight;
+			if (
+				point.z < 1 &&
+				x > 24 &&
+				x < available - 24 &&
+				y > 80 &&
+				y < innerHeight - 100
+			) {
+				readingLabel.hidden = false;
+				const width = Math.min(250, available - 64);
+				readingLabel.style.width = `${width}px`;
+				readingLabel.style.left = `${Math.max(28, Math.min(available - width - 28, x + 20))}px`;
+				readingLabel.style.top = `${Math.max(90, Math.min(innerHeight - readingLabel.offsetHeight - 30, y + 24))}px`;
+			}
+		}
 	}
 	let lastInspection = 0;
 	let hasRendered = false;
@@ -555,7 +740,7 @@ export async function createAtlasWorld(
 	let renderCount = 0;
 	const inspect = new URLSearchParams(location.search).has("inspect");
 	function frame(now: number) {
-		if (disposed) return;
+		if (disposed || contextLost) return;
 		raf = 0;
 		if (now < nextFrameAt) {
 			raf = requestAnimationFrame(frame);
@@ -586,6 +771,52 @@ export async function createAtlasWorld(
 		look.lerp(targetLook, blend);
 		offsetX = THREE.MathUtils.lerp(offsetX, targetOffsetX, blend);
 		offsetY = THREE.MathUtils.lerp(offsetY, targetOffsetY, blend);
+		if (flight) {
+			const active = flight;
+			const t = Math.max(
+				0,
+				Math.min(1, (now - active.started) / active.duration),
+			);
+			const eased = t * t * (3 - 2 * t);
+			const startPoint = active.edge.curve.getPointAt(active.reverse ? 1 : 0);
+			const endPoint = active.edge.curve.getPointAt(active.reverse ? 0 : 1);
+			const routePoint = active.edge.curve.getPointAt(
+				active.reverse ? 1 - eased : eased,
+			);
+			look
+				.copy(routePoint)
+				.add(
+					active.start.look
+						.clone()
+						.sub(startPoint)
+						.lerp(active.end.look.clone().sub(endPoint), eased),
+				);
+			const distance = active.start.eye
+				.clone()
+				.sub(active.start.look)
+				.lerp(active.end.eye.clone().sub(active.end.look), eased);
+			distance.y += Math.sin(t * Math.PI) * 0.8;
+			eye.copy(look).add(distance);
+			offsetX = THREE.MathUtils.lerp(
+				active.start.offsetX,
+				active.end.offsetX,
+				eased,
+			);
+			offsetY = THREE.MathUtils.lerp(
+				active.start.offsetY,
+				active.end.offsetY,
+				eased,
+			);
+			active.edge.traveler.position.copy(routePoint);
+			active.progress(eased);
+			if (t === 1) {
+				flight = null;
+				active.edge.traveler.visible = false;
+				adoptPose(active.end);
+				delete root.dataset.lineageFlight;
+				active.resolve(true);
+			}
+		}
 		const relative = eye.clone().sub(look);
 		relative.applyAxisAngle(
 			new THREE.Vector3(0, 1, 0),
@@ -643,7 +874,15 @@ export async function createAtlasWorld(
 		});
 		let markersSettling = false;
 		for (const [id, marker] of paperMarkers) {
-			const size = state.previewPaper === id || state.reading === id ? 1.9 : 1;
+			const edge =
+				flight?.edge ?? lineages.find((e) => e.to === state.lineageFocus);
+			const size =
+				state.reading === id
+					? 2.2
+					: state.previewPaper === id ||
+							(edge && (edge.from === id || edge.to === id))
+						? 1.9
+						: 1;
 			marker.scale.setScalar(
 				THREE.MathUtils.lerp(marker.scale.x, size, inputBlend),
 			);
@@ -651,7 +890,16 @@ export async function createAtlasWorld(
 		}
 		renderer.render(scene, camera);
 		renderCount++;
-		if (inspect) root.dataset.renderCount = String(renderCount);
+		if (inspect) {
+			root.dataset.renderCount = String(renderCount);
+			root.dataset.cameraLook = JSON.stringify(
+				look.toArray().map((n) => Math.round(n * 100) / 100),
+			);
+			root.dataset.cameraDrag = String(Math.round(drag * 1000) / 1000);
+			root.dataset.camera = JSON.stringify(
+				camera.position.toArray().map((n) => Math.round(n * 100) / 100),
+			);
+		}
 		hasRendered = true;
 		projectLabels();
 		if (lastInspection === 0 || now - lastInspection > 900) {
@@ -660,6 +908,10 @@ export async function createAtlasWorld(
 				camera.position.toArray().map((n) => Math.round(n * 100) / 100),
 			);
 			if (inspect) {
+				root.dataset.cameraLook = JSON.stringify(
+					look.toArray().map((n) => Math.round(n * 100) / 100),
+				);
+				root.dataset.cameraDrag = String(Math.round(drag * 1000) / 1000);
 				const gl = renderer.getContext(),
 					pixels = new Uint8Array(
 						gl.drawingBufferWidth * gl.drawingBufferHeight * 4,
@@ -712,19 +964,21 @@ export async function createAtlasWorld(
 				Math.abs(background.g - targetColor.g) +
 				Math.abs(background.b - targetColor.b) >
 				0.001;
-		root.dataset.sceneActivity = settling
-			? "settling"
-			: ambientMotion
-				? "ambient"
-				: "rest";
-		if (!document.hidden && (ambientMotion || settling)) {
-			nextFrameAt = now + (settling ? 0 : 1000 / 30 - 0.5);
+		root.dataset.sceneActivity = flight
+			? "travel"
+			: settling
+				? "settling"
+				: ambientMotion
+					? "ambient"
+					: "rest";
+		if (!document.hidden && (flight || ambientMotion || settling)) {
+			nextFrameAt = now + (flight || settling ? 0 : 1000 / 30 - 0.5);
 			raf = requestAnimationFrame(frame);
 		}
 	}
 	function invalidate() {
 		nextFrameAt = 0;
-		if (!raf && !document.hidden && !disposed) {
+		if (!raf && !document.hidden && !disposed && !contextLost) {
 			last = performance.now();
 			raf = requestAnimationFrame(frame);
 		}
@@ -752,6 +1006,7 @@ export async function createAtlasWorld(
 	);
 	listen(document, "visibilitychange", () => {
 		if (document.hidden) {
+			cancelTrace();
 			cancelAnimationFrame(raf);
 			raf = 0;
 		} else invalidate();
@@ -816,16 +1071,20 @@ export async function createAtlasWorld(
 		invalidate();
 	});
 	listen(reduced, "change", () => {
+		cancelTrace();
 		paused = reduced.matches;
 		invalidate();
 	});
 	listen(renderer.domElement, "webglcontextlost", (event) => {
 		event.preventDefault();
+		contextLost = true;
+		cancelTrace();
 		cancelAnimationFrame(raf);
 		raf = 0;
 		root.dataset.sceneReady = "fallback";
 	});
 	listen(renderer.domElement, "webglcontextrestored", () => {
+		contextLost = false;
 		hasRendered = false;
 		resize();
 	});
@@ -833,19 +1092,107 @@ export async function createAtlasWorld(
 	goals();
 	return {
 		setState(next) {
-			if (
+			const cameraChanged =
 				(next.phase !== undefined && next.phase !== state.phase) ||
 				(next.field !== undefined && next.field !== state.field) ||
-				(next.reading !== undefined && next.reading !== state.reading)
-			) {
+				(next.index !== undefined && next.index !== state.index) ||
+				(next.reading !== undefined && next.reading !== state.reading);
+			if (cameraChanged) {
+				cancelTrace();
+				if (next.reading && !state.reading) {
+					readerDirection
+						.copy(eye)
+						.sub(look)
+						.applyAxisAngle(new THREE.Vector3(0, 1, 0), drag)
+						.normalize();
+				}
 				targetDrag = 0;
 				pointer.x = 0;
 				pointer.y = 0;
 				endDrag();
 			}
 			Object.assign(state, next);
-			goals();
+			if (cameraChanged) goals();
+			else appearance();
 		},
+		captureView() {
+			return {
+				phase: state.phase,
+				field: state.field,
+				index: state.index,
+				eye: eye.toArray(),
+				look: look.toArray(),
+				offset: [offsetX, offsetY],
+				drag,
+				viewport: [innerWidth, innerHeight],
+			} as AtlasView;
+		},
+		restoreView(view) {
+			if (
+				state.reading ||
+				state.phase !== view.phase ||
+				state.field !== view.field ||
+				state.index !== view.index
+			)
+				return;
+			cancelTrace();
+			targetDrag = view.drag;
+			pointer.x = 0;
+			pointer.y = 0;
+			if (view.viewport[0] === innerWidth && view.viewport[1] === innerHeight) {
+				adoptPose({
+					eye: new THREE.Vector3(...view.eye),
+					look: new THREE.Vector3(...view.look),
+					offsetX: view.offset[0],
+					offsetY: view.offset[1],
+				});
+			} else goals();
+			invalidate();
+		},
+		traceLineage(from, to, progress) {
+			cancelTrace();
+			const edge = lineages.find(
+				(e) =>
+					(e.from === from && e.to === to) || (e.from === to && e.to === from),
+			);
+			if (
+				!edge ||
+				contextLost ||
+				reduced.matches ||
+				innerWidth <= 760 ||
+				document.hidden
+			)
+				return Promise.resolve(false);
+			const start = {
+				eye: camera.position.clone(),
+				look: look.clone(),
+				offsetX,
+				offsetY,
+			};
+			const end = cameraPose(to);
+			targetDrag = 0;
+			drag = 0;
+			pointer.x = 0;
+			pointer.y = 0;
+			easedPointer.x = 0;
+			easedPointer.y = 0;
+			return new Promise<boolean>((resolve) => {
+				flight = {
+					edge,
+					started: performance.now(),
+					duration: 950,
+					reverse: from === edge.to,
+					start,
+					end,
+					progress,
+					resolve,
+				};
+				edge.traveler.visible = true;
+				root.dataset.lineageFlight = `${from}:${to}`;
+				appearance();
+			});
+		},
+		cancelTrace,
 		reset() {
 			targetDrag = 0;
 			pointer.x = 0;
@@ -857,6 +1204,7 @@ export async function createAtlasWorld(
 			invalidate();
 		},
 		dispose() {
+			cancelTrace();
 			disposed = true;
 			cancelAnimationFrame(raf);
 			for (const remove of listeners) remove();

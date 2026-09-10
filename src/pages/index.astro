@@ -8,6 +8,7 @@ import {
 	fields,
 	type Paper,
 } from "../components/atlas/atlas-data";
+import LineageLink from "../components/atlas/LineageLink.astro";
 import ManuscriptLayer from "../components/ManuscriptLayer.astro";
 import TencentWordmark from "../components/TencentWordmark.astro";
 import Layout from "../layouts/Layout.astro";
@@ -71,6 +72,7 @@ const chapters = [
 			{fields.map(field => <button class="field-pin" data-field-pin={field.id} data-select-field={field.id} type="button"><span class="field-pin-number">{field.number}</span><span class="field-pin-name">{field.short}</span><span class="field-pin-count">{selected.filter(p => p.category === field.category).length} selected works</span></button>)}
 			{selected.map(paper => <button class="paper-pin" data-paper-pin={paper.id} data-read-paper={paper.id} type="button" aria-label={`${paper.title}, ${paper.venueShort ?? paper.venue}, ${paper.year}`}><span class="paper-pin-dot"></span></button>)}
 			<div class="paper-preview" data-paper-preview aria-hidden="true" hidden><span data-preview-meta></span><strong data-preview-title></strong></div>
+			<div class="reading-map-label" data-reading-map-label aria-hidden="true" hidden><span data-reading-map-meta></span><strong data-reading-map-title></strong></div>
 		</div>
 		<nav class="atlas-chapters" aria-label="Atlas chapters">
 			{chapters.map((chapter,index) => <a href={`#${chapter.id}`} data-chapter-link={chapter.id}><span>0{index+1}</span><span>{chapter.label}</span></a>)}
@@ -127,7 +129,16 @@ const chapters = [
 
 	<dialog class="atlas-reader" data-atlas-reader aria-label="Publication reader">
 		<div class="reader-toolbar"><span class="atlas-overline">Research / Publication</span><div><span class="reader-position" data-reader-position aria-label="Publication position"></span><button data-reader-prev type="button" aria-label="Previous paper" title="Previous paper">←</button><button data-reader-next type="button" aria-label="Next paper" title="Next paper">→</button><button data-reader-close type="button" aria-label="Close publication" title="Close publication"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19" /></svg></button></div></div>
-		{readers.map(({paper,Content}) => <article class="reader-paper" data-reader-paper={paper.id} hidden><p class="reader-year">{paper.data.year} <span>{paper.data.venueShort ?? "Research"}</span></p><h2 tabindex="-1">{paper.data.title}</h2><p class="reader-authors">{paper.data.authors}</p><p class="reader-venue">{paper.data.venue}</p><div class="reader-links">{paper.data.link && <a href={paper.data.link} target="_blank" rel="noopener noreferrer">Paper <span aria-hidden="true">↗</span></a>}<a href={`/publications/${paper.id}`}>Publication page <span aria-hidden="true">↗</span></a></div><div class="reader-prose">{paper.body?.trim() ? <Content /> : <p>{paper.data.description}</p>}</div>{paper.data.lineage && <aside class="reader-lineage"><p class="atlas-overline">Idea lineage</p><p>{paper.data.lineage.text}</p><a href={`/publications/${paper.data.lineage.sourceId}`} data-read-paper={paper.data.lineage.sourceId}>{paper.data.lineage.sourceTitle} <span aria-hidden="true">↗</span></a></aside>}<div class="reader-related"><p class="atlas-overline">In this direction</p>{selected.filter(p=>p.category===paper.data.homepageCategory&&p.id!==paper.id).slice(0,2).map(p=><a href={`/publications/${p.id}`} data-read-paper={p.id}><span>{p.year}</span>{p.title}<span aria-hidden="true">↗</span></a>)}</div></article>)}
+		{readers.map(({paper,Content}) => <article class="reader-paper" data-reader-paper={paper.id} hidden>
+			<p class="reader-year">{paper.data.year} <span>{paper.data.venueShort ?? "Research"}</span></p>
+			<h2 tabindex="-1">{paper.data.title}</h2>
+			<p class="reader-authors">{paper.data.authors}</p><p class="reader-venue">{paper.data.venue}</p>
+			<div class="reader-links">{paper.data.link && <a href={paper.data.link} target="_blank" rel="noopener noreferrer">Paper <span aria-hidden="true">↗</span></a>}<a href={`/publications/${paper.id}`}>Publication page <span aria-hidden="true">↗</span></a></div>
+			<div class="reader-prose">{paper.body?.trim() ? <Content /> : <p>{paper.data.description}</p>}</div>
+			{paper.data.lineage && <LineageLink source={papers.find(p => p.id === paper.data.lineage?.sourceId)!} target={papers.find(p=>p.id===paper.id)!} direction="source" />}
+			{papers.filter(p => p.lineage?.sourceId === paper.id).map(target => <LineageLink source={papers.find(p=>p.id===paper.id)!} target={target} direction="target" />)}
+			<div class="reader-related"><p class="atlas-overline">In this direction</p>{selected.filter(p=>p.category===paper.data.homepageCategory&&p.id!==paper.id).slice(0,2).map(p=><a href={`/publications/${p.id}`} data-read-paper={p.id}><span>{p.year}</span>{p.title}<span aria-hidden="true">↗</span></a>)}</div>
+		</article>)}
 	</dialog>
 	<script>
 		import { mountAtlasExperience } from "../components/atlas/controller";
