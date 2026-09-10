@@ -113,7 +113,20 @@ const chapters = [
 
 		<section id="journey" class="atlas-journey reading-chapter" data-atlas-section="journey">
 			<div class="chapter-intro"><p class="atlas-overline">02 / In practice</p><h2>Ideas into<br /><em>experience.</em></h2></div>
-			<div class="journey-content"><div class="atlas-about"><About /></div><div class="journey-entries">{experienceItems.map(({data},index) => <article class="journey-entry"><div class="journey-date"><span>{data.period.split(".")[0]}</span><small>{data.period}</small></div><div><p class="atlas-overline">{data.title}</p><h3>{data.logo === "tencent" ? <TencentWordmark class="journey-tencent" /> : "Analemma"}</h3>{data.logo==="tencent" && <p class="journey-program">CDG &middot; Tencent Rhino-Bird Elite Talent Program</p>}<p>{data.description}</p></div></article>)}</div></div>
+			<div class="journey-content">
+				<div class="atlas-about"><About /></div>
+				<div class="journey-entries">
+					{experienceItems.map(({data}) => <article class="journey-entry">
+						<div class="journey-date"><span>{data.period.split(".")[0]}</span><small>{data.period}</small></div>
+						<div>
+							<p class="atlas-overline">{data.title}</p>
+							<h3 class="journey-organization">{data.logo === "tencent" ? <TencentWordmark class="journey-tencent" /> : <>{data.logo === "analemma" && <span class="journey-analemma" aria-hidden="true" />}<span>{data.organization}</span></>}</h3>
+							{data.logo === "tencent" && <p class="journey-program">CDG &middot; Tencent Rhino-Bird Elite Talent Program</p>}
+							<p>{data.description}</p>
+						</div>
+					</article>)}
+				</div>
+			</div>
 		</section>
 
 		<section id="awards" class="atlas-awards" data-atlas-section="awards">

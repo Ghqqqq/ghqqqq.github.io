@@ -159,6 +159,36 @@ test("experience, awards and service retain every current content record", async
 	}
 });
 
+test("experience organization marks are rendered with their packaged themeable assets", async () => {
+	const { html } = await homepage();
+	const journey = html.match(/<section[^>]*id="journey"[^>]*>([\s\S]*?)<\/section>/)[1];
+	assert.ok(journey.includes('class="journey-analemma" aria-hidden="true"'), "Analemma's mark must accompany its organization name");
+	assert.ok(visibleText(journey).includes("Analemma"));
+	assert.ok(journey.includes("journey-tencent"), "Tencent's existing wordmark must remain available");
+	const cssFiles = [...html.matchAll(/href="(\/_astro\/[^\"]+\.css)"/g)].map(match => match[1]);
+	const css = (await Promise.all(cssFiles.map(file => readFile(projectFile(`dist${file}`), "utf8")))).join("\n");
+	assert.ok(css.includes("analemma-mark.png"), "The homepage must load the mark's mask styling");
+	assert.deepEqual(await readFile(projectFile("dist/analemma-mark.png")), await readFile(projectFile("public/analemma-mark.png")));
+});
+
+test("IdeaTrail appears in Agents, the reading layer and the complete archive", async () => {
+	const { html, papers } = await homepage();
+	const paper = papers.find(paper => paper.id === "ideatrail-full-process-agent-trajectories-for-scientific-ideation");
+	assert.ok(paper, "IdeaTrail must be included in publication data");
+	assert.equal(paper.title, "IdeaTrail: Full-Process Agent Trajectories for Scientific Ideation");
+	assert.equal(paper.authors, "Hengquan Guo");
+	assert.equal(paper.year, 2026);
+	assert.equal(paper.venue, "ArXiv preprint");
+	assert.equal(paper.link, "https://arxiv.org/abs/2607.10144");
+	assert.equal(paper.selected, true);
+	assert.equal(fieldForPaper(paper), "agents");
+	assert.ok(html.includes(`data-paper-pin="${paper.id}"`));
+	assert.ok(html.includes(`data-reader-paper="${paper.id}"`));
+	const archive = await readFile(projectFile("dist/publications/index.html"), "utf8");
+	assert.ok(visibleText(archive).includes(paper.title));
+	await access(projectFile(`dist/publications/${paper.id}/index.html`));
+});
+
 test("existing section bookmarks resolve to the corresponding new views", () => {
 	for (const [old, next] of Object.entries({
 		about: "journey", experience: "journey", publications: "research",
