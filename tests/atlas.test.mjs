@@ -164,9 +164,8 @@ test("the current internship timeline starts with Baidu and keeps Analemma's com
 	const entries = [...html.matchAll(/<article class="journey-entry">([\s\S]*?)<\/article>/g)].map(match => visibleText(match[1]));
 	assert.match(entries[0], /Baidu \/ ERNIE/);
 	assert.ok(entries[0].includes("2026.08–Present"));
-	assert.match(entries[0], /RSI and the evaluation of agentic systems/);
-	assert.match(entries[0], /black-box assessment of end-to-end behavior and white-box analysis of internal mechanisms/);
-	assert.match(entries[0], /understanding agent capabilities, diagnosing failure modes, and assessing reliability/);
+	assert.match(entries[0], /RSI and agentic evaluation/);
+	assert.match(entries[0], /black-box behavioral assessment, white-box analysis, and reliability evaluation/);
 	assert.match(entries[1], /Analemma/);
 	assert.ok(entries[1].includes("2026.04–2026.07"));
 	assert.match(entries[2], /Tencent Rhino-Bird Elite Talent Program/);
