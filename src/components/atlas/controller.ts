@@ -5,7 +5,12 @@ import {
 	type Paper,
 	type Phase,
 	resolveAtlasHash,
+	resolveSurfaceMode,
+	type SurfaceMode,
+	selectedPapersForField,
 } from "./atlas-data";
+import { createReaderTransition, visibleTitle } from "./reader-transition";
+import "./reader-transition.css";
 import { type AtlasView, type AtlasWorld, createAtlasWorld } from "./world";
 
 export function mountAtlasExperience() {
@@ -15,6 +20,21 @@ export function mountAtlasExperience() {
 		"[data-atlas-reader]",
 	);
 	if (!root || !data || !reader) return;
+	document.documentElement.dataset.manuscriptDepth = "layered";
+	const catalog = root.querySelector<HTMLElement>("[data-selected-catalog]");
+	const catalogList = root.querySelector<HTMLElement>(".catalog-list");
+	const folio = reader.querySelector<HTMLElement>("[data-reader-folio]");
+	if (!catalog || !catalogList || !folio) return;
+	const surfaceButtons = Array.from(
+		root.querySelectorAll<HTMLButtonElement>("[data-surface-mode]"),
+	);
+	const initialURL = new URL(location.href);
+	if (
+		["R", "A", "B", "C"].includes(initialURL.searchParams.get("variant") ?? "")
+	) {
+		initialURL.searchParams.delete("variant");
+		history.replaceState(history.state, "", initialURL);
+	}
 	const papers = JSON.parse(data.textContent ?? "[]") as Paper[];
 	const selected = papers.filter((p) => p.selected);
 	const research = document.querySelector<HTMLElement>("#research")!;
@@ -23,7 +43,11 @@ export function mountAtlasExperience() {
 	let phase: Phase = "overview";
 	let reading: Paper | null = null;
 	let view: "map" | "index" = "map";
+	let surface = resolveSurfaceMode(initialURL.searchParams.get("surface"));
+	let disposed = false;
 	let paused = matchMedia("(prefers-reduced-motion: reduce)").matches;
+	const readerTransition = createReaderTransition(reader, () => !paused);
+	let readerSource: HTMLElement | null = null;
 	let returnFocus: HTMLElement | null = null;
 	let readingFromApp = false;
 	const readingPositions = new Map<string, number>();
@@ -31,6 +55,7 @@ export function mountAtlasExperience() {
 		camera: AtlasView | null;
 		field: FieldId | null;
 		view: "map" | "index";
+		catalogScroll: number;
 	} | null = null;
 	let lineageFocus: string | null = null;
 	let traceEpoch = 0;
@@ -53,6 +78,7 @@ export function mountAtlasExperience() {
 			.toggleAttribute("hidden", !paused);
 	}
 	let scrollFrame = 0;
+	let folioFrame = 0;
 	const disposers: (() => void)[] = [];
 	const headingLink = document.querySelector<HTMLAnchorElement>(
 		'.site-nav a[href="/"]',
@@ -81,9 +107,66 @@ export function mountAtlasExperience() {
 			reading: reading?.id ?? null,
 			index: phase === "research" && view === "index",
 			light: document.documentElement.dataset.theme === "light",
+			surface,
 		});
 	}
+	function setSurfaceMode(next: SurfaceMode, updateURL = false) {
+		surface = next;
+		root!.dataset.surface = next;
+		for (const button of surfaceButtons)
+			button.setAttribute(
+				"aria-pressed",
+				String(button.dataset.surfaceMode === next),
+			);
+		if (updateURL) {
+			const url = new URL(location.href);
+			if (next === "relief") url.searchParams.delete("surface");
+			else url.searchParams.set("surface", next);
+			history.replaceState(history.state, "", url);
+		}
+		syncWorld();
+	}
+	function updateSurfaceAvailability() {
+		for (const button of surfaceButtons) {
+			button.disabled = root!.dataset.sceneReady !== "true";
+			button.title =
+				root!.dataset.sceneReady === "fallback"
+					? "3D view unavailable"
+					: button.dataset.surfaceMode === "relief"
+						? "Satin relief"
+						: "Contour study";
+		}
+	}
+	const sceneObserver = new MutationObserver(updateSurfaceAvailability);
+	sceneObserver.observe(root, {
+		attributes: true,
+		attributeFilter: ["data-scene-ready"],
+	});
+	function updateFolio() {
+		folioFrame = 0;
+		const extent = reader!.scrollHeight - reader!.clientHeight;
+		const fraction = reader!.open
+			? extent > 0
+				? Math.max(0, Math.min(1, reader!.scrollTop / extent))
+				: 1
+			: 0;
+		folio!.style.setProperty("--folio-position", String(fraction));
+	}
+	function queueFolio() {
+		if (!disposed && reader!.open && !folioFrame)
+			folioFrame = requestAnimationFrame(updateFolio);
+	}
+	const readerResizeObserver =
+		typeof ResizeObserver === "undefined"
+			? null
+			: new ResizeObserver(queueFolio);
+	listen(reader, "scroll", queueFolio, { passive: true });
+	listen(reader, "load", queueFolio, { capture: true });
+	void document.fonts.ready.then(queueFolio);
 	function highlightTarget(target: EventTarget | null) {
+		// Keep the hovered map title present until its old-frame capture completes.
+		if (document.documentElement.dataset.readerTransitionStage === "capture")
+			return;
 		const choice =
 			target instanceof Element
 				? target.closest<HTMLElement>("[data-select-field]")
@@ -105,7 +188,7 @@ export function mountAtlasExperience() {
 		if (paperId) root!.dataset.previewPaper = paperId;
 		else delete root!.dataset.previewPaper;
 		for (const link of root!.querySelectorAll<HTMLElement>(
-			".field-paper,.paper-pin",
+			".catalog-paper,.paper-pin",
 		))
 			link.toggleAttribute(
 				"data-previewed",
@@ -229,10 +312,14 @@ export function mountAtlasExperience() {
 	}
 	listen(document, "visibilitychange", () => {
 		root.dataset.pageVisible = String(!document.hidden);
-		if (document.hidden) cancelLineage();
+		if (document.hidden) {
+			cancelLineage();
+			readerTransition.cancel();
+		}
 	});
 	root.dataset.pageVisible = String(!document.hidden);
 	listen(matchMedia("(prefers-reduced-motion: reduce)"), "change", (event) => {
+		readerTransition.cancel();
 		cancelLineage();
 		paused = (event as MediaQueryListEvent).matches;
 		syncMotionButton();
@@ -240,14 +327,25 @@ export function mountAtlasExperience() {
 	});
 	function focusField(next: FieldId | null) {
 		highlightTarget(null);
+		const changed = field !== next;
 		field = next;
 		root!.dataset.field = next ?? "all";
-		root!.querySelector<HTMLElement>("[data-research-overview]")!.hidden =
-			!!next;
-		for (const panel of root!.querySelectorAll<HTMLElement>(
-			"[data-field-focus]",
+		for (const item of catalog!.querySelectorAll<HTMLElement>(
+			"[data-catalog-item]",
 		))
-			panel.hidden = panel.dataset.fieldFocus !== next;
+			item.hidden = !!next && item.dataset.catalogField !== next;
+		for (const button of catalog!.querySelectorAll<HTMLButtonElement>(
+			"[data-field-filter]",
+		))
+			button.setAttribute(
+				"aria-pressed",
+				String(button.dataset.fieldFilter === (next ?? "all")),
+			);
+		catalog!.querySelector("[data-catalog-title]")!.textContent =
+			fields.find((item) => item.id === next)?.short ?? "Selected work";
+		catalog!.querySelector("[data-catalog-count]")!.textContent =
+			`${selectedPapersForField(papers, next).length} works`;
+		if (changed) catalogList!.scrollTop = 0;
 		const caption = root!.querySelector<HTMLElement>("[data-map-caption]");
 		if (caption)
 			caption.textContent =
@@ -259,12 +357,7 @@ export function mountAtlasExperience() {
 	function updateResearchHeading() {
 		const title = root!.querySelector<HTMLElement>(".research-heading h2");
 		if (title)
-			title.innerHTML =
-				view === "index"
-					? "Publications"
-					: field
-						? "Research Atlas"
-						: "The research<br /><em>landscape.</em>";
+			title.textContent = view === "index" ? "Publications" : "Research Atlas";
 	}
 	function setView(next: "map" | "index") {
 		highlightTarget(null);
@@ -280,7 +373,12 @@ export function mountAtlasExperience() {
 		syncWorld();
 		updateResearchHeading();
 	}
-	function saveState(hash: string, replace = false, readerEntry = false) {
+	function saveState(
+		hash: string,
+		replace = false,
+		readerEntry = false,
+		scrollPosition?: number,
+	) {
 		if (!replace && history.state?.atlas && !reading)
 			history.replaceState({ ...history.state, scroll: scrollY }, "");
 		const sectionId =
@@ -298,7 +396,7 @@ export function mountAtlasExperience() {
 			field,
 			view,
 			reader: readerEntry,
-			scroll: destinationScroll,
+			scroll: scrollPosition ?? destinationScroll,
 		};
 		if (replace)
 			history.replaceState(
@@ -322,19 +420,25 @@ export function mountAtlasExperience() {
 		});
 	}
 	function scope() {
-		if (view === "index") {
+		const selection = readerOrigin ?? { field, view };
+		let items: Paper[];
+		if (selection.view === "index") {
 			const query = root!
 				.querySelector<HTMLInputElement>("[data-paper-search]")!
 				.value.trim()
 				.toLowerCase();
-			return papers.filter((p) =>
+			items = papers.filter((p) =>
 				`${p.title} ${p.authors} ${p.year} ${p.venue}`
 					.toLowerCase()
 					.includes(query),
 			);
+		} else items = selectedPapersForField(papers, selection.field);
+		// A lineage jump can leave the originating list while keeping its return context.
+		if (reading && !items.some((paper) => paper.id === reading!.id)) {
+			const direction = fieldForPaper(reading);
+			if (direction) return selectedPapersForField(papers, direction);
 		}
-		const group = fields.find((f) => f.id === field);
-		return selected.filter((p) => !group || p.category === group.category);
+		return items;
 	}
 	function updateReaderButtons() {
 		const items = scope(),
@@ -361,7 +465,12 @@ export function mountAtlasExperience() {
 		if (!reader!.open) {
 			returnFocus = document.activeElement as HTMLElement;
 			readerOrigin = readingFromApp
-				? { camera: world?.captureView() ?? null, field, view }
+				? {
+						camera: world?.captureView() ?? null,
+						field,
+						view,
+						catalogScroll: catalogList!.scrollTop,
+					}
 				: null;
 		}
 		reading = paper;
@@ -379,12 +488,54 @@ export function mountAtlasExperience() {
 			)
 			?.focus({ preventScroll: true });
 		root!.dataset.reading = paper.id;
+		readerResizeObserver?.disconnect();
+		const article = reader!.querySelector<HTMLElement>(
+			`[data-reader-paper="${CSS.escape(paper.id)}"]`,
+		);
+		if (article) readerResizeObserver?.observe(article);
+		queueFolio();
 		updateReaderButtons();
 		syncWorld();
 	}
-	function openPaper(id: string) {
+	function paperHeading() {
+		return reader!.querySelector<HTMLElement>(
+			"[data-reader-paper]:not([hidden]) > h2",
+		);
+	}
+	function sourceTitle(link: HTMLElement | null) {
+		if (!link) return null;
+		if (link.hasAttribute("data-paper-pin"))
+			return visibleTitle(
+				root!.querySelector<HTMLElement>("[data-preview-title]"),
+			);
+		return visibleTitle(link.querySelector<HTMLElement>("strong, h3"));
+	}
+	function returnTitle(id: string) {
+		if (readerSource?.dataset.readPaper === id) {
+			const source = sourceTitle(readerSource);
+			if (source) return source;
+		}
+		for (const link of root!.querySelectorAll<HTMLElement>(
+			`a[data-read-paper="${CSS.escape(id)}"]`,
+		)) {
+			const source = sourceTitle(link);
+			if (source) return source;
+		}
+		return null;
+	}
+	function openPaper(id: string, source: HTMLElement | null = null) {
 		const paper = papers.find((p) => p.id === id);
 		if (!paper) return;
+		readerTransition.cancel(false);
+		if (!reader!.open && source) {
+			readerSource = source;
+			readerTransition.run(`open:${id}`, "open", sourceTitle(source), () => {
+				openPaperNow(paper);
+				return paperHeading();
+			});
+		} else openPaperNow(paper);
+	}
+	function openPaperNow(paper: Paper) {
 		cancelLineage();
 		const replacing = reader!.open;
 		if (!replacing)
@@ -401,12 +552,18 @@ export function mountAtlasExperience() {
 		rememberReadingPosition();
 		const origin = reader!.open ? readerOrigin : null;
 		if (reader!.open) reader!.close();
+		delete reader!.dataset.readerShared;
+		readerResizeObserver?.disconnect();
+		cancelAnimationFrame(folioFrame);
+		folioFrame = 0;
+		folio!.style.setProperty("--folio-position", "0");
 		readerOrigin = null;
 		reading = null;
 		delete root!.dataset.reading;
 		if (origin) {
 			setView(origin.view);
 			focusField(origin.field);
+			catalogList!.scrollTop = origin.catalogScroll;
 		} else syncWorld();
 		returnFocus?.focus({ preventScroll: true });
 		return origin;
@@ -427,7 +584,26 @@ export function mountAtlasExperience() {
 		goToResearch();
 	}
 	function navigateHash() {
+		const key = `close:${location.href}`;
+		if (readerTransition.key === key) return;
+		readerTransition.cancel(false);
+		if (
+			reader!.open &&
+			reading &&
+			!resolveAtlasHash(location.hash).startsWith("paper-")
+		) {
+			const id = reading.id;
+			readerTransition.run(key, "close", paperHeading(), () => {
+				navigateHashNow();
+				return returnTitle(id);
+			});
+		} else navigateHashNow();
+	}
+	function navigateHashNow() {
 		cancelLineage();
+		setSurfaceMode(
+			resolveSurfaceMode(new URLSearchParams(location.search).get("surface")),
+		);
 		const hash = resolveAtlasHash(location.hash);
 		const legacy = location.hash && location.hash !== `#${hash}`;
 		if (legacy) {
@@ -477,6 +653,17 @@ export function mountAtlasExperience() {
 		)
 			return;
 		const target = event.target as Element;
+		const surfaceButton = target.closest<HTMLButtonElement>(
+			"[data-surface-mode]",
+		);
+		if (surfaceButton && !surfaceButton.disabled) {
+			event.preventDefault();
+			setSurfaceMode(
+				resolveSurfaceMode(surfaceButton.dataset.surfaceMode ?? null),
+				true,
+			);
+			return;
+		}
 		if (target.closest("[data-open-atlas-index]")) {
 			event.preventDefault();
 			const toggle =
@@ -495,7 +682,7 @@ export function mountAtlasExperience() {
 			event.preventDefault();
 			if (paperLink.hasAttribute("data-lineage-link"))
 				void traceLineage(paperLink);
-			else openPaper(paperLink.dataset.readPaper!);
+			else openPaper(paperLink.dataset.readPaper!, paperLink);
 			return;
 		}
 		const fieldLink = target.closest<HTMLElement>("[data-select-field]");
@@ -503,16 +690,22 @@ export function mountAtlasExperience() {
 			event.preventDefault();
 			const next = fields.find((f) => f.id === fieldLink.dataset.selectField);
 			if (next) {
+				const inCatalog = !!fieldLink.closest("[data-selected-catalog]");
 				setView("map");
 				focusField(next.id);
-				saveState(`#field-${next.id}`);
-				goToResearch();
+				saveState(
+					`#field-${next.id}`,
+					false,
+					false,
+					inCatalog ? scrollY : undefined,
+				);
+				if (!inCatalog) goToResearch();
 			}
 			return;
 		}
 		if (target.closest("[data-map-overview]")) {
 			focusField(null);
-			saveState("#research");
+			saveState("#research", false, false, scrollY);
 			world?.reset();
 			return;
 		}
@@ -559,6 +752,7 @@ export function mountAtlasExperience() {
 		const pause = target.closest<HTMLButtonElement>("[data-toggle-motion]");
 		if (pause) {
 			paused = !paused;
+			if (paused) readerTransition.cancel();
 			world?.pause(paused);
 			syncMotionButton();
 		}
@@ -629,8 +823,10 @@ export function mountAtlasExperience() {
 		{ passive: true },
 	);
 	listen(window, "resize", () => {
+		readerTransition.cancel();
 		cancelLineage();
 		updatePhase();
+		queueFolio();
 	});
 	const themeObserver = new MutationObserver(syncWorld);
 	themeObserver.observe(document.documentElement, {
@@ -639,6 +835,8 @@ export function mountAtlasExperience() {
 	});
 	root.dataset.visualReady = "true";
 	syncMotionButton();
+	setSurfaceMode(surface);
+	updateSurfaceAvailability();
 	if (location.hash === "#index") {
 		setView("index");
 		goToResearch();
@@ -646,6 +844,10 @@ export function mountAtlasExperience() {
 	updatePhase();
 	createAtlasWorld(root, papers)
 		.then((result) => {
+			if (disposed) {
+				result?.dispose();
+				return;
+			}
 			world = result;
 			syncWorld();
 			world?.pause(paused);
@@ -656,10 +858,15 @@ export function mountAtlasExperience() {
 		});
 	if (import.meta.hot)
 		import.meta.hot.dispose(() => {
+			disposed = true;
+			readerTransition.cancel(false);
 			cancelLineage();
 			world?.dispose();
 			themeObserver.disconnect();
+			sceneObserver.disconnect();
+			readerResizeObserver?.disconnect();
 			cancelAnimationFrame(scrollFrame);
+			cancelAnimationFrame(folioFrame);
 			for (const dispose of disposers) dispose();
 			if (reader.open) reader.close();
 			delete root.dataset.reading;

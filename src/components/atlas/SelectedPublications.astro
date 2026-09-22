@@ -1,0 +1,25 @@
+---
+import { fieldForPaper, fields, type Paper } from "./atlas-data";
+
+interface Props {
+	papers: Paper[];
+}
+const { papers } = Astro.props;
+---
+
+<section class="selected-catalog" data-selected-catalog aria-label="Selected publication index">
+  <div class="catalog-filters" role="group" aria-label="Research direction">
+    <button type="button" data-map-overview data-field-filter="all" aria-pressed="true" aria-controls="selected-work-list">All</button>
+    {fields.map(field => <button type="button" data-select-field={field.id} data-field-filter={field.id} aria-pressed="false" aria-controls="selected-work-list">{field.filterLabel}</button>)}
+  </div>
+  <header class="catalog-heading"><h3 data-catalog-title>Selected work</h3><span data-catalog-count role="status">{papers.length} works</span></header>
+  <ul class="catalog-list" id="selected-work-list" tabindex="0" aria-label="Selected papers">
+    {papers.map(paper => <li data-catalog-item={paper.id} data-catalog-field={fieldForPaper(paper)}>
+      <a class="catalog-paper" href={"/publications/" + paper.id} data-read-paper={paper.id}>
+        <span class="catalog-year">{paper.year}</span>
+        <span class="catalog-copy"><strong>{paper.title}</strong><span class="catalog-venue">{paper.venueShort ?? paper.venue}</span><span class="catalog-summary">{paper.description}</span></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M5 19 19 5M6 5h13v13"/></svg>
+      </a>
+    </li>)}
+  </ul>
+</section>

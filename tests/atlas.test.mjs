@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { access, readFile, readdir } from "node:fs/promises";
 import test from "node:test";
-import { fields, fieldForPaper, resolveAtlasHash } from "../src/components/atlas/atlas-data.ts";
+import { fields, fieldForPaper, resolveAtlasHash, resolveSurfaceMode, selectedPapersForField } from "../src/components/atlas/atlas-data.ts";
 import { terrainElevation } from "../src/components/atlas/terrain.ts";
 
 const projectFile = (path) => new URL(`../${path}`, import.meta.url);
@@ -103,7 +103,7 @@ test("all papers, research categories and idea-lineage targets remain available"
 		if (paper.lineage) assert.ok(papers.some(p => p.id === paper.lineage.sourceId));
 	}
 	for (const field of fields) {
-		assert.ok(html.includes(`data-field-focus="${field.id}"`));
+		assert.ok(html.includes(`data-field-filter="${field.id}"`));
 		assert.ok(papers.some(p => p.selected && p.category === field.category));
 	}
 	assert.equal((html.match(/data-index-paper\b/g) ?? []).length, papers.length);
@@ -130,6 +130,29 @@ test("idea-lineage traversal exposes both directions of declared relations only"
 		}
 	}
 	assert.match(html, /data-reading-map-label[^>]*aria-hidden="true"[^>]*hidden/);
+});
+
+test("the combined atlas renders its controls and selected catalog without the demo shell", async () => {
+	const { html, papers } = await homepage();
+	assert.equal((html.match(/data-surface-mode="relief"/g) ?? []).length, 2);
+	assert.equal((html.match(/data-surface-mode="contours"/g) ?? []).length, 2);
+	const catalogIds = [...html.matchAll(/data-catalog-item="([^"]+)"/g)].map(match => match[1]);
+	assert.deepEqual(catalogIds, papers.filter(paper => paper.selected).map(paper => paper.id));
+	assert.match(html, /data-reader-folio/);
+	assert.doesNotMatch(html, /data-detail-prototype|data-detail-variant|data-detail-demo|DETAIL LAB|data-field-focus/);
+	await assert.rejects(access(projectFile("src/components/atlas/prototype/DetailLab.astro")), { code: "ENOENT" });
+});
+
+test("surface resolution and catalog filtering share the same typed research data", async () => {
+	for (const value of [null, "", "relief", "unknown"]) assert.equal(resolveSurfaceMode(value), "relief");
+	assert.equal(resolveSurfaceMode("contours"), "contours");
+	const { papers } = await homepage();
+	assert.deepEqual(selectedPapersForField(papers, null), papers.filter(paper => paper.selected));
+	for (const field of fields) {
+		const selection = selectedPapersForField(papers, field.id);
+		assert.ok(selection.length > 0);
+		assert.ok(selection.every(paper => paper.selected && fieldForPaper(paper) === field.id));
+	}
 });
 
 test("experience, awards and service retain every current content record", async () => {

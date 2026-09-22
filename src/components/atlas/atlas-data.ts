@@ -5,6 +5,7 @@ export const fields = [
 		category: "reinforcement-learning-bandits",
 		label: "Reinforcement Learning & Bandits",
 		short: "RL & Bandits",
+		filterLabel: "RL & Bandits",
 		description:
 			"Bandits and online learning. Safe and constrained decision-making.",
 		x: -6,
@@ -17,6 +18,7 @@ export const fields = [
 		category: "recommendation-bidding",
 		label: "Recommendation & Bidding",
 		short: "Recommendation & Bidding",
+		filterLabel: "Applications",
 		description:
 			"Learning from feedback in recommendation and online advertising.",
 		x: 0,
@@ -29,6 +31,7 @@ export const fields = [
 		category: "agent-llm-alignment",
 		label: "Agent / LLM Alignment",
 		short: "Agents & Alignment",
+		filterLabel: "Agents",
 		description:
 			"Reinforcement learning for agentic LLMs and multimodal large models.",
 		x: 6,
@@ -38,10 +41,14 @@ export const fields = [
 ] as const;
 
 export type FieldId = (typeof fields)[number]["id"];
+export type SurfaceMode = "relief" | "contours";
+export const resolveSurfaceMode = (value: string | null): SurfaceMode =>
+	value === "contours" ? "contours" : "relief";
 export type Phase = "overview" | "research" | "journey" | "awards" | "service";
 export type Paper = {
 	id: string;
 	title: string;
+	description: string;
 	authors: string;
 	venue: string;
 	venueShort?: string;
@@ -53,6 +60,14 @@ export type Paper = {
 };
 export const fieldForPaper = (paper: Paper) =>
 	fields.find((field) => field.category === paper.category)?.id;
+
+export const selectedPapersForField = (
+	papers: Paper[],
+	field: FieldId | null,
+) =>
+	papers.filter(
+		(paper) => paper.selected && (!field || fieldForPaper(paper) === field),
+	);
 
 const legacyHashes: Readonly<Record<string, string>> = {
 	about: "journey",

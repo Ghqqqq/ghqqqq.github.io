@@ -9,11 +9,14 @@ import {
 	type Paper,
 } from "../components/atlas/atlas-data";
 import LineageLink from "../components/atlas/LineageLink.astro";
+import SelectedPublications from "../components/atlas/SelectedPublications.astro";
+import SurfaceControls from "../components/atlas/SurfaceControls.astro";
 import ErnieMark from "../components/ErnieMark.astro";
 import ManuscriptLayer from "../components/ManuscriptLayer.astro";
 import TencentWordmark from "../components/TencentWordmark.astro";
 import Layout from "../layouts/Layout.astro";
 import "../components/atlas/atlas.css";
+import "../components/atlas/atlas-details.css";
 
 const [publications, about, experience, awards, services] = await Promise.all([
 	getCollection("publications"),
@@ -31,6 +34,7 @@ const ordered = [...publications].sort(
 const papers: Paper[] = ordered.map(({ id, data }) => ({
 	id,
 	title: data.title,
+	description: data.description,
 	authors: data.authors,
 	venue: data.venue,
 	venueShort: data.venueShort,
@@ -65,7 +69,7 @@ const chapters = [
 
 <Layout title="Hengquan Guo" description="Reinforcement learning and bandits, from theoretical foundations to agentic and multimodal systems." layout="home" ambient="none">
 	<script is:inline>document.documentElement.dataset.atlasPhase = "overview"; document.documentElement.dataset.homeHero = "visible";</script>
-	<article class="atlas-experience" data-atlas-experience data-view="map" data-field="all">
+	<article class="atlas-experience" data-atlas-experience data-view="map" data-field="all" data-surface="relief">
 		<script type="application/json" id="atlas-paper-data" set:html={JSON.stringify(papers).replace(/</g,"\\u003c")} />
 		<div class="atlas-world" data-atlas-world aria-hidden="true"></div>
 		<div class="atlas-manuscript" aria-hidden="true"><ManuscriptLayer /></div>
@@ -89,6 +93,7 @@ const chapters = [
 				<div class="opening-links"><a href="https://scholar.google.com/citations?user=8bGinucAAAAJ&hl=zh-CN" target="_blank" rel="noopener noreferrer">Google Scholar <span aria-hidden="true">↗</span></a><a href="mailto:guohq@shanghaitech.edu.cn">guohq (at) shanghaitech.edu.cn</a><a href="mailto:guohq46@qq.com">guohq46 (at) qq.com</a></div>
 			</div>
 			<div class="opening-map-space" data-scene-frame="overview" aria-hidden="true"><AtlasPoster priority /></div>
+			<SurfaceControls context="overview" />
 			<div class="opening-coordinate" aria-hidden="true">31.2304&deg; N<br />121.4737&deg; E</div>
 			<div class="opening-fields">
 				{fields.map(field => <a href="#research" data-select-field={field.id}><span>{field.number}</span><span>{field.short}</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M5 19 19 5M6 5h13v13" /></svg></a>)}
@@ -97,19 +102,14 @@ const chapters = [
 
 		<section id="research" class="atlas-research" data-atlas-section="research">
 			<div class="research-map-space" data-scene-frame="research" aria-hidden="true"><AtlasPoster /></div>
-			<header class="research-heading"><div><p class="atlas-overline">01 / Research &amp; selected work</p><h2>The research<br /><em>landscape.</em></h2></div><div class="view-control" role="group" aria-label="Publication view"><button type="button" data-view-button="map" aria-pressed="true" title="Atlas view" aria-label="Atlas view"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Zm6-3v15M15 6v15" /></svg></button><button type="button" data-view-button="index" aria-pressed="false" title="Publication index" aria-label="Publication index"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1" /></svg></button></div></header>
-			<div class="research-map-content">
-				<div class="research-overview" data-research-overview>
-					{fields.map(field => <button type="button" class="field-choice" data-select-field={field.id}><span class="field-choice-number">{field.number}</span><span><strong>{field.label}</strong><small>{field.description}</small></span><span class="field-choice-arrow" aria-hidden="true">↗</span></button>)}
-				</div>
-				{fields.map(field => <div class="field-focus" data-field-focus={field.id} hidden><button class="atlas-back" data-map-overview type="button"><span aria-hidden="true">←</span> All directions</button><p class="atlas-overline">{field.number} / {selected.filter(p => p.category===field.category).length} selected works</p><h3>{field.label}</h3><p class="field-description">{field.description}</p><div class="field-paper-list">{selected.filter(p=>p.category===field.category).map(paper => <a class="field-paper" href={`/publications/${paper.id}`} data-read-paper={paper.id}><span class="paper-year">{paper.year}</span><span><strong>{paper.title}</strong><small>{paper.venueShort ?? paper.venue}</small></span><span aria-hidden="true">↗</span></a>)}</div></div>)}
-			</div>
+			<header class="research-heading"><div><p class="atlas-overline">01 / Research &amp; selected work</p><h2>Research Atlas</h2></div><div class="view-control" role="group" aria-label="Publication view"><button type="button" data-view-button="map" aria-pressed="true" title="Atlas view" aria-label="Atlas view"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Zm6-3v15M15 6v15" /></svg></button><button type="button" data-view-button="index" aria-pressed="false" title="Publication index" aria-label="Publication index"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1" /></svg></button></div></header>
+			<SelectedPublications papers={selected} />
 			<div class="publication-index" data-publication-index>
 				<div class="index-tools"><p>{papers.length} publications</p><label><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg><input type="search" aria-label="Search publications" placeholder="Search publications" data-paper-search /></label></div>
 				{papers.map(paper => <a href={`/publications/${paper.id}`} class="index-paper" data-read-paper={paper.id} data-index-paper data-search-text={`${paper.title} ${paper.authors} ${paper.year} ${paper.venue}`.toLowerCase()}><span class="paper-year">{paper.year}</span><span><h3>{paper.title}</h3><p>{paper.authors}</p><small>{paper.venue}</small></span><span aria-hidden="true">↗</span></a>)}
 				<p data-search-empty hidden>No matching publications.</p>
 			</div>
-			<div class="map-caption"><span data-map-caption>Reinforcement Learning &amp; Bandits</span><div><button type="button" data-reset-camera aria-label="Reset map view" title="Reset map view"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.6 7M3 4v7h7" /></svg></button><button type="button" data-toggle-motion aria-label="Pause scene motion" title="Pause scene motion" aria-pressed="false"><svg data-pause-icon width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg><svg data-play-icon hidden width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m8 5 11 7-11 7Z" /></svg></button></div></div>
+			<div class="map-caption"><span data-map-caption>Reinforcement Learning &amp; Bandits</span><SurfaceControls context="research" /><div><button type="button" data-reset-camera aria-label="Reset map view" title="Reset map view"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.6 7M3 4v7h7" /></svg></button><button type="button" data-toggle-motion aria-label="Pause scene motion" title="Pause scene motion" aria-pressed="false"><svg data-pause-icon width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg><svg data-play-icon hidden width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m8 5 11 7-11 7Z" /></svg></button></div></div>
 		</section>
 
 		<section id="journey" class="atlas-journey reading-chapter" data-atlas-section="journey">
@@ -142,6 +142,7 @@ const chapters = [
 	</article>
 
 	<dialog class="atlas-reader" data-atlas-reader aria-label="Publication reader">
+		<div class="reader-folio-position" data-reader-folio aria-hidden="true"></div>
 		<div class="reader-toolbar"><span class="atlas-overline">Research / Publication</span><div><span class="reader-position" data-reader-position aria-label="Publication position"></span><button data-reader-prev type="button" aria-label="Previous paper" title="Previous paper">←</button><button data-reader-next type="button" aria-label="Next paper" title="Next paper">→</button><button data-reader-close type="button" aria-label="Close publication" title="Close publication"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19" /></svg></button></div></div>
 		{readers.map(({paper,Content}) => <article class="reader-paper" data-reader-paper={paper.id} hidden>
 			<p class="reader-year">{paper.data.year} <span>{paper.data.venueShort ?? "Research"}</span></p>

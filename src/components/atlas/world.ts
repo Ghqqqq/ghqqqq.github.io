@@ -4,8 +4,15 @@ import {
 	fields,
 	type Paper,
 	type Phase,
+	type SurfaceMode,
 } from "./atlas-data";
+import { fieldQuietWeights, terrainFieldWeights } from "./field-lighting";
 import { canExploreScene, needsAmbientFrames } from "./render-policy";
+import {
+	beginSurfaceReveal,
+	type SurfaceReveal,
+	sampleSurfaceReveal,
+} from "./surface-reveal";
 import { terrainElevation } from "./terrain";
 import { bakeTerrainLighting } from "./terrain-lighting";
 
@@ -18,6 +25,7 @@ export type WorldState = {
 	hovered: FieldId | null;
 	previewPaper: string | null;
 	lineageFocus: string | null;
+	surface: SurfaceMode;
 };
 export type AtlasView = {
 	phase: Phase;
@@ -91,10 +99,21 @@ export async function createAtlasWorld(
 	terrainGeometry.rotateX(-Math.PI / 2);
 	const positions = terrainGeometry.getAttribute("position");
 	const heights = new Float32Array(positions.count);
+	const regionWeights = new Float32Array(positions.count * 3);
 	for (let i = 0; i < positions.count; i++) {
 		heights[i] = elevation(positions.getX(i), positions.getZ(i));
 		positions.setY(i, heights[i]);
+		regionWeights.set(
+			terrainFieldWeights(positions.getX(i), positions.getZ(i), fields),
+			i * 3,
+		);
 	}
+	terrainGeometry.setAttribute(
+		"fieldWeights",
+		new THREE.Float32BufferAttribute(regionWeights, 3),
+	);
+	const fieldQuiet = new THREE.Vector3();
+	const targetFieldQuiet = new THREE.Vector3();
 	terrainGeometry.setAttribute(
 		"terrainLight",
 		new THREE.Float32BufferAttribute(
@@ -103,6 +122,24 @@ export async function createAtlasWorld(
 		),
 	);
 	terrainGeometry.computeVertexNormals();
+	const ridge = new Float32Array(positions.count);
+	const stride = segments + 1;
+	const stepX = 34 / segments;
+	const stepZ = 28 / depthSegments;
+	for (let z = 1; z < depthSegments; z++) {
+		for (let x = 1; x < segments; x++) {
+			const i = z * stride + x;
+			const curvature =
+				(2 * heights[i] - heights[i - 1] - heights[i + 1]) / (stepX * stepX) +
+				(2 * heights[i] - heights[i - stride] - heights[i + stride]) /
+					(stepZ * stepZ);
+			ridge[i] = Math.max(0, Math.min(1, curvature * 0.25));
+		}
+	}
+	terrainGeometry.setAttribute(
+		"terrainRidge",
+		new THREE.Float32BufferAttribute(ridge, 1),
+	);
 	const terrainMaterial = new THREE.ShaderMaterial({
 		transparent: true,
 		depthWrite: true,
@@ -115,13 +152,20 @@ export async function createAtlasWorld(
 			clock: { value: 0 },
 			focus: { value: new THREE.Vector2(0, 0) },
 			focusStrength: { value: 0 },
+			fieldQuiet: { value: fieldQuiet },
+			contourMode: { value: 0 },
+			surfacePointer: { value: new THREE.Vector2(0, 0) },
 		},
 		vertexShader: `
+			attribute vec3 fieldWeights; varying vec3 regionWeights;
 			attribute vec2 terrainLight; varying vec2 bakedLight;
+			attribute float terrainRidge; varying float ridgeWeight;
 			varying vec3 terrainNormal; varying vec3 terrainPosition;
 			varying float distanceToCamera;
 			void main() {
+				regionWeights = fieldWeights;
 				bakedLight = terrainLight;
+				ridgeWeight = terrainRidge;
 				terrainNormal = normalize(mat3(modelMatrix) * normal);
 				terrainPosition = (modelMatrix * vec4(position, 1.0)).xyz;
 				vec4 v = modelViewMatrix * vec4(position, 1.0);
@@ -129,10 +173,13 @@ export async function createAtlasWorld(
 				gl_Position = projectionMatrix * v;
 			}`,
 		fragmentShader: `
+			varying vec3 regionWeights; uniform vec3 fieldQuiet;
 			varying vec2 bakedLight;
+			varying float ridgeWeight;
 			uniform vec3 base; uniform vec3 valley; uniform vec3 summit;
 			uniform vec3 fogColor; uniform float strength; uniform float clock;
 			uniform vec2 focus; uniform float focusStrength;
+			uniform float contourMode; uniform vec2 surfacePointer;
 			varying vec3 terrainNormal; varying vec3 terrainPosition;
 			varying float distanceToCamera;
 			float contour(float height, float interval) {
@@ -142,9 +189,11 @@ export async function createAtlasWorld(
 				return (1.0 - smoothstep(0.2, 1.0, distance / width)) * min(1.0, 0.13 / width);
 			}
 			void main() {
+				float quiet = smoothstep(0.08, 0.92, dot(regionWeights, fieldQuiet));
+				float lineClarity = mix(1.0, 0.36, quiet);
 				vec3 n = normalize(terrainNormal);
 				vec3 viewDirection = normalize(cameraPosition - terrainPosition);
-				vec3 lightDirection = normalize(vec3(-0.65 + sin(clock * 0.12) * 0.18, 0.9, 0.6));
+				vec3 lightDirection = normalize(vec3(-0.65 + sin(clock * 0.12) * 0.18 + surfacePointer.x, 0.9, 0.6 + surfacePointer.y));
 				float diffuse = max(0.0, dot(n, lightDirection));
 				float halfLight = max(0.0, dot(n, normalize(lightDirection + viewDirection)));
 				float satin = pow(halfLight, 26.0) * 0.085 + pow(halfLight, 100.0) * 0.34;
@@ -160,9 +209,39 @@ export async function createAtlasWorld(
 				color += summit * edgeLight * 0.09;
 				float nearDetail = 1.0 - smoothstep(25.0, 52.0, distanceToCamera);
 				float lines = max(contour(terrainPosition.y, 0.14) * mix(0.025, 0.065, nearDetail), contour(terrainPosition.y, 0.7) * mix(0.12, 0.22, nearDetail));
-				color = mix(color, summit, lines * smoothstep(0.15, 0.5, terrainPosition.y));
+				color = mix(color, summit, lines * lineClarity * smoothstep(0.15, 0.5, terrainPosition.y));
 				float localFocus = exp(-dot(terrainPosition.xz - focus, terrainPosition.xz - focus) / 16.0);
 				color += summit * localFocus * focusStrength * 0.085;
+				float grazing = pow(max(0.0, dot(n, normalize(vec3(0.45, 0.65, -0.55)))), 3.0);
+				vec3 porcelain = mix(vec3(0.10, 0.20, 0.62), vec3(0.67, 0.83, 0.97), smoothstep(0.6, 5.8, terrainPosition.y) * 0.82);
+				vec3 studio = porcelain * (0.42 + 0.62 * diffuse) * mix(0.55, 1.0, bakedLight.x);
+				studio += summit * (grazing * 0.18 + pow(halfLight, 70.0) * 0.30) * bakedLight.y;
+				float engraving = max(contour(terrainPosition.y, 0.14) * 0.095, contour(terrainPosition.y, 0.7) * 0.38);
+				studio = mix(studio, summit, engraving * lineClarity);
+				color = mix(color, studio, 0.85);
+				vec3 tangent = normalize(vec3(n.z, 0.0, -n.x) + vec3(0.0001, 0.0, 0.0));
+				vec3 bitangent = normalize(cross(n, tangent));
+				vec3 halfDirection = normalize(lightDirection + viewDirection);
+				float ht = dot(halfDirection, tangent);
+				float hb = dot(halfDirection, bitangent);
+				float hn = max(0.02, dot(halfDirection, n));
+				float brushed = exp(-(ht * ht / 0.23 + hb * hb / 0.012) / (hn * hn));
+				vec3 silver = mix(vec3(0.56, 0.86, 1.0), vec3(0.94, 0.97, 1.0), 0.5 + 0.5 * dot(viewDirection, tangent));
+				float facet = 0.22 + 0.78 * ridgeWeight;
+				vec3 finished = color * vec3(0.87, 0.91, 0.97);
+				finished += silver * brushed * facet * 0.55 * bakedLight.y * smoothstep(0.1, 0.7, terrainPosition.y);
+				color = finished;
+				vec3 technical = vec3(0.075, 0.14, 0.42) * (0.7 + 0.3 * diffuse);
+				float ink = max(contour(terrainPosition.y, 0.14) * 0.44, contour(terrainPosition.y, 0.7) * 0.82);
+				technical = mix(technical, vec3(0.66, 0.84, 0.99), ink * lineClarity);
+				float h = smoothstep(0.0, 6.0, terrainPosition.y);
+				float front = mix(-0.16, 1.16, contourMode);
+				float developed = 1.0 - smoothstep(front - 0.12, front + 0.12, h);
+				float traveling = 4.0 * contourMode * (1.0 - contourMode);
+				float edge = exp(-pow((h - front) / 0.045, 2.0)) * traveling;
+				color = mix(color, technical, developed);
+				color += summit * edge * 0.075;
+				color = mix(color, mix(fogColor, color * 0.86, 0.72), quiet);
 				float fog = exp(-max(0.0, distanceToCamera - 22.0) * 0.02);
 				color = mix(fogColor, color, fog);
 				float alpha = smoothstep(0.0, 0.5, terrainPosition.y) * strength;
@@ -362,7 +441,32 @@ export async function createAtlasWorld(
 		hovered: null,
 		previewPaper: null,
 		lineageFocus: null,
+		surface: "relief",
 	};
+	let surfaceReveal: SurfaceReveal | null = null;
+	function settleSurface() {
+		surfaceReveal = null;
+		terrainMaterial.uniforms.contourMode.value =
+			state.surface === "contours" ? 1 : 0;
+	}
+	function changeSurface(now: number) {
+		const target = state.surface === "contours" ? 1 : 0;
+		const current = surfaceReveal
+			? sampleSurfaceReveal(surfaceReveal, now).value
+			: terrainMaterial.uniforms.contourMode.value;
+		if (
+			!hasRendered ||
+			paused ||
+			reduced.matches ||
+			document.hidden ||
+			!canExploreScene(state)
+		) {
+			settleSurface();
+		} else {
+			terrainMaterial.uniforms.contourMode.value = current;
+			surfaceReveal = beginSurfaceReveal(current, target, now);
+		}
+	}
 	const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 	let paused = reduced.matches,
 		raf = 0,
@@ -567,6 +671,20 @@ export async function createAtlasWorld(
 			terrainMaterial.uniforms.focus.value.set(highlighted.x, highlighted.z);
 		const related =
 			flight?.edge ?? lineages.find((edge) => edge.to === state.lineageFocus);
+		const activeField =
+			state.reading || (state.phase === "research" && !state.index)
+				? state.field
+				: null;
+		const retainedFields = related
+			? [related.from, related.to].flatMap((id) => {
+					const paper = papers.find((paper) => paper.id === id);
+					const field = paper && fieldForPaper(paper);
+					return field ? [field] : [];
+				})
+			: [];
+		targetFieldQuiet.fromArray(
+			fieldQuietWeights(fields, activeField, retainedFields),
+		);
 		for (const edge of lineages) {
 			const target = papers.find((p) => p.id === edge.to)!;
 			edge.mesh.visible =
@@ -749,6 +867,11 @@ export async function createAtlasWorld(
 		const dt = Math.max(0, Math.min((now - last) / 1000 || 1 / 60, 0.05));
 		last = now;
 		const ambientMotion = needsAmbientFrames(state, paused);
+		if (surfaceReveal) {
+			const sample = sampleSurfaceReveal(surfaceReveal, now);
+			terrainMaterial.uniforms.contourMode.value = sample.value;
+			if (sample.done) surfaceReveal = null;
+		}
 		if (ambientMotion) time += dt;
 		if (
 			innerWidth <= 760 &&
@@ -762,6 +885,10 @@ export async function createAtlasWorld(
 		const blend = !hasRendered || reduced.matches ? 1 : 1 - Math.exp(-dt * 4.2);
 		const inputBlend =
 			!hasRendered || reduced.matches ? 1 : 1 - Math.exp(-dt * 11);
+		fieldQuiet.lerp(
+			targetFieldQuiet,
+			!hasRendered || paused || reduced.matches ? 1 : inputBlend,
+		);
 		const pointerX = ambientMotion ? pointer.x : 0;
 		const pointerY = ambientMotion ? pointer.y : 0;
 		drag = THREE.MathUtils.lerp(drag, targetDrag, inputBlend);
@@ -845,6 +972,10 @@ export async function createAtlasWorld(
 			blend,
 		);
 		terrainMaterial.uniforms.clock.value = time;
+		terrainMaterial.uniforms.surfacePointer.value.set(
+			easedPointer.x * 0.75,
+			easedPointer.y * 0.7,
+		);
 		terrainMaterial.uniforms.focusStrength.value = THREE.MathUtils.lerp(
 			terrainMaterial.uniforms.focusStrength.value,
 			state.hovered || state.field ? 1 : 0,
@@ -891,6 +1022,13 @@ export async function createAtlasWorld(
 		renderer.render(scene, camera);
 		renderCount++;
 		if (inspect) {
+			root.dataset.fieldLighting = JSON.stringify(
+				fieldQuiet.toArray().map((value) => Math.round(value * 1000) / 1000),
+			);
+			root.dataset.surfaceBlend = String(
+				terrainMaterial.uniforms.contourMode.value,
+			);
+			root.dataset.surfaceAnimating = String(!!surfaceReveal);
 			root.dataset.renderCount = String(renderCount);
 			root.dataset.cameraLook = JSON.stringify(
 				look.toArray().map((n) => Math.round(n * 100) / 100),
@@ -946,8 +1084,9 @@ export async function createAtlasWorld(
 				});
 			}
 		}
-		root.dataset.sceneReady = "true";
+		if (root.dataset.sceneReady !== "true") root.dataset.sceneReady = "true";
 		const settling =
+			fieldQuiet.distanceToSquared(targetFieldQuiet) > 0.000004 ||
 			markersSettling ||
 			Math.abs(drag - targetDrag) > 0.0001 ||
 			Math.abs(easedPointer.x - pointerX) > 0.0001 ||
@@ -966,13 +1105,19 @@ export async function createAtlasWorld(
 				0.001;
 		root.dataset.sceneActivity = flight
 			? "travel"
-			: settling
-				? "settling"
-				: ambientMotion
-					? "ambient"
-					: "rest";
-		if (!document.hidden && (flight || ambientMotion || settling)) {
-			nextFrameAt = now + (flight || settling ? 0 : 1000 / 30 - 0.5);
+			: surfaceReveal
+				? "surface"
+				: settling
+					? "settling"
+					: ambientMotion
+						? "ambient"
+						: "rest";
+		if (
+			!document.hidden &&
+			(flight || surfaceReveal || ambientMotion || settling)
+		) {
+			nextFrameAt =
+				now + (flight || surfaceReveal || settling ? 0 : 1000 / 30 - 0.5);
 			raf = requestAnimationFrame(frame);
 		}
 	}
@@ -1006,6 +1151,7 @@ export async function createAtlasWorld(
 	);
 	listen(document, "visibilitychange", () => {
 		if (document.hidden) {
+			settleSurface();
 			cancelTrace();
 			cancelAnimationFrame(raf);
 			raf = 0;
@@ -1073,11 +1219,13 @@ export async function createAtlasWorld(
 	listen(reduced, "change", () => {
 		cancelTrace();
 		paused = reduced.matches;
+		if (paused) settleSurface();
 		invalidate();
 	});
 	listen(renderer.domElement, "webglcontextlost", (event) => {
 		event.preventDefault();
 		contextLost = true;
+		settleSurface();
 		cancelTrace();
 		cancelAnimationFrame(raf);
 		raf = 0;
@@ -1092,6 +1240,8 @@ export async function createAtlasWorld(
 	goals();
 	return {
 		setState(next) {
+			const surfaceChanged =
+				next.surface !== undefined && next.surface !== state.surface;
 			const cameraChanged =
 				(next.phase !== undefined && next.phase !== state.phase) ||
 				(next.field !== undefined && next.field !== state.field) ||
@@ -1112,6 +1262,8 @@ export async function createAtlasWorld(
 				endDrag();
 			}
 			Object.assign(state, next);
+			if (surfaceChanged) changeSurface(performance.now());
+			if (!canExploreScene(state)) settleSurface();
 			if (cameraChanged) goals();
 			else appearance();
 		},
@@ -1201,6 +1353,7 @@ export async function createAtlasWorld(
 		},
 		pause(value) {
 			paused = value;
+			if (paused) settleSurface();
 			invalidate();
 		},
 		dispose() {

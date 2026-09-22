@@ -24,6 +24,7 @@ worktrees/
 
 # local playwright screenshots / traces
 .playwright-cli/
+output/playwright/
 
 # jetbrains setting folder
 .idea/
