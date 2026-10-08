@@ -35,10 +35,6 @@
 	color: #f5ff65;
 	border-bottom-color: #f5ff65;
 }
-.opening-coordinate {
-	color: #d0daf5;
-}
-
 .selected-catalog {
 	position: relative;
 	z-index: 8;

@@ -2,12 +2,16 @@ import {
 	type FieldId,
 	fieldForPaper,
 	fields,
+	isCobaltPhase,
 	type Paper,
 	type Phase,
 	type SurfaceMode,
 } from "./atlas-data";
 import { fieldQuietWeights, terrainFieldWeights } from "./field-lighting";
+import { layoutFieldTags } from "./field-tags";
+import { createLeaderLayer } from "./leader-layer";
 import { canExploreScene, needsAmbientFrames } from "./render-policy";
+import { beginScanPulse, type ScanPulse, sampleScanPulse } from "./scan-pulse";
 import {
 	beginSurfaceReveal,
 	type SurfaceReveal,
@@ -60,6 +64,10 @@ export async function createAtlasWorld(
 ): Promise<AtlasWorld | null> {
 	const host = root.querySelector<HTMLElement>("[data-atlas-world]");
 	if (!host) return null;
+	const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+	const openingScan =
+		document.documentElement.hasAttribute("data-atlas-intro") &&
+		!reduced.matches;
 	const THREE = await import("three");
 	let renderer: InstanceType<typeof THREE.WebGLRenderer>;
 	try {
@@ -155,6 +163,10 @@ export async function createAtlasWorld(
 			fieldQuiet: { value: fieldQuiet },
 			contourMode: { value: 0 },
 			surfacePointer: { value: new THREE.Vector2(0, 0) },
+			scanCenter: { value: new THREE.Vector2(0, 0) },
+			scanRadius: { value: 0 },
+			scanConceal: { value: openingScan ? 1 : 0 },
+			scanEdge: { value: 0 },
 		},
 		vertexShader: `
 			attribute vec3 fieldWeights; varying vec3 regionWeights;
@@ -180,6 +192,7 @@ export async function createAtlasWorld(
 			uniform vec3 fogColor; uniform float strength; uniform float clock;
 			uniform vec2 focus; uniform float focusStrength;
 			uniform float contourMode; uniform vec2 surfacePointer;
+			uniform vec2 scanCenter; uniform float scanRadius; uniform float scanConceal; uniform float scanEdge;
 			varying vec3 terrainNormal; varying vec3 terrainPosition;
 			varying float distanceToCamera;
 			float contour(float height, float interval) {
@@ -241,6 +254,10 @@ export async function createAtlasWorld(
 				float edge = exp(-pow((h - front) / 0.045, 2.0)) * traveling;
 				color = mix(color, technical, developed);
 				color += summit * edge * 0.075;
+				float scanDistance = length(terrainPosition.xz - scanCenter);
+				color = mix(color, technical, scanConceal * smoothstep(scanRadius - 0.9, scanRadius + 0.1, scanDistance));
+				float scanFront = scanEdge * exp(-pow((scanDistance - scanRadius) / 0.32, 2.0));
+				color = mix(color, vec3(0.97, 1.0, 0.62), scanFront * 0.6);
 				color = mix(color, mix(fogColor, color * 0.86, 0.72), quiet);
 				float fog = exp(-max(0.0, distanceToCamera - 22.0) * 0.02);
 				color = mix(fogColor, color, fog);
@@ -260,6 +277,24 @@ export async function createAtlasWorld(
 	gridMaterial.transparent = true;
 	gridMaterial.opacity = 0.085;
 	scene.add(grid);
+	const scanRingMaterial = new THREE.MeshBasicMaterial({
+		color: 0xf5ff65,
+		transparent: true,
+		opacity: 0,
+		fog: false,
+		depthWrite: false,
+		side: THREE.DoubleSide,
+	});
+	const scanRing = new THREE.Mesh(
+		new THREE.RingGeometry(0.992, 1, 192),
+		scanRingMaterial,
+	);
+	scanRing.rotation.x = -Math.PI / 2;
+	scanRing.position.y = 0.02;
+	scanRing.visible = false;
+	scene.add(scanRing);
+	let scan: ScanPulse | null = null;
+	let openingScanPending = openingScan;
 	const markerMaterial = new THREE.MeshBasicMaterial({
 		color: 0xf5ff65,
 		fog: false,
@@ -432,6 +467,15 @@ export async function createAtlasWorld(
 	const readingLabel = root.querySelector<HTMLElement>(
 		"[data-reading-map-label]",
 	)!;
+	const leaderLayer = createLeaderLayer(
+		root.querySelector("[data-atlas-annotations]")!,
+	);
+	const fieldLeaders = new Map(
+		fields.map((field) => [field.id as string, leaderLayer.leader("field")]),
+	);
+	const previewLeader = leaderLayer.leader("preview", false);
+	const catalogLeader = leaderLayer.leader("link");
+	const readingLeader = leaderLayer.leader("reading");
 	const state: WorldState = {
 		phase: "overview",
 		field: null,
@@ -467,7 +511,6 @@ export async function createAtlasWorld(
 			surfaceReveal = beginSurfaceReveal(current, target, now);
 		}
 	}
-	const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 	let paused = reduced.matches,
 		raf = 0,
 		last = 0,
@@ -658,11 +701,16 @@ export async function createAtlasWorld(
 		adoptPose(cameraPose());
 		appearance();
 	}
+	// Crossing between cobalt and the reading surface swaps colour in one frame so
+	// the chapter cut overlay can wipe the outgoing surface away cleanly.
+	let cobaltShown = true;
+	let snapBackground = false;
 	function appearance() {
-		const blue =
-			state.phase === "overview" ||
-			state.phase === "research" ||
-			state.phase === "awards";
+		const blue = isCobaltPhase(state.phase);
+		if (blue !== cobaltShown) {
+			cobaltShown = blue;
+			snapBackground = true;
+		}
 		targetColor.set(blue ? 0x1735d6 : state.light ? 0xf1ece2 : 0x111116);
 		const highlighted = fields.find(
 			(f) => f.id === (state.hovered ?? state.field),
@@ -736,53 +784,40 @@ export async function createAtlasWorld(
 	}
 	function projectLabels() {
 		let previewVisible = false;
-		const occupied: {
-			left: number;
-			top: number;
-			right: number;
-			bottom: number;
-		}[] = [];
 		const active =
 			(state.phase === "overview" || state.phase === "research") &&
 			!state.reading &&
 			!state.index &&
 			innerWidth > 760;
-		for (const label of fieldLabels) {
+		const summits = fieldLabels.map((label, slot) => {
 			const field = fields.find((f) => f.id === label.dataset.fieldPin)!;
 			const point = new THREE.Vector3(
 				field.x,
-				elevation(field.x, field.z) + 0.8,
+				elevation(field.x, field.z) + 0.1,
 				field.z,
 			).project(camera);
 			const x = (point.x * 0.5 + 0.5) * innerWidth;
-			let y = (-point.y * 0.5 + 0.5) * innerHeight;
+			const y = (-point.y * 0.5 + 0.5) * innerHeight;
 			label.hidden =
 				!active ||
 				!!state.field ||
 				point.z > 1 ||
 				x < innerWidth * 0.46 ||
-				x > innerWidth - 70 ||
-				y < 100 ||
-				y > innerHeight - 100;
-			if (!label.hidden) {
-				const width = label.offsetWidth,
-					height = label.offsetHeight;
-				const left = x - width / 2,
-					right = x + width / 2;
-				for (const previous of occupied) {
-					if (
-						left < previous.right + 12 &&
-						right > previous.left - 12 &&
-						y > previous.top - 12 &&
-						y - height < previous.bottom + 12
-					)
-						y = previous.bottom + height + 12;
-				}
-				occupied.push({ left, right, top: y - height, bottom: y });
-			}
-			label.style.left = `${x}px`;
-			label.style.top = `${y}px`;
-		}
+				x > innerWidth - 40 ||
+				y < 150 ||
+				y > innerHeight - 80;
+			if (label.hidden) fieldLeaders.get(field.id)!.hide();
+			return { label, field, slot, x, y };
+		});
+		const shownSummits = summits.filter((summit) => !summit.label.hidden);
+		const tags = layoutFieldTags(shownSummits, innerWidth, fields.length);
+		shownSummits.forEach(({ label, field, x, y }, index) => {
+			const tag = tags[index];
+			label.style.width = `${tag.width}px`;
+			label.style.left = `${tag.left}px`;
+			label.style.top = `${tag.band - label.offsetHeight}px`;
+			fieldLeaders.get(field.id)!.show(tag.leader, { x, y });
+		});
 		for (const label of paperLabels) {
 			const paper = selected.find((p) => p.id === label.dataset.paperPin)!;
 			const point = paperPositions.get(paper.id)!.clone().project(camera);
@@ -817,10 +852,16 @@ export async function createAtlasWorld(
 				);
 				paperPreview.style.left = `${left}px`;
 				paperPreview.style.top = `${top}px`;
+				previewLeader.show(
+					`M${x} ${y}L${left < x ? left + width : left} ${top + 14}`,
+				);
 			}
 		}
 		paperPreview.hidden = !previewVisible;
+		if (!previewVisible) previewLeader.hide();
+		linkCatalogPreview(active);
 		readingLabel.hidden = true;
+		readingLeader.hide();
 		const activePoint = state.reading
 			? paperPositions.get(state.reading)
 			: null;
@@ -846,11 +887,47 @@ export async function createAtlasWorld(
 			) {
 				readingLabel.hidden = false;
 				const width = Math.min(250, available - 64);
+				const left = Math.max(28, Math.min(available - width - 28, x + 44));
+				const top = Math.max(
+					90,
+					Math.min(innerHeight - readingLabel.offsetHeight - 30, y + 56),
+				);
 				readingLabel.style.width = `${width}px`;
-				readingLabel.style.left = `${Math.max(28, Math.min(available - width - 28, x + 20))}px`;
-				readingLabel.style.top = `${Math.max(90, Math.min(innerHeight - readingLabel.offsetHeight - 30, y + 24))}px`;
+				readingLabel.style.left = `${left}px`;
+				readingLabel.style.top = `${top}px`;
+				readingLeader.show(`M${x} ${y}L${left + 36} ${top - 8}H${left}`, {
+					x,
+					y,
+				});
 			}
 		}
+	}
+	function linkCatalogPreview(active: boolean) {
+		const entry =
+			active && state.phase === "research" && state.previewPaper
+				? root.querySelector<HTMLElement>(".catalog-paper[data-previewed]")
+				: null;
+		const target =
+			entry && state.previewPaper
+				? paperPositions.get(state.previewPaper)!.clone().project(camera)
+				: null;
+		if (!entry || !target || target.z > 1) {
+			catalogLeader.hide();
+			return;
+		}
+		const rect = entry.getBoundingClientRect();
+		const x = (target.x * 0.5 + 0.5) * innerWidth;
+		const y = (-target.y * 0.5 + 0.5) * innerHeight;
+		const startX = rect.right + 12;
+		const startY = rect.top + 22;
+		if (rect.bottom < 60 || rect.top > innerHeight || x < startX + 60) {
+			catalogLeader.hide();
+			return;
+		}
+		catalogLeader.show(`M${startX} ${startY}H${startX + 40}L${x} ${y}`, {
+			x,
+			y,
+		});
 	}
 	let lastInspection = 0;
 	let hasRendered = false;
@@ -960,12 +1037,24 @@ export async function createAtlasWorld(
 			innerWidth,
 			innerHeight,
 		);
-		background.lerp(targetColor, blend);
+		background.lerp(targetColor, snapBackground ? 1 : blend);
+		snapBackground = false;
 		scene.fog!.color.copy(background);
-		const blue =
-			state.phase === "overview" ||
-			state.phase === "research" ||
-			state.phase === "awards";
+		if (scan) {
+			const pulse = sampleScanPulse(scan, now);
+			terrainMaterial.uniforms.scanRadius.value = pulse.radius;
+			terrainMaterial.uniforms.scanEdge.value = pulse.edge;
+			scanRing.visible = pulse.edge > 0 && !pulse.done;
+			scanRing.scale.setScalar(Math.max(0.01, pulse.radius));
+			scanRingMaterial.opacity = pulse.edge * 0.6;
+			if (pulse.done) {
+				scan = null;
+				terrainMaterial.uniforms.scanConceal.value = 0;
+				terrainMaterial.uniforms.scanEdge.value = 0;
+				scanRing.visible = false;
+			}
+		}
+		const blue = isCobaltPhase(state.phase);
 		terrainMaterial.uniforms.strength.value = THREE.MathUtils.lerp(
 			terrainMaterial.uniforms.strength.value,
 			blue ? 1 : 0,
@@ -1039,6 +1128,15 @@ export async function createAtlasWorld(
 			);
 		}
 		hasRendered = true;
+		if (openingScanPending) {
+			openingScanPending = false;
+			startScan(origin.x, origin.z, {
+				radius: 27,
+				duration: 1900,
+				conceals: true,
+				delay: 650,
+			});
+		}
 		projectLabels();
 		if (lastInspection === 0 || now - lastInspection > 900) {
 			lastInspection = now;
@@ -1107,19 +1205,30 @@ export async function createAtlasWorld(
 			? "travel"
 			: surfaceReveal
 				? "surface"
-				: settling
-					? "settling"
-					: ambientMotion
-						? "ambient"
-						: "rest";
-		if (
-			!document.hidden &&
-			(flight || surfaceReveal || ambientMotion || settling)
-		) {
-			nextFrameAt =
-				now + (flight || surfaceReveal || settling ? 0 : 1000 / 30 - 0.5);
+				: scan
+					? "scan"
+					: settling
+						? "settling"
+						: ambientMotion
+							? "ambient"
+							: "rest";
+		const transient = flight || surfaceReveal || scan || settling;
+		if (!document.hidden && (transient || ambientMotion)) {
+			nextFrameAt = now + (transient ? 0 : 1000 / 30 - 0.5);
 			raf = requestAnimationFrame(frame);
 		}
+	}
+	function startScan(
+		x: number,
+		z: number,
+		options: Parameters<typeof beginScanPulse>[1],
+	) {
+		scan = beginScanPulse(performance.now(), options);
+		terrainMaterial.uniforms.scanCenter.value.set(x, z);
+		terrainMaterial.uniforms.scanConceal.value = options.conceals ? 1 : 0;
+		terrainMaterial.uniforms.scanRadius.value = 0;
+		scanRing.position.set(x, scanRing.position.y, z);
+		invalidate();
 	}
 	function invalidate() {
 		nextFrameAt = 0;
@@ -1261,7 +1370,24 @@ export async function createAtlasWorld(
 				pointer.y = 0;
 				endDrag();
 			}
+			const surveyed =
+				hasRendered &&
+				!reduced.matches &&
+				!scan?.conceals &&
+				!state.reading &&
+				!next.reading &&
+				next.field &&
+				next.field !== state.field
+					? fields.find((f) => f.id === next.field)
+					: null;
 			Object.assign(state, next);
+			if (surveyed)
+				startScan(surveyed.x, surveyed.z, {
+					radius: 8,
+					duration: 1150,
+					conceals: false,
+					delay: 280,
+				});
 			if (surfaceChanged) changeSurface(performance.now());
 			if (!canExploreScene(state)) settleSurface();
 			if (cameraChanged) goals();
@@ -1374,6 +1500,7 @@ export async function createAtlasWorld(
 				}
 			});
 			renderer.dispose();
+			leaderLayer.dispose();
 			renderer.domElement.remove();
 		},
 	};

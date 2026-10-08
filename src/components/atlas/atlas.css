@@ -143,7 +143,7 @@ html:is([data-atlas-phase="journey"], [data-atlas-phase="service"])
 	.atlas-world {
 	background: var(--home-surface);
 }
-.atlas-manuscript .ms-line {
+html .atlas-manuscript .ms-line {
 	animation-play-state: paused;
 }
 html[data-manuscript-depth="layered"]
@@ -209,42 +209,37 @@ html:is([data-atlas-phase="journey"], [data-atlas-phase="service"])
 	position: absolute;
 	left: 0;
 	top: 0;
-	width: 200px;
-	padding: 12px 12px 12px 28px;
+	padding: 0 0 9px;
 	color: #f4f0e8;
 	text-align: left;
 	pointer-events: auto;
-	transform: translate(-50%, -100%);
 	transition: opacity 220ms;
 }
-.field-pin::before {
-	content: "";
-	position: absolute;
-	left: 12px;
-	top: 20px;
-	width: 5px;
-	height: 5px;
-	background: #f5ff65;
-}
 .field-pin-number {
-	font-family: var(--font-mono);
-	font-size: 0.75rem;
-	opacity: 0.75;
 	display: block;
-	margin-bottom: 5px;
+	margin-bottom: 6px;
+	color: #f5ff65;
+	font-family: var(--font-mono);
+	font-size: 0.6rem;
+	letter-spacing: 0.16em;
+}
+.field-pin-number::before {
+	content: "FIELD ";
 }
 .field-pin-name {
-	font-family: var(--font-display);
-	font-size: 1.17rem;
-	line-height: 1.1;
 	display: block;
+	font-family: var(--font-display);
+	font-size: 1.22rem;
+	line-height: 1.1;
 }
 .field-pin-count {
 	display: block;
-	margin-top: 6px;
-	font-family: var(--font-mono);
-	font-size: 0.75rem;
+	margin-top: 7px;
 	color: #c8d0f6;
+	font-family: var(--font-mono);
+	font-size: 0.6rem;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
 }
 .field-pin:hover .field-pin-name,
 .field-pin:focus-visible .field-pin-name {
@@ -282,8 +277,8 @@ html:is([data-atlas-phase="journey"], [data-atlas-phase="service"])
 	width: 270px;
 	max-width: calc(100vw - 64px);
 	padding: 0.85rem 1rem;
-	border-left: 1px solid #f5ff65;
-	background: #122bbcf2;
+	border: 1px solid #ffffff4d;
+	background: #0e2295f0;
 	color: #f4f0e8;
 	pointer-events: none;
 	animation: paper-preview-enter 200ms ease both;
@@ -309,14 +304,6 @@ html:is([data-atlas-phase="journey"], [data-atlas-phase="service"])
 	pointer-events: none;
 	color: #f4f0e8;
 	text-shadow: 0 1px 3px #1735d6;
-}
-.reading-map-label::before {
-	content: "";
-	display: block;
-	width: 24px;
-	height: 1px;
-	background: #f5ff65;
-	margin-bottom: 10px;
 }
 .reading-map-label > span {
 	display: block;
@@ -516,16 +503,6 @@ html[data-atlas-phase="service"] .atlas-chapters a[aria-current] {
 }
 .opening-links a:hover {
 	color: #f5ff65;
-}
-.opening-coordinate {
-	position: absolute;
-	top: 5rem;
-	right: var(--atlas-gutter);
-	text-align: right;
-	color: #b1bfeb;
-	font-family: var(--font-mono);
-	font-size: 0.72rem;
-	line-height: 1.7;
 }
 .opening-fields {
 	display: grid;
@@ -1199,12 +1176,6 @@ body:has(.atlas-reader[open]) {
 	.opening-statement {
 		font-size: 1.8rem;
 	}
-	.opening-coordinate {
-		right: var(--atlas-gutter);
-	}
-	.field-pin {
-		width: 165px;
-	}
 	.field-pin-name {
 		font-size: 1rem;
 	}
@@ -1278,9 +1249,6 @@ body:has(.atlas-reader[open]) {
 	}
 	.opening-links a {
 		font-size: 0.77rem;
-	}
-	.opening-coordinate {
-		display: none;
 	}
 	.opening-map-space {
 		grid-column: 1;

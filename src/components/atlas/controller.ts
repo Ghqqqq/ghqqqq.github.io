@@ -2,14 +2,18 @@ import {
 	type FieldId,
 	fieldForPaper,
 	fields,
+	isCobaltPhase,
 	type Paper,
 	type Phase,
+	phases,
 	resolveAtlasHash,
 	resolveSurfaceMode,
 	type SurfaceMode,
 	selectedPapersForField,
 } from "./atlas-data";
+import { createChapterCut } from "./chapter-cut";
 import { createReaderTransition, visibleTitle } from "./reader-transition";
+import { decodeText } from "./text-decode";
 import "./reader-transition.css";
 import { type AtlasView, type AtlasWorld, createAtlasWorld } from "./world";
 
@@ -38,6 +42,43 @@ export function mountAtlasExperience() {
 	const papers = JSON.parse(data.textContent ?? "[]") as Paper[];
 	const selected = papers.filter((p) => p.selected);
 	const research = document.querySelector<HTMLElement>("#research")!;
+	const chapterCutWrap = root.querySelector<HTMLElement>("[data-chapter-cut]");
+	const chapterCut = chapterCutWrap ? createChapterCut(chapterCutWrap) : null;
+	const timecodeIndex = root.querySelector<HTMLElement>(
+		"[data-timecode-index]",
+	);
+	const timecodeLabel = root.querySelector<HTMLElement>(
+		"[data-timecode-label]",
+	);
+	const readerRecord = reader.querySelector<HTMLElement>(
+		"[data-reader-record]",
+	);
+	const opening = document.documentElement.hasAttribute("data-atlas-intro");
+	if (opening) {
+		const tagsAt = 1750;
+		decodeText(root.querySelector(".opening-copy .atlas-overline"), {
+			duration: 760,
+			delay: 560,
+		});
+		decodeText(root.querySelector("[data-opening-coordinate]"), {
+			duration: 520,
+			delay: 120,
+		});
+		root.querySelectorAll(".field-pin").forEach((pin, index) => {
+			decodeText(pin.querySelector(".field-pin-number"), {
+				duration: 520,
+				delay: tagsAt + index * 120,
+			});
+			decodeText(pin.querySelector(".field-pin-count"), {
+				duration: 640,
+				delay: tagsAt + 160 + index * 120,
+			});
+		});
+		setTimeout(
+			() => document.documentElement.removeAttribute("data-atlas-intro"),
+			4200,
+		);
+	}
 	let world: AtlasWorld | null = null;
 	let field: FieldId | null = null;
 	let phase: Phase = "overview";
@@ -495,7 +536,22 @@ export function mountAtlasExperience() {
 		if (article) readerResizeObserver?.observe(article);
 		queueFolio();
 		updateReaderButtons();
+		updateReaderRecord(paper);
 		syncWorld();
+	}
+	function updateReaderRecord(paper: Paper) {
+		if (!readerRecord) return;
+		const index = papers.findIndex((p) => p.id === paper.id);
+		const direction = fields.find((f) => f.id === fieldForPaper(paper));
+		const pad = (value: number) => String(value).padStart(2, "0");
+		const next = [
+			`No. ${pad(index + 1)}/${pad(papers.length)}`,
+			direction ? `Field ${direction.number} · ${direction.short}` : "Research",
+			`${paper.venueShort ?? "Preprint"} ${paper.year}`,
+		].join("  ·  ");
+		if (readerRecord.textContent === next) return;
+		readerRecord.textContent = next;
+		decodeText(readerRecord, { duration: 520 });
 	}
 	function paperHeading() {
 		return reader!.querySelector<HTMLElement>(
@@ -788,6 +844,42 @@ export function mountAtlasExperience() {
 	const sections = Array.from(
 		root.querySelectorAll<HTMLElement>("[data-atlas-section]"),
 	);
+	let phaseSettled = false;
+	function enterPhase(previous: Phase, next: Phase) {
+		const index = phases.indexOf(next);
+		if (timecodeIndex && timecodeLabel) {
+			timecodeIndex.textContent = `${String(index + 1).padStart(2, "0")}/${String(phases.length).padStart(2, "0")}`;
+			timecodeLabel.textContent =
+				root!.querySelector(`[data-timecode-step="${next}"]`)?.textContent ??
+				next;
+			for (const step of root!.querySelectorAll<HTMLElement>(
+				"[data-timecode-step]",
+			))
+				step.toggleAttribute(
+					"data-passed",
+					phases.indexOf(step.dataset.timecodeStep as Phase) < index,
+				);
+		}
+		if (!phaseSettled) return;
+		if (
+			isCobaltPhase(previous) !== isCobaltPhase(next) &&
+			!matchMedia("(prefers-reduced-motion: reduce)").matches
+		)
+			chapterCut?.play(
+				isCobaltPhase(previous)
+					? "#1735d6"
+					: getComputedStyle(document.body)
+							.getPropertyValue("--home-surface")
+							.trim(),
+				index > phases.indexOf(previous),
+			);
+		decodeText(timecodeLabel, { duration: 420 });
+		if (next !== "overview")
+			decodeText(
+				document.getElementById(next)?.querySelector(".atlas-overline") ?? null,
+				{ duration: 620, delay: 60 },
+			);
+	}
 	function updatePhase() {
 		scrollFrame = 0;
 		let active = sections[0];
@@ -795,9 +887,12 @@ export function mountAtlasExperience() {
 			if (section.getBoundingClientRect().top < innerHeight * 0.4)
 				active = section;
 		const next = active.dataset.atlasSection as Phase;
-		if (next !== phase) {
-			highlightTarget(null);
+		if (next !== phase || !phaseSettled) {
+			const previous = phase;
+			if (next !== phase) highlightTarget(null);
 			phase = next;
+			enterPhase(previous, next);
+			phaseSettled = true;
 			syncWorld();
 		}
 		document.documentElement.dataset.atlasPhase = phase;
@@ -860,6 +955,7 @@ export function mountAtlasExperience() {
 		import.meta.hot.dispose(() => {
 			disposed = true;
 			readerTransition.cancel(false);
+			chapterCut?.cancel();
 			cancelLineage();
 			world?.dispose();
 			themeObserver.disconnect();

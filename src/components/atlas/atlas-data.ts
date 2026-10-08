@@ -45,6 +45,16 @@ export type SurfaceMode = "relief" | "contours";
 export const resolveSurfaceMode = (value: string | null): SurfaceMode =>
 	value === "contours" ? "contours" : "relief";
 export type Phase = "overview" | "research" | "journey" | "awards" | "service";
+export const phases: readonly Phase[] = [
+	"overview",
+	"research",
+	"journey",
+	"awards",
+	"service",
+];
+/** Chapters drawn on the cobalt field; the rest use the reading surface. */
+export const isCobaltPhase = (phase: Phase) =>
+	phase === "overview" || phase === "research" || phase === "awards";
 export type Paper = {
 	id: string;
 	title: string;

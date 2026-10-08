@@ -1,0 +1,444 @@
+/* Survey layer: viewfinder, field tags, chapter progress, chapter cuts and the opening. */
+
+.atlas-experience {
+	--survey-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---------- Opening: name, signal bar ---------- */
+.opening-copy h1::after {
+	content: "";
+	display: block;
+	width: 64px;
+	height: 2px;
+	margin-top: 1.3rem;
+	background: #f5ff65;
+	transform-origin: left;
+}
+
+/* ---------- Viewfinder ---------- */
+.survey-frame {
+	position: absolute;
+	inset: 30px 0 0;
+	z-index: 1;
+	pointer-events: none;
+	color: #c6d0f3;
+	font-family: var(--font-mono);
+	font-size: 0.6rem;
+	line-height: 1.5;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+.survey-frame i {
+	position: absolute;
+	width: 20px;
+	height: 20px;
+	border: 0 solid #ffffff99;
+}
+.survey-frame i:nth-of-type(1) {
+	top: 0;
+	left: 0;
+	border-top-width: 1px;
+	border-left-width: 1px;
+}
+.survey-frame i:nth-of-type(2) {
+	top: 0;
+	right: 0;
+	border-top-width: 1px;
+	border-right-width: 1px;
+}
+.survey-frame i:nth-of-type(3) {
+	bottom: 0;
+	left: 0;
+	border-bottom-width: 1px;
+	border-left-width: 1px;
+}
+.survey-frame i:nth-of-type(4) {
+	bottom: 0;
+	right: 0;
+	border-bottom-width: 1px;
+	border-right-width: 1px;
+}
+.survey-frame span {
+	position: absolute;
+	white-space: nowrap;
+}
+.survey-frame-caption {
+	top: 6px;
+	left: 30px;
+}
+.survey-frame-caption::before {
+	content: "";
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	margin-right: 8px;
+	background: #f5ff65;
+}
+.survey-frame-coordinate {
+	top: 6px;
+	right: 30px;
+	opacity: 0.8;
+}
+.survey-frame-meta {
+	bottom: 4px;
+	left: 30px;
+	opacity: 0.8;
+}
+[data-view="index"] .research-map-space .survey-frame {
+	display: none;
+}
+@media (max-width: 760px) {
+	.survey-frame {
+		display: none;
+	}
+}
+
+/* ---------- Field tags and leaders ---------- */
+.atlas-leaders {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+	pointer-events: none;
+}
+.atlas-leader {
+	fill: none;
+	stroke: #f4f0e8b3;
+	stroke-width: 1px;
+	vector-effect: non-scaling-stroke;
+	stroke-dasharray: 1;
+	stroke-dashoffset: 1;
+	opacity: 0;
+}
+.atlas-leader[data-on] {
+	opacity: 1;
+	animation: survey-draw 900ms var(--survey-ease) both;
+}
+.atlas-leader-field[data-on],
+.field-pin:not([hidden]) {
+	animation-delay: var(--survey-tag-delay, 0ms);
+}
+.atlas-leader-link,
+.atlas-leader-reading {
+	stroke: #f5ff65;
+}
+.atlas-leader-link[data-on] {
+	animation-duration: 420ms;
+}
+.atlas-leader-ring {
+	fill: #1735d6;
+	stroke: #ffffffe6;
+	stroke-width: 1px;
+	vector-effect: non-scaling-stroke;
+	opacity: 0;
+	transition: opacity 200ms;
+}
+.atlas-leader-ring[data-on] {
+	opacity: 1;
+}
+.atlas-leader-ring-signal {
+	fill: none;
+	stroke: #f5ff65;
+}
+.field-pin:not([hidden]) {
+	animation-name: survey-rise;
+	animation-duration: 700ms;
+	animation-timing-function: var(--survey-ease);
+	animation-fill-mode: both;
+}
+
+/* ---------- Chapter progress (replaces the side rail on wide screens) ---------- */
+.atlas-timecode {
+	display: none;
+}
+.atlas-timecode-name {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+@media (min-width: 1100px) {
+	.atlas-chapters {
+		display: none;
+	}
+	.atlas-timecode {
+		display: flex;
+		position: fixed;
+		z-index: 55;
+		top: 0;
+		left: 50%;
+		height: 57px;
+		align-items: center;
+		gap: 4px;
+		transform: translateX(-50%);
+		color: #c9d2f1;
+		font-family: var(--font-mono);
+		font-size: 0.64rem;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+	.atlas-experience[data-reading] > .atlas-timecode {
+		display: none;
+	}
+}
+.atlas-timecode a {
+	position: relative;
+	display: block;
+	width: 22px;
+	height: 28px;
+	color: inherit;
+}
+.atlas-timecode a::before {
+	content: "";
+	position: absolute;
+	left: 2px;
+	right: 2px;
+	top: 50%;
+	height: 3px;
+	margin-top: -1.5px;
+	background: currentColor;
+	opacity: 0.28;
+	transition:
+		opacity 220ms,
+		background 220ms;
+}
+.atlas-timecode a[data-passed]::before {
+	opacity: 0.7;
+}
+.atlas-timecode a:is(:hover, :focus-visible)::before {
+	opacity: 1;
+}
+.atlas-timecode a[aria-current]::before {
+	opacity: 1;
+	background: #f5ff65;
+}
+.atlas-timecode-index {
+	margin-left: 12px;
+	color: #f5ff65;
+	font-variant-numeric: tabular-nums;
+}
+.atlas-timecode-label {
+	min-width: 10ch;
+	margin-left: 10px;
+}
+html:is([data-atlas-phase="journey"], [data-atlas-phase="service"])
+	.atlas-timecode {
+	color: var(--home-surface-muted);
+}
+html:is([data-atlas-phase="journey"], [data-atlas-phase="service"])
+	.atlas-timecode-index {
+	color: var(--primary-light);
+}
+html:is([data-atlas-phase="journey"], [data-atlas-phase="service"])
+	.atlas-timecode
+	a[aria-current]::before {
+	background: var(--primary-light);
+}
+
+/* ---------- Chapter cut ---------- */
+.chapter-cut {
+	position: fixed;
+	inset: 0;
+	z-index: 1;
+	pointer-events: none;
+	visibility: hidden;
+}
+.chapter-cut[data-active] {
+	visibility: visible;
+}
+.chapter-cut-surface,
+.chapter-cut-edge {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+}
+.chapter-cut-edge {
+	overflow: visible;
+}
+.chapter-cut-edge line {
+	stroke: #f5ff65;
+	stroke-width: 2px;
+	vector-effect: non-scaling-stroke;
+}
+
+/* ---------- Reader record header ---------- */
+[data-reader-record] {
+	color: #1735d6;
+	letter-spacing: 0.08em;
+}
+[data-reader-record]::before {
+	content: "";
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	margin-right: 10px;
+	background: #1735d6;
+}
+
+/* ---------- Opening sequence (first visit per session, motion allowed) ---------- */
+.opening-crosshair {
+	display: none;
+}
+html[data-atlas-intro] .opening-crosshair {
+	display: block;
+	position: fixed;
+	inset: 0;
+	z-index: 70;
+	pointer-events: none;
+	animation: survey-leave 420ms ease 1150ms both;
+}
+.opening-crosshair i {
+	position: absolute;
+	background: #ffffffbf;
+}
+.opening-crosshair i:first-child {
+	left: 0;
+	right: 0;
+	top: 50%;
+	height: 1px;
+	animation: survey-grow-x 640ms var(--survey-ease) 40ms both;
+}
+.opening-crosshair i:nth-child(2) {
+	top: 0;
+	bottom: 0;
+	left: 50%;
+	width: 1px;
+	animation: survey-grow-y 640ms var(--survey-ease) 120ms both;
+}
+.opening-crosshair span {
+	position: absolute;
+	left: calc(50% + 14px);
+	top: calc(50% - 26px);
+	color: #dfe5fb;
+	font-family: var(--font-mono);
+	font-size: 0.66rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+.opening-crosshair span:last-child {
+	top: calc(50% + 12px);
+	color: #f5ff65;
+}
+html[data-atlas-intro] .atlas-world {
+	animation: survey-fade 700ms ease 380ms both;
+}
+html[data-atlas-intro] .atlas-poster {
+	display: none;
+}
+html[data-atlas-intro] .atlas-experience {
+	--survey-tag-delay: 1650ms;
+}
+html[data-atlas-intro] .opening-copy h1 > span {
+	animation: survey-wipe-up 1050ms var(--survey-ease) 640ms both;
+}
+html[data-atlas-intro] .opening-copy h1 > span:nth-child(2) {
+	animation-delay: 750ms;
+}
+html[data-atlas-intro] .name-period {
+	display: inline-block;
+	animation: survey-pop 520ms var(--survey-ease) 1320ms both;
+}
+html[data-atlas-intro] .opening-copy h1::after {
+	animation: survey-draw-x 760ms var(--survey-ease) 1120ms both;
+}
+html[data-atlas-intro]
+	:is(.opening-statement, .opening-profile, .opening-links, .opening-fields) {
+	animation: survey-rise 760ms var(--survey-ease) 1080ms both;
+}
+html[data-atlas-intro] .opening-profile {
+	animation-delay: 1180ms;
+}
+html[data-atlas-intro] .opening-links {
+	animation-delay: 1340ms;
+}
+html[data-atlas-intro] .opening-fields {
+	animation-delay: 1460ms;
+}
+html[data-atlas-intro] .survey-frame i {
+	animation: survey-bracket 700ms var(--survey-ease) 860ms both;
+}
+html[data-atlas-intro] .survey-frame span {
+	animation: survey-wipe-x 600ms var(--survey-ease) 1260ms both;
+}
+
+@keyframes survey-wipe-up {
+	from {
+		clip-path: inset(0 -10% 100% -10%);
+		transform: translateY(0.32em);
+	}
+	to {
+		clip-path: inset(-30% -10% -40% -10%);
+		transform: none;
+	}
+}
+@keyframes survey-wipe-x {
+	from {
+		clip-path: inset(0 100% 0 0);
+	}
+	to {
+		clip-path: inset(0 -5% 0 0);
+	}
+}
+@keyframes survey-pop {
+	from {
+		transform: scale(0);
+	}
+}
+@keyframes survey-draw-x {
+	from {
+		transform: scaleX(0);
+	}
+}
+@keyframes survey-rise {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+}
+@keyframes survey-fade {
+	from {
+		opacity: 0;
+	}
+}
+@keyframes survey-bracket {
+	from {
+		opacity: 0;
+		transform: scale(2.4);
+	}
+}
+@keyframes survey-draw {
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+@keyframes survey-grow-x {
+	from {
+		transform: scaleX(0);
+	}
+}
+@keyframes survey-grow-y {
+	from {
+		transform: scaleY(0);
+	}
+}
+@keyframes survey-leave {
+	to {
+		opacity: 0;
+		visibility: hidden;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.atlas-leader {
+		stroke-dashoffset: 0;
+	}
+	.atlas-leader[data-on],
+	.field-pin:not([hidden]) {
+		animation: none;
+	}
+}

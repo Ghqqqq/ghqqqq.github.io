@@ -33,7 +33,7 @@ test("research markers sit on the three raised regions and the outer terrain fad
 	}
 });
 
-test("the atlas keeps its animated manuscript and separate responsive scene anchors", async () => {
+test("the atlas keeps its manuscript field and separate responsive scene anchors", async () => {
 	const html = await readFile(new URL("../dist/index.html", import.meta.url), "utf8");
 	assert.match(html, /class="atlas-manuscript"/);
 	assert.match(html, /class="manuscript-layer"/);

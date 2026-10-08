@@ -1,0 +1,15 @@
+---
+interface Props {
+	caption: string;
+	meta: string;
+	coordinate?: string;
+}
+const { caption, meta, coordinate } = Astro.props;
+---
+
+<div class="survey-frame" aria-hidden="true">
+	<i></i><i></i><i></i><i></i>
+	<span class="survey-frame-caption">{caption}</span>
+	{coordinate && <span class="survey-frame-coordinate">{coordinate}</span>}
+	<span class="survey-frame-meta">{meta}</span>
+</div>
